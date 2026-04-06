@@ -2,6 +2,7 @@
 """Simple linear regression training example with PyTorch."""  # 用一句话说明这个脚本的用途。
 
 import torch  # 导入 PyTorch，用来定义模型、张量和训练流程。
+from torch.utils.data import DataLoader, TensorDataset  # 导入批量加载工具，把数据拆成一个个 batch。
 from sklearn.datasets import fetch_california_housing  # 导入加州房价数据集，替代已废弃的 Boston 数据集。
 from sklearn.model_selection import train_test_split  # 导入数据集切分工具，用于划分训练集和测试集。
 from sklearn.preprocessing import StandardScaler  # 导入标准化工具，让特征更容易训练收敛。
@@ -25,6 +26,8 @@ x_data = torch.tensor(X_train, dtype=torch.float32)  # 把训练特征转成 flo
 y_data = torch.tensor(Y_train, dtype=torch.float32)  # 把训练标签转成 float32 类型的张量。
 x_test_tensor = torch.tensor(X_test, dtype=torch.float32)  # 把测试特征也转成张量，方便后面评估。
 y_test_tensor = torch.tensor(Y_test, dtype=torch.float32)  # 把测试标签转成张量，方便计算测试损失。
+train_dataset = TensorDataset(x_data, y_data)  # 把训练特征和标签打包成一个数据集对象。
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)  # 每次取 32 个样本训练，并在每轮开始前打乱顺序。
 
 
 class Net(torch.nn.Module):  # 定义一个继承自 PyTorch 模块的线性回归模型。
@@ -40,16 +43,22 @@ net = Net(x_data.shape[1], 1)  # 按训练数据的特征数创建模型，输�
 loss_func = torch.nn.MSELoss()  # 定义均方误差损失函数，回归任务里最常用。
 optimizer = torch.optim.SGD(net.parameters(), lr=0.01)  # 使用随机梯度下降优化器更新模型参数。
 
-for epoch in range(1000):  # 训练 1000 轮，让模型反复看到同一批训练数据。
-    pred = net(x_data).squeeze(1)  # 前向计算预测值，并去掉多余的第 2 维。
-    loss = loss_func(pred, y_data)  # 比较预测值和真实值，得到当前这轮的损失。
+for epoch in range(1000):  # 训练 1000 轮，每一轮都会遍历完所有 batch。
+    total_loss = 0.0  # 记录这一整轮里所有 batch 的损失总和。
 
-    optimizer.zero_grad()  # 在反向传播前先清空旧梯度，避免梯度累计。
-    loss.backward()  # 根据损失对模型参数求梯度。
-    optimizer.step()  # 使用优化器按梯度方向更新参数。
+    for batch_x, batch_y in train_loader:  # 从 DataLoader 里一批一批取出训练数据。
+        pred = net(batch_x).squeeze(1)  # 用当前 batch 做前向传播，并把输出压成一维。
+        loss = loss_func(pred, batch_y)  # 计算当前 batch 的预测误差。
+
+        optimizer.zero_grad()  # 在反向传播前先清空旧梯度，避免梯度累计。
+        loss.backward()  # 根据当前 batch 的损失对模型参数求梯度。
+        optimizer.step()  # 使用优化器按梯度方向更新参数。
+
+        total_loss += loss.item()  # 把当前 batch 的损失累加起来，方便统计整轮表现。
 
     if epoch % 100 == 0:  # 每训练 100 轮打印一次日志，方便观察收敛情况。
-        print(f"Epoch {epoch}, Loss: {loss.item():.4f}")  # 输出当前轮数和损失值。
+        avg_loss = total_loss / len(train_loader)  # 计算这一轮所有 batch 的平均损失。
+        print(f"Epoch {epoch}, Loss: {avg_loss:.4f}")  # 输出当前轮数和平均损失值。
 
 with torch.no_grad():  # 进入不计算梯度模式，评估时更省内存也更快。
     pred_test = net(x_test_tensor).squeeze(1)  # 用训练好的模型对测试集做预测。
