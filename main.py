@@ -34,6 +34,15 @@ def train_linear_regression(x_train, y_train, learning_rate=0.01, epochs=200):  
     w = np.zeros(x_train.shape[1], dtype=np.float32)  # 初始化权重向量，shape = (8,)。
     b = np.float32(0.0)  # 初始化偏置，它是一个标量。
     n = len(x_train)  # 训练样本数，是一个整数。
+    # 这一版是 full-batch gradient descent，也就是每一轮都直接用整份训练集一起算。
+    # 当前 pred = x_train @ w + b 时，x_train shape = (num_train_samples, 8)，pred shape = (num_train_samples,)。
+    # 如果改成 mini-batch，就会先切出 batch_x，再写成 pred = batch_x @ w + b。
+    # 如果改成 stochastic gradient descent，则每次只取 1 条样本来更新参数。
+    #
+    # 三种方式对照:
+    # 1. Full-batch: 一次用全部样本，代码最简单，但大数据时更慢、更占内存。
+    # 2. Mini-batch: 一次用一小批样本，是深度学习里最常见的训练方式。
+    # 3. Stochastic: 一次只用 1 条样本，更新最频繁，但梯度噪声也最大。
 
     for epoch in range(epochs):  # 外层循环控制训练轮数。
         pred = x_train @ w + b  # 前向传播，预测值 shape = (num_train,)。
