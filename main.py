@@ -16,3 +16,16 @@ print(\"Proposal shape:\", proposals.shape)  # 打印候选框张量 shape。
 print(\"ROI feature shape:\", roi_features.shape)  # 打印 ROI 特征张量 shape。
 print(\"Class logit shape:\", cls_logits.shape)  # 打印类别 logits shape。
 print(\"BBox delta shape:\", bbox_deltas.shape)  # 打印框回归输出 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+gt_boxes = torch.tensor([[[10.0, 10.0, 50.0, 50.0]]])  # æž„é€ ä¸€ä¸ªçœŸå®žæ¡†å¼ é‡ï¼Œshape = (1, 1, 4)ã€‚
+pred_box = torch.tensor([[[12.0, 12.0, 48.0, 52.0]]])  # æž„é€ ä¸€ä¸ªé¢„æµ‹æ¡†å¼ é‡ï¼Œshape = (1, 1, 4)ã€‚
+ix1 = torch.maximum(gt_boxes[..., 0], pred_box[..., 0])  # è®¡ç®—äº¤é›†å·¦ä¸Šè§’ xï¼Œshape = (1, 1)ã€‚
+iy1 = torch.maximum(gt_boxes[..., 1], pred_box[..., 1])  # è®¡ç®—äº¤é›†å·¦ä¸Šè§’ yï¼Œshape = (1, 1)ã€‚
+ix2 = torch.minimum(gt_boxes[..., 2], pred_box[..., 2])  # è®¡ç®—äº¤é›†å³ä¸‹è§’ xï¼Œshape = (1, 1)ã€‚
+iy2 = torch.minimum(gt_boxes[..., 3], pred_box[..., 3])  # è®¡ç®—äº¤é›†å³ä¸‹è§’ yï¼Œshape = (1, 1)ã€‚
+inter = torch.clamp(ix2 - ix1, min=0) * torch.clamp(iy2 - iy1, min=0)  # è®¡ç®—äº¤é›†é¢ç§¯ï¼Œshape = (1, 1)ã€‚
+area_gt = (gt_boxes[..., 2] - gt_boxes[..., 0]) * (gt_boxes[..., 3] - gt_boxes[..., 1])  # è®¡ç®—çœŸå®žæ¡†é¢ç§¯ï¼Œshape = (1, 1)ã€‚
+area_pred = (pred_box[..., 2] - pred_box[..., 0]) * (pred_box[..., 3] - pred_box[..., 1])  # è®¡ç®—é¢„æµ‹æ¡†é¢ç§¯ï¼Œshape = (1, 1)ã€‚
+iou = inter / (area_gt + area_pred - inter + 1e-7)  # è®¡ç®— IoUï¼Œshape = (1, 1)ã€‚
+print("IoU:", iou)  # æ‰“å° IoUã€‚
