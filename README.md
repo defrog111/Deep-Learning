@@ -1,7 +1,7 @@
 ﻿# MAE 掩码图像建模
 
 - 标签：扩展
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：cv-extra-mae-masked-image-modeling
 
 ## 题目
 用 MAE 风格模型理解遮挡 patch 重建任务。
@@ -15,3 +15,9 @@
 ## 文件说明
 - main.py：最小可运行示例，逐句中文注释。
 - 代码重点是帮助面试讲清楚结构和数据流，不是追求完整训练工程。
+
+## å¸¸ç”¨ Metric
+- Reconstruction Loss
+- Patch MSE
+- PSNR
+- SSIM

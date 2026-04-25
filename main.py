@@ -15,3 +15,8 @@ print(\"Patch token shape:\", patch_tokens.shape)  # 打印 patch token 序列�
 print(\"Mask shape:\", mask.shape)  # 打印 mask 矩阵的 shape。
 print(\"Visible token shape:\", visible_tokens.shape)  # 打印可见 token 序列的 shape。
 print(\"Reconstructed patch shape:\", reconstructed_patches.shape)  # 打印重建 patch 序列的 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+target_patches = torch.randn_like(reconstructed_patches)  # æž„é€ ç›®æ ‡ patch å¼ é‡ï¼Œshape ä¸Žé‡å»º patch ç›¸åŒã€‚
+reconstruction_loss = torch.mean((reconstructed_patches - target_patches) ** 2)  # è®¡ç®— patch é‡å»º MSEï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Patch reconstruction loss:", float(reconstruction_loss))  # æ‰“å° patch é‡å»ºæŸå¤±ã€‚
