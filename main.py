@@ -24,3 +24,17 @@ for threshold in thresholds:  # 遍历每个候选阈值。
 
 print(\"Best threshold:\", best_threshold)  # 打印最优分裂阈值。
 print(\"Best gini score:\", best_score)  # 打印最优分裂分数。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+pred = (x > best_threshold).astype(np.int32)  # ç”¨æ‰¾åˆ°çš„é˜ˆå€¼åšæœ€ç®€å•çš„äºŒåˆ†ç±»é¢„æµ‹ï¼Œshape = (5,)ã€‚
+accuracy = np.mean(pred == y)  # è®¡ç®— Accuracyï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+tp = np.sum((pred == 1) & (y == 1))  # è®¡ç®— TPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fp = np.sum((pred == 1) & (y == 0))  # è®¡ç®— FPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fn = np.sum((pred == 0) & (y == 1))  # è®¡ç®— FNï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+precision = tp / (tp + fp + 1e-7)  # è®¡ç®— Precisionï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+recall = tp / (tp + fn + 1e-7)  # è®¡ç®— Recallï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # è®¡ç®— F1ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Accuracy:", float(accuracy))  # æ‰“å° Accuracyã€‚
+print("Precision:", float(precision))  # æ‰“å° Precisionã€‚
+print("Recall:", float(recall))  # æ‰“å° Recallã€‚
+print("F1:", float(f1))  # æ‰“å° F1ã€‚

@@ -1,7 +1,7 @@
 ﻿# 手写决策树 Gini 分裂
 
 - 难度标签：核心
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：core-decision-tree-gini
 
 ## 题目
 手写一个二分类决策树的单层版本，核心是用 Gini impurity 选最优分裂。
@@ -17,3 +17,10 @@
 - 关键公式在代码里对应哪一行？
 - 如果样本规模变大，什么部分会最慢？
 - 怎么把这份手写代码扩展成工程版？
+
+## å¸¸ç”¨ Metric
+- Accuracy
+- Precision
+- Recall
+- F1
+- ROC-AUC
