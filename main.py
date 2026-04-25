@@ -32,3 +32,11 @@ fake_scores = discriminator(fake_images)  # 判别假图像，输出 shape = (2,
 print(\"Noise shape:\", noise.shape)  # 打印噪声向量 shape。
 print(\"Fake image shape:\", fake_images.shape)  # 打印生成图像 shape。
 print(\"Fake score shape:\", fake_scores.shape)  # 打印判别器输出 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+real_images = torch.randn(2, 1, 28, 28)  # æž„é€ ä¸¤å¼ çœŸå®žå›¾åƒï¼Œshape = (2, 1, 28, 28)ã€‚
+real_scores = discriminator(real_images)  # åˆ¤åˆ«çœŸå®žå›¾åƒï¼Œshape = (2, 1)ã€‚
+generator_loss = -fake_scores.mean()  # è®¡ç®—æœ€å°ç¤ºä¾‹é‡Œçš„ç”Ÿæˆå™¨æŸå¤±ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+discriminator_loss = fake_scores.mean() - real_scores.mean()  # è®¡ç®—æœ€å°ç¤ºä¾‹é‡Œçš„åˆ¤åˆ«å™¨æŸå¤±ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Generator loss:", float(generator_loss))  # æ‰“å°ç”Ÿæˆå™¨æŸå¤±ã€‚
+print("Discriminator loss:", float(discriminator_loss))  # æ‰“å°åˆ¤åˆ«å™¨æŸå¤±ã€‚
