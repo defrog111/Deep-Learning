@@ -1,7 +1,7 @@
 ﻿# 手写 NumPy 线性回归
 
 - 难度标签：核心
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：core-linear-regression-numpy
 
 ## 题目
 用 NumPy 手写线性回归，包含前向传播、MSE、梯度下降和测试评估。
@@ -17,3 +17,10 @@
 - 关键公式在代码里对应哪一行？
 - 如果样本规模变大，什么部分会最慢？
 - 怎么把这份手写代码扩展成工程版？
+
+## å¸¸ç”¨ Metric
+- MSE
+- RMSE
+- MAE
+- R2
+- MAPE

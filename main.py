@@ -32,3 +32,13 @@ test_mse = np.mean(test_error ** 2)  # 计算测试集 MSE，输出是标量。
 print(\"Weight shape:\", w.shape)  # 打印权重向量的 shape。
 print(\"Prediction shape:\", pred_test.shape)  # 打印预测结果的 shape。
 print(\"Test MSE:\", float(test_mse))  # 打印测试集 MSE。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+rmse = np.sqrt(test_mse)  # æ ¹æ® MSE è®¡ç®— RMSEï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+test_mae = np.mean(np.abs(test_error))  # è®¡ç®—æµ‹è¯•é›† MAEï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+test_r2 = 1.0 - np.sum(test_error ** 2) / np.sum((y_test - np.mean(y_test)) ** 2)  # è®¡ç®—æµ‹è¯•é›† R2ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+test_mape = np.mean(np.abs(test_error) / (np.abs(y_test) + 1e-7))  # è®¡ç®—æµ‹è¯•é›† MAPEï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Test RMSE:", float(rmse))  # æ‰“å°æµ‹è¯•é›† RMSEã€‚
+print("Test MAE:", float(test_mae))  # æ‰“å°æµ‹è¯•é›† MAEã€‚
+print("Test R2:", float(test_r2))  # æ‰“å°æµ‹è¯•é›† R2ã€‚
+print("Test MAPE:", float(test_mape))  # æ‰“å°æµ‹è¯•é›† MAPEã€‚
