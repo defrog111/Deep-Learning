@@ -57,3 +57,9 @@ loss = loss_fn(denoised_images, clean_images)  # 计算去噪损失，输出 sha
 print(\"Noisy image shape:\", noisy_images.shape)  # 打印输入图像 shape。
 print(\"Denoised image shape:\", denoised_images.shape)  # 打印输出图像 shape。
 print(\"Loss shape:\", loss.shape)  # 打印损失 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+mae = torch.mean(torch.abs(denoised_images - clean_images))  # è®¡ç®— MAEï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+psnr = 10.0 * torch.log10(1.0 / (loss + 1e-7))  # ç”¨ MSE è¿‘ä¼¼è®¡ç®— PSNRï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("MAE:", float(mae))  # æ‰“å° MAEã€‚
+print("PSNR:", float(psnr))  # æ‰“å° PSNRã€‚
