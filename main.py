@@ -16,3 +16,7 @@ for step in range(5):  # 迭代更新 5 次。
         new_centroids[cluster_id] = np.mean(cluster_points, axis=0)  # 对当前簇求均值作为新中心，shape = (2,)。
     centroids = new_centroids  # 用新中心替换旧中心。
     print(f\"Step {step} | Labels: {labels} | Centroids: {centroids}\")  # 打印当前分配和中心。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+inertia = np.sum((x - centroids[labels]) ** 2)  # è®¡ç®—ç°‡å†…å¹³æ–¹å’Œ Inertiaï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Inertia:", float(inertia))  # æ‰“å° KMeans å¸¸è§æŒ‡æ ‡ Inertiaã€‚

@@ -1,7 +1,7 @@
 ﻿# 手写 NumPy KMeans
 
 - 难度标签：核心
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：core-kmeans-numpy
 
 ## 题目
 用 NumPy 手写 KMeans 聚类，包含分配样本、更新中心和迭代收敛。
@@ -17,3 +17,9 @@
 - 关键公式在代码里对应哪一行？
 - 如果样本规模变大，什么部分会最慢？
 - 怎么把这份手写代码扩展成工程版？
+
+## å¸¸ç”¨ Metric
+- Inertia
+- Silhouette Score
+- ARI
+- NMI
