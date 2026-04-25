@@ -34,3 +34,17 @@ pred_labels = (probs_test >= 0.5).astype(np.int32)  # 按 0.5 阈值转成预测
 
 print(\"Probability shape:\", probs_test.shape)  # 打印概率向量的 shape。
 print(\"Predicted labels:\", pred_labels)  # 打印预测类别。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+y_true = np.array([0, 1], dtype=np.int32)  # æž„é€ ä¸€ç»„æµ‹è¯•çœŸå®žæ ‡ç­¾ï¼Œshape = (2,)ã€‚
+accuracy = np.mean(pred_labels == y_true)  # è®¡ç®— Accuracyï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+tp = np.sum((pred_labels == 1) & (y_true == 1))  # è®¡ç®— TPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fp = np.sum((pred_labels == 1) & (y_true == 0))  # è®¡ç®— FPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fn = np.sum((pred_labels == 0) & (y_true == 1))  # è®¡ç®— FNï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+precision = tp / (tp + fp + 1e-7)  # è®¡ç®— Precisionï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+recall = tp / (tp + fn + 1e-7)  # è®¡ç®— Recallï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # è®¡ç®— F1ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Accuracy:", float(accuracy))  # æ‰“å° Accuracyã€‚
+print("Precision:", float(precision))  # æ‰“å° Precisionã€‚
+print("Recall:", float(recall))  # æ‰“å° Recallã€‚
+print("F1:", float(f1))  # æ‰“å° F1ã€‚
