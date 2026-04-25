@@ -40,3 +40,9 @@ model = TinyResNet()  # 创建 ResNet 模型；模型本身没有 shape。
 logits = model(images)  # 前向传播得到输出，shape = (4, 10)。
 print(\"Image shape:\", images.shape)  # 打印输入图像 shape。
 print(\"Logits shape:\", logits.shape)  # 打印输出 logits shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+labels = torch.randint(0, 10, (4,))  # æž„é€ åˆ†ç±»æ ‡ç­¾å‘é‡ï¼Œshape = (4,)ã€‚
+pred_labels = torch.argmax(logits, dim=1)  # æŠŠ logits è½¬æˆé¢„æµ‹ç±»åˆ«ï¼Œshape = (4,)ã€‚
+accuracy = (pred_labels == labels).float().mean()  # è®¡ç®— Accuracyï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Accuracy:", float(accuracy))  # æ‰“å° Accuracyã€‚

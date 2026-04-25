@@ -1,7 +1,7 @@
 ﻿# ResNet 图像分类
 
 - 标签：扩展
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：cv-extra-resnet-image-classification
 
 ## 题目
 用残差网络做图像分类，理解 skip connection 和分类头。
@@ -15,3 +15,10 @@
 ## 文件说明
 - main.py：最小可运行示例，逐句中文注释。
 - 代码重点是帮助面试讲清楚结构和数据流，不是追求完整训练工程。
+
+## å¸¸ç”¨ Metric
+- Accuracy
+- Precision
+- Recall
+- F1
+- ROC-AUC
