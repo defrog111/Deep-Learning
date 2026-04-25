@@ -1,7 +1,7 @@
 ﻿# 多模态 Transformer 分类
 
 - 标签：核心
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：multimodal-core-transformer-fusion-classification
 
 ## 题目
 输入数值特征、类别特征、图像和文本，用 Transformer 融合后做分类。
@@ -15,3 +15,12 @@
 ## 文件说明
 - main.py：最小可运行示例，逐句中文注释。
 - 代码重点是帮助面试讲清楚结构和数据流，不是追求完整训练工程。
+
+## å¸¸ç”¨ Metric
+- Accuracy
+- Precision
+- Recall
+- F1
+- ROC-AUC
+- PR-AUC
+- Ablation by modality

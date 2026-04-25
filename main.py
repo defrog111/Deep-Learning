@@ -43,3 +43,8 @@ print(\"Image shape:\", image_x.shape)  # 打印图像张量 shape。
 print(\"Text shape:\", text_x.shape)  # 打印文本 token 矩阵 shape。
 print(\"Logits shape:\", logits.shape)  # 打印分类输出 shape。
 print(\"Loss shape:\", loss.shape)  # 打印损失 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+pred_labels = torch.argmax(logits, dim=1)  # æŠŠåˆ†ç±» logits è½¬æˆé¢„æµ‹ç±»åˆ«ï¼Œshape = (2,)ã€‚
+accuracy = (pred_labels == labels).float().mean()  # è®¡ç®— Accuracyï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Accuracy:", float(accuracy))  # æ‰“å° Accuracyã€‚
