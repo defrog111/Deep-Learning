@@ -38,3 +38,18 @@ for epoch in range(200):  # 开始训练循环。
         print(f\"Epoch {epoch:03d} | MSE: {loss:.4f}\")  # 打印训练日志。
 
 print(\"Prediction shape:\", pred.shape)  # 打印最终预测矩阵的 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+pred_labels = (pred >= 0.5).astype(np.int32)  # æŠŠè¿žç»­è¾“å‡ºæŒ‰ 0.5 é˜ˆå€¼è½¬æˆäºŒåˆ†ç±»æ ‡ç­¾ï¼Œshape = (4, 1)ã€‚
+y_labels = y.astype(np.int32)  # æŠŠçœŸå®žæ ‡ç­¾è½¬æˆæ•´åž‹æ ‡ç­¾çŸ©é˜µï¼Œshape = (4, 1)ã€‚
+accuracy = np.mean(pred_labels == y_labels)  # è®¡ç®— Accuracyï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+tp = np.sum((pred_labels == 1) & (y_labels == 1))  # è®¡ç®— TPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fp = np.sum((pred_labels == 1) & (y_labels == 0))  # è®¡ç®— FPï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+fn = np.sum((pred_labels == 0) & (y_labels == 1))  # è®¡ç®— FNï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+precision = tp / (tp + fp + 1e-7)  # è®¡ç®— Precisionï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+recall = tp / (tp + fn + 1e-7)  # è®¡ç®— Recallï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # è®¡ç®— F1ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Accuracy:", float(accuracy))  # æ‰“å° Accuracyã€‚
+print("Precision:", float(precision))  # æ‰“å° Precisionã€‚
+print("Recall:", float(recall))  # æ‰“å° Recallã€‚
+print("F1:", float(f1))  # æ‰“å° F1ã€‚
