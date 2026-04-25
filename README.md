@@ -1,7 +1,7 @@
 ﻿# VAE 图像去噪
 
 - 标签：核心
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：cv-core-vae-image-denoising
 
 ## 题目
 用卷积 VAE 做图像去噪，包含 encoder、reparameterization 和 decoder。
@@ -15,3 +15,10 @@
 ## 文件说明
 - main.py：最小可运行示例，逐句中文注释。
 - 代码重点是帮助面试讲清楚结构和数据流，不是追求完整训练工程。
+
+## å¸¸ç”¨ Metric
+- Reconstruction Loss
+- KL Loss
+- MSE
+- PSNR
+- SSIM

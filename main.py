@@ -51,3 +51,8 @@ print(\"Reconstructed image shape:\", recon_images.shape)  # 打印重建图像 
 print(\"Mu shape:\", mu.shape)  # 打印均值向量 shape。
 print(\"Logvar shape:\", logvar.shape)  # 打印对数方差向量 shape。
 print(\"Loss shape:\", loss.shape)  # 打印总损失 shape。
+# 常用 Metric 已补充，下面是这道题最常见指标的最小示例。
+psnr = 10.0 * torch.log10(1.0 / (recon_loss + 1e-7))  # 用重建 MSE 近似计算 PSNR，输出是标量。
+mae = torch.mean(torch.abs(recon_images - clean_images))  # 计算重建 MAE，输出是标量。
+print("Reconstruction MAE:", float(mae))  # 打印重建 MAE。
+print("PSNR:", float(psnr))  # 打印 PSNR。
