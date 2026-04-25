@@ -1,88 +1,53 @@
-# -*- coding: utf-8 -*-  # 声明文件使用 UTF-8 编码，方便同时写英文和中文注释。
-"""Minimal NumPy linear regression interview version."""  # 用一句话说明这个脚本的用途。
-
-import numpy as np  # 导入 NumPy，用来做矩阵运算和手写梯度下降。
-from sklearn.datasets import fetch_california_housing  # 导入加州房价数据集，作为回归任务示例。
-from sklearn.model_selection import train_test_split  # 导入数据切分工具，用于划分训练集和测试集。
-from sklearn.preprocessing import StandardScaler  # 导入标准化工具，让特征更容易训练收敛。
+﻿import torch  # 导入 PyTorch，用来定义 VAE 图像去噪模型；这里没有张量 shape。
 
 
-def prepare_data():  # 负责数据下载、切分、标准化和类型转换。
-    data = fetch_california_housing()  # 下载或读取加州房价数据集。
-    x = data.data  # 输入特征矩阵，shape = (20640, 8)。
-    y = data.target  # 回归标签向量，shape = (20640,)。
+class ConvVAE(torch.nn.Module):  # 定义一个最小卷积 VAE；输入是图像，输出是重建图像和隐变量统计量。
+    def __init__(self, latent_dim: int = 16) -> None:  # 初始化 VAE 参数；latent_dim 是整数。
+        super().__init__()  # 调用父类初始化；这里没有张量 shape。
+        self.encoder = torch.nn.Sequential(  # 定义卷积 encoder；输入 shape = (B, 1, 28, 28)。
+            torch.nn.Conv2d(1, 8, kernel_size=3, stride=2, padding=1),  # 第一层卷积后输出 shape = (B, 8, 14, 14)。
+            torch.nn.ReLU(),  # 做激活，shape 不变。
+            torch.nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=1),  # 第二层卷积后输出 shape = (B, 16, 7, 7)。
+            torch.nn.ReLU(),  # 再做激活，shape 不变。
+        )  # 结束 encoder 定义；这里没有张量 shape。
+        self.fc_mu = torch.nn.Linear(16 * 7 * 7, latent_dim)  # 定义均值层，输入 shape = (B, 784)，输出 shape = (B, latent_dim)。
+        self.fc_logvar = torch.nn.Linear(16 * 7 * 7, latent_dim)  # 定义对数方差层，输入输出 shape 同上。
+        self.fc_decode = torch.nn.Linear(latent_dim, 16 * 7 * 7)  # 定义解码前的线性层，输入 shape = (B, latent_dim)，输出 shape = (B, 784)。
+        self.decoder = torch.nn.Sequential(  # 定义卷积 decoder；输入 shape = (B, 16, 7, 7)。
+            torch.nn.ConvTranspose2d(16, 8, kernel_size=4, stride=2, padding=1),  # 第一层反卷积后输出 shape = (B, 8, 14, 14)。
+            torch.nn.ReLU(),  # 做激活，shape 不变。
+            torch.nn.ConvTranspose2d(8, 1, kernel_size=4, stride=2, padding=1),  # 第二层反卷积后输出 shape = (B, 1, 28, 28)。
+            torch.nn.Sigmoid(),  # 把像素范围压到 0 到 1，shape 不变。
+        )  # 结束 decoder 定义；这里没有张量 shape。
 
-    x_train, x_test, y_train, y_test = train_test_split(  # 把原始数据切成训练集和测试集。
-        x,  # 全部特征，shape = (20640, 8)。
-        y,  # 全部标签，shape = (20640,)。
-        test_size=0.2,  # 抽 20% 作为测试集。
-        random_state=42,  # 固定随机种子，保证划分稳定。
-    )
+    def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:  # 定义重参数化技巧；输入 mu 和 logvar 的 shape = (B, latent_dim)。
+        std = torch.exp(0.5 * logvar)  # 把 logvar 变成标准差 std，shape = (B, latent_dim)。
+        eps = torch.randn_like(std)  # 采样和 std 同 shape 的标准高斯噪声，shape = (B, latent_dim)。
+        z = mu + eps * std  # 得到隐变量 z，shape = (B, latent_dim)。
+        return z  # 返回采样后的隐变量。
 
-    scaler = StandardScaler()  # 创建标准化器对象，只能在训练集上 fit。
-    x_train = scaler.fit_transform(x_train)  # 在训练集上学习均值和方差后做标准化，shape 仍是 (num_train, 8)。
-    x_test = scaler.transform(x_test)  # 用训练集的标准化规则转换测试集，shape 仍是 (num_test, 8)。
-
-    x_train = x_train.astype(np.float32)  # 把训练特征转成 float32，shape = (num_train, 8)。
-    x_test = x_test.astype(np.float32)  # 把测试特征转成 float32，shape = (num_test, 8)。
-    y_train = y_train.astype(np.float32)  # 把训练标签转成 float32，shape = (num_train,)。
-    y_test = y_test.astype(np.float32)  # 把测试标签转成 float32，shape = (num_test,)。
-    return x_train, x_test, y_train, y_test  # 返回训练集和测试集。
-
-
-def train_linear_regression(x_train, y_train, learning_rate=0.01, epochs=200):  # 手写线性回归训练函数。
-    w = np.zeros(x_train.shape[1], dtype=np.float32)  # 初始化权重向量，shape = (8,)。
-    b = np.float32(0.0)  # 初始化偏置，它是一个标量。
-    n = len(x_train)  # 训练样本数，是一个整数。
-    # 这一版是 full-batch gradient descent，也就是每一轮都直接用整份训练集一起算。
-    # 当前 pred = x_train @ w + b 时，x_train shape = (num_train_samples, 8)，pred shape = (num_train_samples,)。
-    # 如果改成 mini-batch，就会先切出 batch_x，再写成 pred = batch_x @ w + b。
-    # 如果改成 stochastic gradient descent，则每次只取 1 条样本来更新参数。
-    #
-    # 三种方式对照:
-    # 1. Full-batch: 一次用全部样本，代码最简单，但大数据时更慢、更占内存。
-    # 2. Mini-batch: 一次用一小批样本，是深度学习里最常见的训练方式。
-    # 3. Stochastic: 一次只用 1 条样本，更新最频繁，但梯度噪声也最大。
-
-    for epoch in range(epochs):  # 外层循环控制训练轮数。
-        pred = x_train @ w + b  # 前向传播，预测值 shape = (num_train,)。
-        error = pred - y_train  # 预测误差，shape = (num_train,)。
-        loss = np.mean(error ** 2)  # 均方误差 MSE，输出是一个标量。
-
-        grad_w = (2.0 / n) * (x_train.T @ error)  # 损失对权重的梯度，shape = (8,)。
-        grad_b = (2.0 / n) * np.sum(error)  # 损失对偏置的梯度，输出是一个标量。
-
-        w -= learning_rate * grad_w  # 按梯度下降公式更新权重。
-        b -= learning_rate * grad_b  # 按梯度下降公式更新偏置。
-
-        if epoch % 20 == 0:  # 每 20 轮打印一次，方便观察是否收敛。
-            print(f"Epoch {epoch}, Train Loss: {loss:.4f}")  # 打印当前轮数和训练损失。
-
-    return w, b  # 返回训练好的权重和偏置。
+    def forward(self, x: torch.Tensor):  # 定义前向传播；输入带噪图像 shape = (B, 1, 28, 28)。
+        h = self.encoder(x)  # 输入 encoder，输出 shape = (B, 16, 7, 7)。
+        h = h.flatten(1)  # 展平成二维矩阵，shape = (B, 784)。
+        mu = self.fc_mu(h)  # 计算隐变量均值，shape = (B, latent_dim)。
+        logvar = self.fc_logvar(h)  # 计算隐变量对数方差，shape = (B, latent_dim)。
+        z = self.reparameterize(mu, logvar)  # 用重参数化技巧采样隐变量，shape = (B, latent_dim)。
+        h_dec = self.fc_decode(z)  # 把隐变量映射回解码前特征，shape = (B, 784)。
+        h_dec = h_dec.view(x.size(0), 16, 7, 7)  # 重新变回 4 维特征图，shape = (B, 16, 7, 7)。
+        recon = self.decoder(h_dec)  # 输入 decoder 得到重建图像，shape = (B, 1, 28, 28)。
+        return recon, mu, logvar  # 返回重建图像、均值和对数方差。
 
 
-def evaluate(x_data, y_data, w, b):  # 负责在测试集上做推理和指标计算。
-    pred = x_data @ w + b  # 用训练好的参数做预测，pred shape = (num_samples,)。
-    mse = np.mean((pred - y_data) ** 2)  # 计算均方误差，输出是标量。
-    mae = np.mean(np.abs(pred - y_data))  # 计算平均绝对误差，输出是标量。
-    total_var = np.sum((y_data - np.mean(y_data)) ** 2)  # 计算总平方和 SST，输出是标量。
-    residual_var = np.sum((y_data - pred) ** 2)  # 计算残差平方和 SSR，输出是标量。
-    r2 = 1 - residual_var / total_var  # 根据 R2 = 1 - SSR / SST 计算拟合优度。
-    return pred, float(mse), float(mae), float(r2)  # 返回预测值和关键指标。
+noisy_images = torch.rand(2, 1, 28, 28)  # 构造 2 张带噪图像，shape = (2, 1, 28, 28)。
+clean_images = torch.rand(2, 1, 28, 28)  # 构造 2 张干净目标图像，shape = (2, 1, 28, 28)。
+model = ConvVAE(latent_dim=16)  # 创建卷积 VAE 模型；模型本身没有 shape。
+recon_images, mu, logvar = model(noisy_images)  # 前向传播得到重建图像和隐变量统计量；recon_images shape = (2, 1, 28, 28)。
+recon_loss = torch.nn.functional.mse_loss(recon_images, clean_images)  # 计算重建损失，输出 shape = ()。
+kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())  # 计算 KL 散度损失，输出 shape = ()。
+loss = recon_loss + kl_loss  # 合并总损失，输出 shape = ()。
 
-
-def main():  # 主入口函数，把完整流程串起来。
-    x_train, x_test, y_train, y_test = prepare_data()  # 准备训练集和测试集。
-    w, b = train_linear_regression(x_train, y_train)  # 训练手写线性回归模型。
-    pred, mse, mae, r2 = evaluate(x_test, y_test, w, b)  # 在测试集上做推理和评估。
-
-    print(f"\nWeight shape: {w.shape}")  # 打印权重向量 shape，当前一般是 (8,)。
-    print("Bias shape: scalar")  # 打印偏置是标量，不是向量。
-    print(f"Prediction shape: {pred.shape}")  # 打印预测结果 shape，当前一般是 (num_test,)。
-    print("Test MSE:", mse)  # 打印测试集均方误差。
-    print("Test MAE:", mae)  # 打印测试集平均绝对误差。
-    print("Test R2:", r2)  # 打印测试集 R2。
-
-
-if __name__ == "__main__":  # 直接运行这个文件时才执行 main，被别的文件导入时不会自动运行。
-    main()
+print(\"Noisy image shape:\", noisy_images.shape)  # 打印输入图像 shape。
+print(\"Reconstructed image shape:\", recon_images.shape)  # 打印重建图像 shape。
+print(\"Mu shape:\", mu.shape)  # 打印均值向量 shape。
+print(\"Logvar shape:\", logvar.shape)  # 打印对数方差向量 shape。
+print(\"Loss shape:\", loss.shape)  # 打印总损失 shape。
