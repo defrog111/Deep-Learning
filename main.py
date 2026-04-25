@@ -24,3 +24,7 @@ distance = torch.norm(feat_a - feat_b, dim=1)  # 计算两路特征之间的欧�
 print(\"Feature A shape:\", feat_a.shape)  # 打印第一路特征 shape。
 print(\"Feature B shape:\", feat_b.shape)  # 打印第二路特征 shape。
 print(\"Distance shape:\", distance.shape)  # 打印距离向量 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+cosine_similarity = torch.nn.functional.cosine_similarity(feat_a, feat_b)  # è®¡ç®—ä¸¤è·¯ç‰¹å¾çš„ä½™å¼¦ç›¸ä¼¼åº¦ï¼Œshape = (2,)ã€‚
+print("Cosine similarity:", cosine_similarity)  # æ‰“å°ä½™å¼¦ç›¸ä¼¼åº¦ã€‚

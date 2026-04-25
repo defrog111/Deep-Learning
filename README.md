@@ -1,7 +1,7 @@
 ﻿# Siamese 图像匹配
 
 - 标签：扩展
-- Branch：$(System.Collections.Hashtable.Branch)
+- Branch：cv-extra-siamese-image-matching
 
 ## 题目
 用 Siamese 网络提取图像特征，做相似度学习或图像匹配。
@@ -15,3 +15,9 @@
 ## 文件说明
 - main.py：最小可运行示例，逐句中文注释。
 - 代码重点是帮助面试讲清楚结构和数据流，不是追求完整训练工程。
+
+## å¸¸ç”¨ Metric
+- Cosine Similarity
+- Contrastive Loss
+- ROC-AUC
+- Recall@K
