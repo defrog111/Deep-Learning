@@ -17,3 +17,7 @@ print(\"Encoder output shape:\", encoder_output.shape)  # 打印 encoder 输出 
 print(\"Decoder output shape:\", decoder_output.shape)  # 打印 decoder 输出 shape。
 print(\"Class logits shape:\", class_logits.shape)  # 打印分类输出 shape。
 print(\"Box shape:\", boxes.shape)  # 打印边界框输出 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+iou_proxy = torch.mean(boxes[..., 2:] - boxes[..., :2])  # ç”¨ä¸€ä¸ªç®€åŒ–ä»£ç†é‡æ¼”ç¤ºæ¡†è´¨é‡ç»Ÿè®¡ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Box quality proxy:", float(iou_proxy))  # æ‰“å°ä¸€ä¸ªç®€å•çš„æ¡†è´¨é‡ä»£ç†æŒ‡æ ‡ã€‚
