@@ -16,3 +16,10 @@ x_reduced = x_centered @ projection_matrix  # 把原始数据投影到 1 维，s
 print(\"Covariance shape:\", cov.shape)  # 打印协方差矩阵的 shape。
 print(\"Projection shape:\", projection_matrix.shape)  # 打印投影矩阵的 shape。
 print(\"Reduced shape:\", x_reduced.shape)  # 打印降维结果的 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+explained_variance_ratio = eigenvalues[order] / np.sum(eigenvalues)  # è®¡ç®—æ¯ä¸ªä¸»æˆåˆ†çš„æ–¹å·®è§£é‡ŠçŽ‡ï¼Œshape = (2,)ã€‚
+reconstructed = x_reduced @ projection_matrix.T + mean  # æŠŠé™ç»´ç»“æžœæŠ•å½±å›žåŽŸç©ºé—´ï¼Œshape = (5, 2)ã€‚
+reconstruction_error = np.mean((x - reconstructed) ** 2)  # è®¡ç®—é‡å»ºè¯¯å·®ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Explained variance ratio:", explained_variance_ratio)  # æ‰“å°æ–¹å·®è§£é‡ŠçŽ‡ã€‚
+print("Reconstruction error:", float(reconstruction_error))  # æ‰“å°é‡å»ºè¯¯å·®ã€‚
