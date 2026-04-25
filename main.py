@@ -47,3 +47,14 @@ print(\"Image shape:\", images.shape)  # 打印输入图像 shape。
 print(\"Logits shape:\", logits.shape)  # 打印输出 logits 图的 shape。
 print(\"Mask shape:\", masks.shape)  # 打印标签 mask 的 shape。
 print(\"Loss shape:\", loss.shape)  # 打印损失张量的 shape。
+
+# å¸¸ç”¨ Metric å·²è¡¥å……ï¼Œä¸‹é¢æ˜¯è¿™é“é¢˜æœ€å¸¸è§æŒ‡æ ‡çš„æœ€å°ç¤ºä¾‹ã€‚
+pred_mask = torch.argmax(logits, dim=1)  # æŠŠåƒç´ åˆ†ç±» logits è½¬æˆé¢„æµ‹ maskï¼Œshape = (2, 64, 64)ã€‚
+intersection = ((pred_mask == 1) & (masks == 1)).float().sum()  # è®¡ç®—å‰æ™¯ç±»åˆ«äº¤é›†åƒç´ æ•°ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+union = ((pred_mask == 1) | (masks == 1)).float().sum()  # è®¡ç®—å‰æ™¯ç±»åˆ«å¹¶é›†åƒç´ æ•°ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+iou = intersection / (union + 1e-7)  # è®¡ç®— IoUï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+dice = 2.0 * intersection / ((pred_mask == 1).float().sum() + (masks == 1).float().sum() + 1e-7)  # è®¡ç®— Diceï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+pixel_accuracy = (pred_mask == masks).float().mean()  # è®¡ç®—åƒç´ å‡†ç¡®çŽ‡ï¼Œè¾“å‡ºæ˜¯æ ‡é‡ã€‚
+print("Pixel Accuracy:", float(pixel_accuracy))  # æ‰“å°åƒç´ å‡†ç¡®çŽ‡ã€‚
+print("IoU:", float(iou))  # æ‰“å° IoUã€‚
+print("Dice:", float(dice))  # æ‰“å° Diceã€‚
