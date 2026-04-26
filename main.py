@@ -1,45 +1,236 @@
-import torch  # 导入 PyTorch，用来定义 RNN 模型和张量；这里没有张量 shape。
+import os
+
+import numpy as np
+import pandas as pd
+import torch
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
-class VanillaRNNRegressor(torch.nn.Module):  # 定义一个最小 RNN 回归模型；输入是序列，输出是一个回归值。
-    def __init__(self, input_size: int = 1, hidden_size: int = 8) -> None:  # 初始化模型参数；input_size 和 hidden_size 都是整数。
-        super().__init__()  # 调用父类初始化；这里没有张量 shape。
-        self.rnn = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, batch_first=True)  # 定义单层 RNN，输入 shape = (B, T, 1)，输出 shape = (B, T, hidden_size)。
-        self.head = torch.nn.Linear(hidden_size, 1)  # 定义回归头，输入 shape = (B, hidden_size)，输出 shape = (B, 1)。
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # 定义前向传播；输入序列 x 的 shape = (B, T, 1)。
-        out, hidden = self.rnn(x)  # 输入 RNN，out 的 shape = (B, T, hidden_size)，hidden 的 shape = (1, B, hidden_size)。
-        last_feature = out[:, -1, :]  # 取最后一个时间步特征，shape = (B, hidden_size)。
-        pred = self.head(last_feature)  # 输出回归值，shape = (B, 1)。
-        return pred  # 返回预测结果。
+def print_title(title: str) -> None:
+    # 打印分隔标题，方便你从终端里快速看出每一部分在讲什么。
+    print("\n" + "=" * 80)
+    print(title)
+    print("=" * 80)
 
 
-sequence_x = torch.tensor(  # 构造一个最小时间序列 batch，shape = (3, 4, 1)。
-    [
-        [[1.0], [2.0], [3.0], [4.0]],
-        [[2.0], [3.0], [4.0], [5.0]],
-        [[3.0], [4.0], [5.0], [6.0]],
-    ],
-    dtype=torch.float32,
-)  # 结束输入序列定义；整体 shape = (3, 4, 1)。
-targets = torch.tensor([[5.0], [6.0], [7.0]], dtype=torch.float32)  # 构造回归目标张量，shape = (3, 1)。
-model = VanillaRNNRegressor(input_size=1, hidden_size=8)  # 创建传统 RNN 回归模型；模型本身没有 shape。
-predictions = model(sequence_x)  # 前向传播得到预测结果，shape = (3, 1)。
-loss_fn = torch.nn.MSELoss()  # 定义均方误差损失函数；loss_fn 本身没有 shape。
-loss = loss_fn(predictions, targets)  # 计算 MSE 损失，输出是标量张量，shape = ()。
-errors = predictions - targets  # 计算预测误差张量，shape = (3, 1)。
-mse = torch.mean(errors ** 2)  # 计算 MSE，输出 shape = ()。
-rmse = torch.sqrt(mse)  # 计算 RMSE，输出 shape = ()。
-mae = torch.mean(torch.abs(errors))  # 计算 MAE，输出 shape = ()。
-ss_res = torch.sum(errors ** 2)  # 计算残差平方和，输出 shape = ()。
-ss_tot = torch.sum((targets - torch.mean(targets)) ** 2)  # 计算总平方和，输出 shape = ()。
-r2 = 1.0 - ss_res / (ss_tot + 1e-7)  # 计算 R2，输出 shape = ()。
+def numpy_array_examples() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    # NumPy 1D 数组最像“向量”；shape = (3,)。
+    numpy_1d = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+    # NumPy 2D 数组最像“表格/矩阵”；shape = (2, 3)。
+    numpy_2d = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
+    # NumPy 3D 数组常见于“batch + sequence + feature”或“batch + H + W”；shape = (2, 3, 1)。
+    numpy_3d = np.array([[[1.0], [2.0], [3.0]], [[4.0], [5.0], [6.0]]], dtype=np.float32)
 
-print("Input sequence shape:", sequence_x.shape)  # 打印输入序列 shape。
-print("Target shape:", targets.shape)  # 打印目标张量 shape。
-print("Prediction shape:", predictions.shape)  # 打印预测张量 shape。
-print("Loss shape:", loss.shape)  # 打印损失张量 shape。
-print("MSE:", float(mse))  # 打印 MSE。
-print("RMSE:", float(rmse))  # 打印 RMSE。
-print("MAE:", float(mae))  # 打印 MAE。
-print("R2:", float(r2))  # 打印 R2。
+    print_title("NumPy 1D / 2D / 3D")
+    print("numpy_1d:\n", numpy_1d)
+    print("numpy_1d.shape:", numpy_1d.shape)
+    print("numpy_1d.dtype:", numpy_1d.dtype)
+    print("numpy_2d:\n", numpy_2d)
+    print("numpy_2d.shape:", numpy_2d.shape)
+    print("numpy_3d:\n", numpy_3d)
+    print("numpy_3d.shape:", numpy_3d.shape)
+
+    # zeros 常用来初始化全 0 数组；shape = (2, 3)。
+    numpy_zeros = np.zeros((2, 3), dtype=np.float32)
+    # ones 常用来初始化全 1 数组；shape = (2, 3)。
+    numpy_ones = np.ones((2, 3), dtype=np.float32)
+    # random.rand 生成 [0, 1) 均匀分布随机数；shape = (2, 3)。
+    numpy_random_uniform = np.random.rand(2, 3).astype(np.float32)
+    # random.randn 生成标准正态分布随机数；shape = (2, 3)。
+    numpy_random_normal = np.random.randn(2, 3).astype(np.float32)
+    # eye 生成单位矩阵；shape = (3, 3)。
+    numpy_eye = np.eye(3, dtype=np.float32)
+    # reshape 常用来改 shape 不改数据总数；这里把 (6,) 改成 (2, 3)。
+    numpy_reshape_source = np.array([1, 2, 3, 4, 5, 6], dtype=np.float32)  # shape = (6,)。
+    numpy_reshaped = numpy_reshape_source.reshape(2, 3)  # shape = (2, 3)。
+
+    print("numpy_zeros.shape:", numpy_zeros.shape)
+    print("numpy_ones.shape:", numpy_ones.shape)
+    print("numpy_random_uniform.shape:", numpy_random_uniform.shape)
+    print("numpy_random_normal.shape:", numpy_random_normal.shape)
+    print("numpy_eye:\n", numpy_eye)
+    print("numpy_eye.shape:", numpy_eye.shape)
+    print("numpy_reshape_source.shape:", numpy_reshape_source.shape)
+    print("numpy_reshaped:\n", numpy_reshaped)
+    print("numpy_reshaped.shape:", numpy_reshaped.shape)
+    return numpy_1d, numpy_2d, numpy_3d
+
+
+def pytorch_tensor_examples() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    # PyTorch 1D Tensor；shape = (3,)。
+    torch_1d = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+    # PyTorch 2D Tensor；shape = (2, 3)。
+    torch_2d = torch.tensor([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=torch.float32)
+    # PyTorch 3D Tensor；shape = (2, 3, 1)。
+    torch_3d = torch.tensor([[[1.0], [2.0], [3.0]], [[4.0], [5.0], [6.0]]], dtype=torch.float32)
+
+    print_title("PyTorch 1D / 2D / 3D")
+    print("torch_1d:\n", torch_1d)
+    print("torch_1d.shape:", tuple(torch_1d.shape))
+    print("torch_1d.dtype:", torch_1d.dtype)
+    print("torch_2d:\n", torch_2d)
+    print("torch_2d.shape:", tuple(torch_2d.shape))
+    print("torch_3d:\n", torch_3d)
+    print("torch_3d.shape:", tuple(torch_3d.shape))
+
+    # torch.zeros 生成全 0 Tensor；shape = (2, 3)。
+    torch_zeros = torch.zeros((2, 3), dtype=torch.float32)
+    # torch.ones 生成全 1 Tensor；shape = (2, 3)。
+    torch_ones = torch.ones((2, 3), dtype=torch.float32)
+    # torch.rand 生成 [0, 1) 均匀分布随机数；shape = (2, 3)。
+    torch_random_uniform = torch.rand((2, 3), dtype=torch.float32)
+    # torch.randn 生成标准正态分布随机数；shape = (2, 3)。
+    torch_random_normal = torch.randn((2, 3), dtype=torch.float32)
+    # torch.eye 生成单位矩阵；shape = (3, 3)。
+    torch_eye = torch.eye(3, dtype=torch.float32)
+    # reshape 常用来改张量形状；这里把 (6,) 改成 (2, 3)。
+    torch_reshape_source = torch.tensor([1, 2, 3, 4, 5, 6], dtype=torch.float32)  # shape = (6,)。
+    torch_reshaped = torch_reshape_source.reshape(2, 3)  # shape = (2, 3)。
+
+    print("torch_zeros.shape:", tuple(torch_zeros.shape))
+    print("torch_ones.shape:", tuple(torch_ones.shape))
+    print("torch_random_uniform.shape:", tuple(torch_random_uniform.shape))
+    print("torch_random_normal.shape:", tuple(torch_random_normal.shape))
+    print("torch_eye:\n", torch_eye)
+    print("torch_eye.shape:", tuple(torch_eye.shape))
+    print("torch_reshape_source.shape:", tuple(torch_reshape_source.shape))
+    print("torch_reshaped:\n", torch_reshaped)
+    print("torch_reshaped.shape:", tuple(torch_reshaped.shape))
+    return torch_1d, torch_2d, torch_3d
+
+
+def sklearn_array_examples() -> None:
+    # 这里要特别提醒你：sklearn 通常没有自己专门的“1D/2D/3D 数组类型”。
+    # sklearn 大多数时候直接吃 NumPy 数组或者 pandas DataFrame。
+    dataset = load_iris()
+    sklearn_data_2d = dataset.data.astype(np.float32)  # shape = (150, 4)，这是最典型的 sklearn data 形式。
+    sklearn_target_1d = dataset.target.astype(np.int64)  # shape = (150,)，这是最典型的 sklearn target 形式。
+    sklearn_data_3d = sklearn_data_2d.reshape(150, 4, 1)  # 这里只是演示怎么人为转成 3D；sklearn 本身多数模型并不直接吃 3D。
+
+    print_title("sklearn 常见 data / target 形式")
+    print("sklearn_data_2d.shape:", sklearn_data_2d.shape)
+    print("sklearn_target_1d.shape:", sklearn_target_1d.shape)
+    print("sklearn_data_3d.shape:", sklearn_data_3d.shape)
+
+    # StandardScaler 是 sklearn 常见预处理器；它一般希望输入是 2D，shape = (num_samples, num_features)。
+    scaler = StandardScaler()
+    scaled_data_2d = scaler.fit_transform(sklearn_data_2d)  # 输出 shape 仍然是 (150, 4)。
+    print("scaled_data_2d.shape:", scaled_data_2d.shape)
+
+    # 如果只有 1D 数据，sklearn 往往要求你先 reshape 成 2D。
+    one_feature_1d = np.array([10.0, 20.0, 30.0, 40.0], dtype=np.float32)  # shape = (4,)。
+    one_feature_2d = one_feature_1d.reshape(-1, 1)  # shape = (4, 1)；-1 表示样本数自动推断。
+    scaled_one_feature = scaler.fit_transform(one_feature_2d)  # 输出 shape = (4, 1)。
+    print("one_feature_1d.shape:", one_feature_1d.shape)
+    print("one_feature_2d.shape for sklearn:", one_feature_2d.shape)
+    print("scaled_one_feature.shape:", scaled_one_feature.shape)
+
+    # sklearn 里最常见的“reshape 场景”就是把 1D 单特征数据改成 2D，因为多数 sklearn API 要求 X 是 2D。
+    single_feature_for_sklearn = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)  # shape = (4,)。
+    single_feature_for_sklearn_2d = single_feature_for_sklearn.reshape(-1, 1)  # shape = (4, 1)。
+    print("single_feature_for_sklearn.shape:", single_feature_for_sklearn.shape)
+    print("single_feature_for_sklearn_2d.shape:", single_feature_for_sklearn_2d.shape)
+
+
+def conversion_examples(numpy_2d: np.ndarray, numpy_3d: np.ndarray) -> None:
+    print_title("NumPy / PyTorch / pandas 互相转换")
+
+    # NumPy -> PyTorch；shape 不变，仍然是 (2, 3)。
+    torch_from_numpy = torch.from_numpy(numpy_2d)
+    print("torch_from_numpy.shape:", tuple(torch_from_numpy.shape))
+    print("torch_from_numpy.dtype:", torch_from_numpy.dtype)
+
+    # PyTorch -> NumPy；如果张量在 CPU 且不带梯度，可以直接 .numpy()。
+    numpy_from_torch = torch_from_numpy.numpy()
+    print("numpy_from_torch.shape:", numpy_from_torch.shape)
+    print("numpy_from_torch.dtype:", numpy_from_torch.dtype)
+
+    # NumPy 3D -> pandas DataFrame 不直接自然，因为 DataFrame 更适合 2D；所以常先 reshape。
+    numpy_3d_to_2d = numpy_3d.reshape(2, 3)  # 从 (2, 3, 1) 压成 (2, 3)。
+    frame_from_numpy = pd.DataFrame(numpy_3d_to_2d, columns=["feature_1", "feature_2", "feature_3"])
+    print("frame_from_numpy:\n", frame_from_numpy)
+    print("frame_from_numpy.shape:", frame_from_numpy.shape)
+
+    # pandas DataFrame -> NumPy；shape = (2, 3)。
+    numpy_from_frame = frame_from_numpy.to_numpy(dtype=np.float32)
+    print("numpy_from_frame.shape:", numpy_from_frame.shape)
+
+    # pandas DataFrame -> PyTorch；先转成 NumPy，再转 Tensor 更常见。
+    torch_from_frame = torch.tensor(numpy_from_frame, dtype=torch.float32)
+    print("torch_from_frame.shape:", tuple(torch_from_frame.shape))
+
+
+def real_csv_examples(csv_path: str) -> None:
+    print_title("真实 CSV 读表 -> data / target")
+
+    # 读真实 CSV 表格；这里是刚下载下来的 iris.csv，shape = (150, 5)。
+    frame = pd.read_csv(csv_path)
+    print("CSV path:", csv_path)
+    print("frame.head():\n", frame.head())
+    print("frame.shape:", frame.shape)
+    print("frame.columns:", list(frame.columns))
+
+    # 这里把前 4 列数值特征作为 data / X；shape = (150, 4)。
+    feature_columns = ["sepal_length", "sepal_width", "petal_length", "petal_width"]
+    data = frame[feature_columns].to_numpy(dtype=np.float32)
+
+    # 这里把最后一列 species 当作 target 原始标签；shape = (150,)。
+    target_text = frame["species"].to_numpy()
+
+    # sklearn 模型通常更喜欢数值 target；所以这里用 LabelEncoder 把字符串标签转成 0/1/2。
+    label_encoder = LabelEncoder()
+    target = label_encoder.fit_transform(target_text)  # 输出 shape = (150,)。
+
+    print("data shape:", data.shape)
+    print("target_text shape:", target_text.shape)
+    print("target shape after LabelEncoder:", target.shape)
+    print("label mapping:", dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
+
+    # 做一个最常见的 train/test split。
+    x_train, x_test, y_train, y_test = train_test_split(
+        data,
+        target,
+        test_size=0.2,
+        random_state=42,
+        stratify=target,
+    )
+    print("x_train.shape:", x_train.shape)
+    print("x_test.shape:", x_test.shape)
+    print("y_train.shape:", y_train.shape)
+    print("y_test.shape:", y_test.shape)
+
+    # 如果后面想喂给 PyTorch，可以继续转成 Tensor。
+    x_train_tensor = torch.tensor(x_train, dtype=torch.float32)  # shape = (120, 4)。
+    y_train_tensor = torch.tensor(y_train, dtype=torch.long)  # 分类标签常用 long，shape = (120,)。
+    print("x_train_tensor.shape:", tuple(x_train_tensor.shape))
+    print("y_train_tensor.shape:", tuple(y_train_tensor.shape))
+
+    # 如果后面想做 sklearn 预处理，可以直接 StandardScaler。
+    scaler = StandardScaler()
+    x_train_scaled = scaler.fit_transform(x_train)  # shape = (120, 4)。
+    x_test_scaled = scaler.transform(x_test)  # shape = (30, 4)。
+    print("x_train_scaled.shape:", x_train_scaled.shape)
+    print("x_test_scaled.shape:", x_test_scaled.shape)
+
+    # 这里顺手提醒你：
+    # 1. 表格任务先想清楚 data 和 target 谁是谁。
+    # 2. 分类 target 常是一维 shape = (num_samples,)。
+    # 3. 回归 target 也常是一维，但如果是 PyTorch 某些 loss，可能会 reshape 成 (num_samples, 1)。
+    # 4. 以后你做多模态表格 + 文本时，我会提醒你怎么做 fusion。
+
+
+def main() -> None:
+    numpy_1d, numpy_2d, numpy_3d = numpy_array_examples()
+    _ = numpy_1d  # 这里只是显式说明 1D 变量也创建过了，避免你回头看代码时以为漏了。
+    _ = pytorch_tensor_examples()
+    sklearn_array_examples()
+    conversion_examples(numpy_2d, numpy_3d)
+
+    csv_path = os.path.join("data", "iris.csv")
+    real_csv_examples(csv_path)
+
+
+if __name__ == "__main__":
+    main()
