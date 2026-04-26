@@ -15,6 +15,67 @@ def print_title(title: str) -> None:
     print("=" * 80)
 
 
+def arange_and_conversion_examples() -> None:
+    # 这一部分专门演示 list、NumPy arange、PyTorch arange 的用法，以及它们之间怎么互相转换。
+    print_title("list / np.arange / torch.arange / 互相转换")
+
+    # Python list 可以直接手写元素；列表长度是 4，不是张量，没有 shape。
+    python_list_manual = [0, 1, 2, 3]
+    # Python list 也可以先用 range 生成，再用 list 包起来；列表长度是 5，不是张量，没有 shape。
+    python_list_from_range = list(range(0, 10, 2))
+
+    # np.arange(start, stop, step) 返回 1D NumPy 数组；shape = (5,)。
+    numpy_arange_int = np.arange(0, 10, 2, dtype=np.int32)
+    # np.arange 也可以生成浮点数间隔的 1D NumPy 数组；shape = (5,)。
+    numpy_arange_float = np.arange(0.0, 1.0, 0.2, dtype=np.float32)
+
+    # torch.arange(start, end, step) 返回 1D PyTorch Tensor；shape = (5,)。
+    torch_arange_int = torch.arange(0, 10, 2, dtype=torch.int32)
+    # torch.arange 也可以生成浮点数间隔的 1D Tensor；shape = (5,)。
+    torch_arange_float = torch.arange(0.0, 1.0, 0.2, dtype=torch.float32)
+
+    print("python_list_manual:", python_list_manual)
+    print("python_list_manual length:", len(python_list_manual))
+    print("python_list_from_range:", python_list_from_range)
+    print("python_list_from_range length:", len(python_list_from_range))
+    print("numpy_arange_int:", numpy_arange_int)
+    print("numpy_arange_int.shape:", numpy_arange_int.shape)
+    print("numpy_arange_float:", numpy_arange_float)
+    print("numpy_arange_float.shape:", numpy_arange_float.shape)
+    print("torch_arange_int:", torch_arange_int)
+    print("torch_arange_int.shape:", tuple(torch_arange_int.shape))
+    print("torch_arange_float:", torch_arange_float)
+    print("torch_arange_float.shape:", tuple(torch_arange_float.shape))
+
+    # list -> NumPy；转换后是 1D NumPy 数组，shape = (5,)。
+    numpy_from_list = np.array(python_list_from_range, dtype=np.int32)
+    # list -> PyTorch；转换后是 1D Tensor，shape = (5,)。
+    torch_from_list = torch.tensor(python_list_from_range, dtype=torch.int32)
+
+    # NumPy -> list；转换后是 Python list，长度是 5，不是张量，没有 shape。
+    list_from_numpy = numpy_arange_int.tolist()
+    # NumPy -> PyTorch；转换后是 1D Tensor，shape = (5,)。
+    torch_from_numpy = torch.from_numpy(numpy_arange_float.copy())
+
+    # PyTorch -> list；转换后是 Python list，长度是 5，不是张量，没有 shape。
+    list_from_torch = torch_arange_int.tolist()
+    # PyTorch -> NumPy；如果 Tensor 在 CPU 上，可以直接 .numpy()；转换后 shape = (5,)。
+    numpy_from_torch = torch_arange_float.numpy()
+
+    print("numpy_from_list:", numpy_from_list)
+    print("numpy_from_list.shape:", numpy_from_list.shape)
+    print("torch_from_list:", torch_from_list)
+    print("torch_from_list.shape:", tuple(torch_from_list.shape))
+    print("list_from_numpy:", list_from_numpy)
+    print("list_from_numpy length:", len(list_from_numpy))
+    print("torch_from_numpy:", torch_from_numpy)
+    print("torch_from_numpy.shape:", tuple(torch_from_numpy.shape))
+    print("list_from_torch:", list_from_torch)
+    print("list_from_torch length:", len(list_from_torch))
+    print("numpy_from_torch:", numpy_from_torch)
+    print("numpy_from_torch.shape:", numpy_from_torch.shape)
+
+
 def numpy_array_examples() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     # NumPy 1D 数组最像“向量”；shape = (3,)。
     numpy_1d = np.array([1.0, 2.0, 3.0], dtype=np.float32)
@@ -102,36 +163,29 @@ def pytorch_tensor_examples() -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]
 
 
 def sklearn_array_examples() -> None:
-    # 这里要特别提醒你：sklearn 通常没有自己专门的“1D/2D/3D 数组类型”。
-    # sklearn 大多数时候直接吃 NumPy 数组或者 pandas DataFrame。
+    # sklearn 通常没有自己专门的“1D/2D/3D 数组类型”，它大多数时候直接吃 NumPy 数组或 pandas DataFrame。
     dataset = load_iris()
     sklearn_data_2d = dataset.data.astype(np.float32)  # shape = (150, 4)，这是最典型的 sklearn data 形式。
     sklearn_target_1d = dataset.target.astype(np.int64)  # shape = (150,)，这是最典型的 sklearn target 形式。
-    sklearn_data_3d = sklearn_data_2d.reshape(150, 4, 1)  # 这里只是演示怎么人为转成 3D；sklearn 本身多数模型并不直接吃 3D。
+    sklearn_data_3d = sklearn_data_2d.reshape(150, 4, 1)  # 这里只是演示怎么人工转成 3D；sklearn 多数模型并不直接吃 3D。
 
     print_title("sklearn 常见 data / target 形式")
     print("sklearn_data_2d.shape:", sklearn_data_2d.shape)
     print("sklearn_target_1d.shape:", sklearn_target_1d.shape)
     print("sklearn_data_3d.shape:", sklearn_data_3d.shape)
 
-    # StandardScaler 是 sklearn 常见预处理器；它一般希望输入是 2D，shape = (num_samples, num_features)。
+    # StandardScaler 一般希望输入是 2D，shape = (num_samples, num_features)。
     scaler = StandardScaler()
     scaled_data_2d = scaler.fit_transform(sklearn_data_2d)  # 输出 shape 仍然是 (150, 4)。
     print("scaled_data_2d.shape:", scaled_data_2d.shape)
 
     # 如果只有 1D 数据，sklearn 往往要求你先 reshape 成 2D。
     one_feature_1d = np.array([10.0, 20.0, 30.0, 40.0], dtype=np.float32)  # shape = (4,)。
-    one_feature_2d = one_feature_1d.reshape(-1, 1)  # shape = (4, 1)；-1 表示样本数自动推断。
+    one_feature_2d = one_feature_1d.reshape(-1, 1)  # shape = (4, 1)。
     scaled_one_feature = scaler.fit_transform(one_feature_2d)  # 输出 shape = (4, 1)。
     print("one_feature_1d.shape:", one_feature_1d.shape)
     print("one_feature_2d.shape for sklearn:", one_feature_2d.shape)
     print("scaled_one_feature.shape:", scaled_one_feature.shape)
-
-    # sklearn 里最常见的“reshape 场景”就是把 1D 单特征数据改成 2D，因为多数 sklearn API 要求 X 是 2D。
-    single_feature_for_sklearn = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)  # shape = (4,)。
-    single_feature_for_sklearn_2d = single_feature_for_sklearn.reshape(-1, 1)  # shape = (4, 1)。
-    print("single_feature_for_sklearn.shape:", single_feature_for_sklearn.shape)
-    print("single_feature_for_sklearn_2d.shape:", single_feature_for_sklearn_2d.shape)
 
 
 def conversion_examples(numpy_2d: np.ndarray, numpy_3d: np.ndarray) -> None:
@@ -147,7 +201,7 @@ def conversion_examples(numpy_2d: np.ndarray, numpy_3d: np.ndarray) -> None:
     print("numpy_from_torch.shape:", numpy_from_torch.shape)
     print("numpy_from_torch.dtype:", numpy_from_torch.dtype)
 
-    # NumPy 3D -> pandas DataFrame 不直接自然，因为 DataFrame 更适合 2D；所以常先 reshape。
+    # NumPy 3D -> pandas DataFrame 不直接自然，所以常先 reshape 成 2D。
     numpy_3d_to_2d = numpy_3d.reshape(2, 3)  # 从 (2, 3, 1) 压成 (2, 3)。
     frame_from_numpy = pd.DataFrame(numpy_3d_to_2d, columns=["feature_1", "feature_2", "feature_3"])
     print("frame_from_numpy:\n", frame_from_numpy)
@@ -165,7 +219,7 @@ def conversion_examples(numpy_2d: np.ndarray, numpy_3d: np.ndarray) -> None:
 def real_csv_examples(csv_path: str) -> None:
     print_title("真实 CSV 读表 -> data / target")
 
-    # 读真实 CSV 表格；这里是刚下载下来的 iris.csv，shape = (150, 5)。
+    # 读真实 CSV 表格；这里是 iris.csv，shape = (150, 5)。
     frame = pd.read_csv(csv_path)
     print("CSV path:", csv_path)
     print("frame.head():\n", frame.head())
@@ -179,7 +233,7 @@ def real_csv_examples(csv_path: str) -> None:
     # 这里把最后一列 species 当作 target 原始标签；shape = (150,)。
     target_text = frame["species"].to_numpy()
 
-    # sklearn 模型通常更喜欢数值 target；所以这里用 LabelEncoder 把字符串标签转成 0/1/2。
+    # sklearn 模型通常更喜欢数值 target，所以这里用 LabelEncoder 把字符串标签转成 0/1/2。
     label_encoder = LabelEncoder()
     target = label_encoder.fit_transform(target_text)  # 输出 shape = (150,)。
 
@@ -214,16 +268,11 @@ def real_csv_examples(csv_path: str) -> None:
     print("x_train_scaled.shape:", x_train_scaled.shape)
     print("x_test_scaled.shape:", x_test_scaled.shape)
 
-    # 这里顺手提醒你：
-    # 1. 表格任务先想清楚 data 和 target 谁是谁。
-    # 2. 分类 target 常是一维 shape = (num_samples,)。
-    # 3. 回归 target 也常是一维，但如果是 PyTorch 某些 loss，可能会 reshape 成 (num_samples, 1)。
-    # 4. 以后你做多模态表格 + 文本时，我会提醒你怎么做 fusion。
-
 
 def main() -> None:
+    arange_and_conversion_examples()
     numpy_1d, numpy_2d, numpy_3d = numpy_array_examples()
-    _ = numpy_1d  # 这里只是显式说明 1D 变量也创建过了，避免你回头看代码时以为漏了。
+    _ = numpy_1d  # 显式说明 1D 变量也创建过了，避免你回头看代码时以为漏了。
     _ = pytorch_tensor_examples()
     sklearn_array_examples()
     conversion_examples(numpy_2d, numpy_3d)
