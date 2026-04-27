@@ -36,24 +36,41 @@ class SimpleCNN(torch.nn.Module):  # 定义一个很简单的 CNN 分类模型�
         return logits  # 返回分类结果。
 
 
+torch.manual_seed(7)  # 固定随机种子，让这个最小训练例子的输出更稳定。
 images = torch.randn(4, 1, 16, 16)  # 构造 4 张灰度图像，shape = (4, 1, 16, 16)。
 labels = torch.tensor([0, 1, 2, 1], dtype=torch.long)  # 构造分类标签向量，shape = (4,)。
 model = SimpleCNN(num_classes=3)  # 创建简单 CNN 模型；模型本身没有 shape。
-prune.l1_unstructured(model.features[0], name="weight", amount=0.3)  # 对第一层卷积权重做 30% 非结构化剪枝；这里主要演示 pruning 的用法。
-logits = model(images)  # 前向传播得到分类 logits，shape = (4, 3)。
 loss_fn = torch.nn.CrossEntropyLoss()  # 定义分类常用交叉熵损失；loss_fn 本身没有 shape。
-loss = loss_fn(logits, labels)  # 计算分类损失，输出是标量张量，shape = ()。
-pred_labels = torch.argmax(logits, dim=1)  # 把 logits 转成预测类别，shape = (4,)。
-accuracy = (pred_labels == labels).float().mean()  # 计算 Accuracy，输出是标量。
-tp = ((pred_labels == 1) & (labels == 1)).float().sum()  # 计算以类别 1 为例的 TP，输出是标量。
-fp = ((pred_labels == 1) & (labels != 1)).float().sum()  # 计算以类别 1 为例的 FP，输出是标量。
-fn = ((pred_labels != 1) & (labels == 1)).float().sum()  # 计算以类别 1 为例的 FN，输出是标量。
-precision = tp / (tp + fp + 1e-7)  # 计算 Precision，输出是标量。
-recall = tp / (tp + fn + 1e-7)  # 计算 Recall，输出是标量。
-f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # 计算 F1，输出是标量。
+optimizer = torch.optim.Adam(model.parameters(), lr=0.05)  # 定义优化器，让 CNN 和 LoRA 分类头一起更新参数。
+
+model.train()  # 切到训练模式，后面开始做最小训练循环。
+for epoch in range(200):  # 训练 200 轮，让这个小模型先学会当前这 4 个样本。
+    optimizer.zero_grad()  # 清空上一轮梯度。
+    logits = model(images)  # 前向传播得到分类 logits，shape = (4, 3)。
+    loss = loss_fn(logits, labels)  # 计算交叉熵损失，输出是标量张量，shape = ()。
+    loss.backward()  # 反向传播，计算各参数梯度。
+    optimizer.step()  # 根据梯度更新模型参数。
+
+    if epoch % 50 == 0 or epoch == 199:  # 打印少量轮次，观察训练 loss 是否下降。
+        print(f"Epoch {epoch:03d} | Train loss: {loss.item():.6f}")
+
+model.eval()  # 切到推理模式，后面的指标计算和量化转换都按评估流程来做。
+with torch.no_grad():  # 评估阶段不需要梯度。
+    logits = model(images)  # 用训练后的模型重新做一次前向传播，shape = (4, 3)。
+    loss = loss_fn(logits, labels)  # 计算评估损失，输出是标量张量，shape = ()。
+    pred_labels = torch.argmax(logits, dim=1)  # 把 logits 转成预测类别，shape = (4,)。
+    accuracy = (pred_labels == labels).float().mean()  # 计算 Accuracy，输出是标量。
+    tp = ((pred_labels == 1) & (labels == 1)).float().sum()  # 计算以类别 1 为例的 TP，输出是标量。
+    fp = ((pred_labels == 1) & (labels != 1)).float().sum()  # 计算以类别 1 为例的 FP，输出是标量。
+    fn = ((pred_labels != 1) & (labels == 1)).float().sum()  # 计算以类别 1 为例的 FN，输出是标量。
+    precision = tp / (tp + fp + 1e-7)  # 计算 Precision，输出是标量。
+    recall = tp / (tp + fn + 1e-7)  # 计算 Recall，输出是标量。
+    f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # 计算 F1，输出是标量。
+
+prune.l1_unstructured(model.features[0], name="weight", amount=0.3)  # 训练完成后对第一层卷积权重做 30% 非结构化剪枝；这里主要演示 pruning 的用法。
 conv_weight = model.features[0].weight_mask  # 取出剪枝后的 mask 张量，shape = (8, 1, 3, 3)。
 sparsity = 1.0 - conv_weight.mean()  # 计算剪枝后的稀疏率，输出是标量。
-float_classifier = model.classifier.base.eval()  # 取出分类头里的原始 Linear 层，并切到 eval 模式，便于做动态量化转换。
+float_classifier = model.classifier.base.eval()  # 取出训练后的分类头原始 Linear 层，并切到 eval 模式，便于做动态量化转换。
 torch.backends.quantized.engine = "qnnpack"  # 当前环境支持 qnnpack；显式设置量化后端，避免出现 NoQEngine 错误。
 float_classifier.qconfig = torch.ao.quantization.default_dynamic_qconfig  # 给浮点 Linear 层挂上动态量化配置，指定权重按 qint8 量化。
 quantized_classifier = torch.nn.quantized.dynamic.Linear.from_float(float_classifier)  # 用未弃用的 from_float 接口把浮点 Linear 转成动态量化 Linear。
