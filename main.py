@@ -1,117 +1,67 @@
-# -*- coding: utf-8 -*-  # 声明文件使用 UTF-8 编码，方便整份脚本写中文注释。
-"""Small PyTorch linear regression example with train/val/test split."""  # 用一句话说明这个脚本的用途。
-
-import torch  # 导入 PyTorch，用来定义张量、模型、损失函数和优化器。
-from sklearn.datasets import fetch_california_housing  # 导入加州房价数据集，作为表格回归示例。
-from sklearn.model_selection import train_test_split  # 导入数据切分工具，用于划分 train、val、test。
-from sklearn.preprocessing import StandardScaler  # 导入标准化工具，只能在训练集上 fit。
-from torch.utils.data import DataLoader, TensorDataset  # 导入批量加载工具，把训练集拆成一个个 batch。
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 
-class Net(torch.nn.Module):  # 定义一个最简单的线性回归网络，输入 shape 常见是 (batch_size, 8)。
-    def __init__(self, input_dim, output_dim):  # 初始化网络时传入输入维度和输出维度，这里都不是张量，没有 shape。
-        super().__init__()  # 调用父类初始化函数，让当前类具备 Module 能力，这里不是张量，没有 shape。
-        self.linear = torch.nn.Linear(input_dim, output_dim)  # 创建全连接层，权重 shape = (1, 8)，偏置 shape = (1,)。
+class LogisticRegression(nn.Module):
+    # 这是最小 PyTorch 二分类逻辑回归模型。
+    # 公式是：
+    # z = x @ W + b
+    # p = sigmoid(z)
+    # 这里 forward 直接返回概率 p，所以 loss 选 BCELoss。
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(1, 1)  # 输入 1 维特征，输出 1 个 logit；weight shape = (1, 1)，bias shape = (1,)。
 
-    def forward(self, x):  # 定义前向传播函数，输入 x 的 shape 常见是 (batch_size, 8) 或 (N, 8)。
-        return self.linear(x)  # 返回线性层输出，shape = (batch_size, 1) 或 (N, 1)。
-
-
-def regression_metrics(pred, target):  # 统一计算回归指标，避免只看一个 loss。
-    error = pred - target  # 逐样本误差向量，shape = (num_samples,)。
-    mse = torch.mean(error ** 2)  # 计算均方误差，输出是 0 维标量张量，shape = ()。
-    mae = torch.mean(torch.abs(error))  # 计算平均绝对误差，输出是 0 维标量张量，shape = ()。
-    rmse = torch.sqrt(mse)  # 对 MSE 开平方得到 RMSE，输出是 0 维标量张量，shape = ()。
-    ss_res = torch.sum(error ** 2)  # 计算残差平方和，输出是 0 维标量张量，shape = ()。
-    ss_tot = torch.sum((target - torch.mean(target)) ** 2)  # 计算总平方和，输出是 0 维标量张量，shape = ()。
-    r2 = 1 - ss_res / ss_tot  # 根据 R2 公式计算拟合优度，输出是 0 维标量张量，shape = ()。
-    return {  # 返回一个字典，里面每个值都是 Python 浮点数。
-        "mse": mse.item(),  # 记录均方误差。
-        "mae": mae.item(),  # 记录平均绝对误差。
-        "rmse": rmse.item(),  # 记录均方根误差。
-        "r2": r2.item(),  # 记录 R2。
-    }
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x 的 shape = (batch_size, 1)。
+        logits = self.linear(x)  # logits shape = (batch_size, 1)。
+        prob = torch.sigmoid(logits)  # sigmoid 后得到概率，shape 仍然是 (batch_size, 1)。
+        return prob
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # 自动选择运行设备，这里不是张量，没有 shape。
-print(f"Using device: {device}")  # 打印当前设备，这是字符串，没有 shape。
+def main() -> None:
+    # 1. 构造最小二分类数据；X shape = (4, 1)，y shape = (4, 1)。
+    X = torch.tensor([[0.0], [1.0], [2.0], [3.0]], dtype=torch.float32)
+    y = torch.tensor([[0.0], [0.0], [1.0], [1.0]], dtype=torch.float32)
 
-dataset = fetch_california_housing()  # 读取加州房价数据集对象，这里不是张量，没有 shape。
-features = dataset.data  # 取出特征矩阵，shape = (20640, 8)。
-targets = dataset.target  # 取出标签向量，shape = (20640,)。
+    # 2. 定义模型。
+    model = LogisticRegression()
 
-x_train_full, x_test, y_train_full, y_test = train_test_split(  # 先切出训练+验证集合和测试集合。
-    features,  # 传入全部特征矩阵，shape = (20640, 8)。
-    targets,  # 传入全部标签向量，shape = (20640,)。
-    test_size=0.2,  # 取 20% 作为测试集，这里不是张量，没有 shape。
-    random_state=42,  # 固定随机种子，保证切分结果稳定，这里不是张量，没有 shape。
-)  # 切分后 x_train_full shape = (16512, 8)，x_test shape = (4128, 8)。
-x_train, x_val, y_train, y_val = train_test_split(  # 再从训练+验证集合中切出训练集和验证集。
-    x_train_full,  # 传入训练+验证特征矩阵，shape = (16512, 8)。
-    y_train_full,  # 传入训练+验证标签向量，shape = (16512,)。
-    test_size=0.2,  # 继续取 20% 作为验证集，这里不是张量，没有 shape。
-    random_state=42,  # 固定随机种子，保证切分结果稳定，这里不是张量，没有 shape。
-)  # 切分后 x_train shape 约是 (13209, 8)，x_val shape 约是 (3303, 8)。
+    # 3. 定义损失函数。
+    # 这里因为 forward 已经手动加了 sigmoid，所以配 BCELoss。
+    criterion = nn.BCELoss()
 
-scaler = StandardScaler()  # 创建标准化器对象，这里不是张量，没有 shape。
-x_train = scaler.fit_transform(x_train)  # 在训练集上拟合并标准化，shape 仍然是 (13209, 8) 左右。
-x_val = scaler.transform(x_val)  # 用训练集统计量标准化验证集，shape 仍然是 (3303, 8) 左右。
-x_test = scaler.transform(x_test)  # 用训练集统计量标准化测试集，shape 仍然是 (4128, 8) 左右。
+    # 4. 定义优化器。
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
 
-x_train = torch.tensor(x_train, dtype=torch.float32)  # 把训练特征转成张量，shape = (13209, 8) 左右。
-y_train = torch.tensor(y_train, dtype=torch.float32)  # 把训练标签转成张量，shape = (13209,) 左右。
-x_val = torch.tensor(x_val, dtype=torch.float32).to(device)  # 把验证特征转成张量并搬到 device，shape = (3303, 8) 左右。
-y_val = torch.tensor(y_val, dtype=torch.float32).to(device)  # 把验证标签转成张量并搬到 device，shape = (3303,) 左右。
-x_test = torch.tensor(x_test, dtype=torch.float32).to(device)  # 把测试特征转成张量并搬到 device，shape = (4128, 8) 左右。
-y_test = torch.tensor(y_test, dtype=torch.float32).to(device)  # 把测试标签转成张量并搬到 device，shape = (4128,) 左右。
+    # 5. 训练。
+    model.train()
+    for epoch in range(1000):
+        pred = model(X)  # pred shape = (4, 1)，这里返回的是概率，不是原始 logit。
+        loss = criterion(pred, y)  # BCE loss 输出是标量张量，shape = ()。
 
-train_dataset = TensorDataset(x_train, y_train)  # 把训练特征和标签打包成数据集，单个样本 shape 分别是 (8,) 和 ()。
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)  # 创建训练加载器，batch_x shape 常见是 (32, 8)，batch_y shape 常见是 (32,)。
-x_train_eval = x_train.to(device)  # 复制一份训练特征到 device 上做整集评估，shape = (13209, 8) 左右。
-y_train_eval = y_train.to(device)  # 复制一份训练标签到 device 上做整集评估，shape = (13209,) 左右。
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-net = Net(x_train.shape[1], 1).to(device)  # 创建网络并搬到 device，net(batch_x) 输出 shape 常见是 (batch_size, 1)。
-loss_func = torch.nn.MSELoss()  # 定义均方误差损失函数，这里不是张量，没有 shape。
-optimizer = torch.optim.SGD(net.parameters(), lr=0.01)  # 定义 SGD 优化器，这里不是张量，没有 shape。
+        if epoch % 200 == 0 or epoch == 999:
+            print(f"Epoch {epoch:04d} | Loss {loss.item():.6f}")
 
-for epoch in range(300):  # 训练 300 轮，epoch 是整数，没有 shape。
-    net.train()  # 切换到训练模式，这里不是张量，没有 shape。
-    total_loss = 0.0  # 记录当前轮所有 batch 的损失总和，这是浮点数，没有 shape。
+    # 6. 测试 / inference。
+    model.eval()
+    with torch.no_grad():
+        test = torch.tensor([[1.5]], dtype=torch.float32)  # 单条测试输入，shape = (1, 1)。
+        prob = model(test)  # prob shape = (1, 1)。
+        pred_label = (prob >= 0.5).float()  # threshold = 0.5，把概率转成预测类别。
+        print("\nTest Input Shape:", tuple(test.shape))
+        print("Predicted Probability:", prob.item())
+        print("Predicted Label:", pred_label.item())
 
-    for batch_x, batch_y in train_loader:  # 从 DataLoader 中逐批取数据，batch_x shape 常见是 (32, 8)，batch_y shape 常见是 (32,)。
-        batch_x = batch_x.to(device)  # 把当前批次特征搬到 device，上下文 shape 仍然是 (32, 8)。
-        batch_y = batch_y.to(device)  # 把当前批次标签搬到 device，上下文 shape 仍然是 (32,)。
-        pred = net(batch_x).squeeze(1)  # 先前向传播得到 (32, 1)，再压掉最后一维得到 (32,)。
-        loss = loss_func(pred, batch_y)  # 计算当前 batch 的 MSE，输出是 0 维标量张量，shape = ()。
+    # 顺手提醒你：
+    # 1. 这版能跑，但数值稳定性不如 BCEWithLogitsLoss 版。
+    # 2. 更稳的写法通常是不在 forward 里手动 sigmoid，而是把 raw logits 直接交给 BCEWithLogitsLoss。
 
-        optimizer.zero_grad()  # 清空上一轮留下的梯度，这里不是张量，没有 shape。
-        loss.backward()  # 对当前 batch 的 loss 做反向传播，这里不是显式新张量，没有 shape。
-        optimizer.step()  # 按梯度更新参数，这里不是张量，没有 shape。
 
-        total_loss += loss.item()  # 把当前 batch 的标量损失累加到总和里，这是浮点数，没有 shape。
-
-    net.eval()  # 切换到评估模式，这里不是张量，没有 shape。
-    with torch.no_grad():  # 关闭梯度计算，这里不是张量，没有 shape。
-        train_pred = net(x_train_eval).squeeze(1)  # 对训练集整集做预测，shape = (13209,) 左右。
-        val_pred = net(x_val).squeeze(1)  # 对验证集整集做预测，shape = (3303,) 左右。
-        train_metrics = regression_metrics(train_pred, y_train_eval)  # 计算训练集指标，返回字典，没有 shape。
-        val_metrics = regression_metrics(val_pred, y_val)  # 计算验证集指标，返回字典，没有 shape。
-
-    if epoch % 50 == 0 or epoch == 299:  # 每 50 轮和最后一轮打印一次日志，这里不是张量，没有 shape。
-        print(  # 打印当前轮训练日志，这里不是张量，没有 shape。
-            f"Epoch {epoch:03d} | "  # 打印轮数，这是字符串，没有 shape。
-            f"Train Loss: {train_metrics['mse']:.4f} | "  # 打印训练集 MSE，这是字符串，没有 shape。
-            f"Val Loss: {val_metrics['mse']:.4f} | "  # 打印验证集 MSE，这是字符串，没有 shape。
-            f"Train R2: {train_metrics['r2']:.4f} | "  # 打印训练集 R2，这是字符串，没有 shape。
-            f"Val R2: {val_metrics['r2']:.4f}"  # 打印验证集 R2，这是字符串，没有 shape。
-        )
-
-with torch.no_grad():  # 关闭梯度计算，准备做最终测试，这里不是张量，没有 shape。
-    test_pred = net(x_test).squeeze(1)  # 对测试集整集做预测，shape = (4128,) 左右。
-    test_metrics = regression_metrics(test_pred, y_test)  # 计算测试集指标，返回字典，没有 shape。
-
-print("\nFinal test metrics:")  # 打印测试集指标标题，这是字符串，没有 shape。
-print("Test MSE:", test_metrics["mse"])  # 打印测试集 MSE，这是字符串和浮点数组合，没有 shape。
-print("Test MAE:", test_metrics["mae"])  # 打印测试集 MAE，这是字符串和浮点数组合，没有 shape。
-print("Test RMSE:", test_metrics["rmse"])  # 打印测试集 RMSE，这是字符串和浮点数组合，没有 shape。
-print("Test R2:", test_metrics["r2"])  # 打印测试集 R2，这是字符串和浮点数组合，没有 shape。
+if __name__ == "__main__":
+    main()
