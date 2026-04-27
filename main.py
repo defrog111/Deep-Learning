@@ -53,7 +53,10 @@ recall = tp / (tp + fn + 1e-7)  # 计算 Recall，输出是标量。
 f1 = 2.0 * precision * recall / (precision + recall + 1e-7)  # 计算 F1，输出是标量。
 conv_weight = model.features[0].weight_mask  # 取出剪枝后的 mask 张量，shape = (8, 1, 3, 3)。
 sparsity = 1.0 - conv_weight.mean()  # 计算剪枝后的稀疏率，输出是标量。
-quantized_classifier = torch.ao.quantization.quantize_dynamic(model.classifier.base, {torch.nn.Linear}, dtype=torch.qint8)  # 对分类头的原始 Linear 层做动态量化，返回量化后的模块。
+float_classifier = model.classifier.base.eval()  # 取出分类头里的原始 Linear 层，并切到 eval 模式，便于做动态量化转换。
+torch.backends.quantized.engine = "qnnpack"  # 当前环境支持 qnnpack；显式设置量化后端，避免出现 NoQEngine 错误。
+float_classifier.qconfig = torch.ao.quantization.default_dynamic_qconfig  # 给浮点 Linear 层挂上动态量化配置，指定权重按 qint8 量化。
+quantized_classifier = torch.nn.quantized.dynamic.Linear.from_float(float_classifier)  # 用未弃用的 from_float 接口把浮点 Linear 转成动态量化 Linear。
 dummy_feature = torch.randn(4, 16)  # 构造一组假特征，shape = (4, 16)，用来测试量化后的分类头。
 quant_logits = quantized_classifier(dummy_feature)  # 输入量化后的 Linear 层，输出 shape = (4, 3)。
 trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)  # 统计当前模型可训练参数量，输出是整数。
