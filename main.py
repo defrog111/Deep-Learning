@@ -1,4 +1,19 @@
+from pathlib import Path  # 导入 Path，用来安全判断示例图片是否存在。
+
 import torch  # 导入 PyTorch，用来定义多标签 CNN 分类模型和张量；这里没有张量 shape。
+from PIL import Image  # 导入 PIL，用来演示如何读取单张图片。
+from torchvision import transforms  # 导入 torchvision.transforms，用来演示 Compose 预处理。
+
+example_transform = transforms.Compose([  # 这里只是图片预处理示例，不参与下面的训练流程。
+    transforms.Grayscale(num_output_channels=1),  # 把图片转成单通道灰度图，输出 shape 类似 (1, H, W)。
+    transforms.Resize((16, 16)),  # 把图片缩放到和下面 CNN 示例一致的空间大小。
+    transforms.ToTensor(),  # 把图片转成 float32 张量，并把像素范围变到 [0, 1]。
+])  # 结束图片预处理示例定义。
+example_image_path = Path("example.png")  # 这是示例图片路径；文件不存在时不会影响下面模型训练。
+if example_image_path.exists():  # 只有示例图片存在时才真正读取，避免 main.py 直接报错。
+    example_image = Image.open(example_image_path)  # 读取单张示例图片。
+    example_tensor = example_transform(example_image)  # 经过 Compose 处理后，shape = (1, 16, 16)。
+    example_batch = example_tensor.unsqueeze(0)  # 给示例图片补一个 batch 维，shape = (1, 1, 16, 16)。
 
 
 class MultiLabelCNN(torch.nn.Module):  # 定义一个简单 CNN 多标签分类模型；输入是图像，输出是多标签 logits。
@@ -10,13 +25,16 @@ class MultiLabelCNN(torch.nn.Module):  # 定义一个简单 CNN 多标签分类�
             torch.nn.MaxPool2d(kernel_size=2),  # 下采样，输出 shape = (B, 8, 8, 8)。
             torch.nn.Conv2d(8, 16, kernel_size=3, padding=1),  # 第二层卷积，输出 shape = (B, 16, 8, 8)。
             torch.nn.ReLU(),  # 做激活，shape 不变。
-            torch.nn.AdaptiveAvgPool2d((1, 1)),  # 做全局池化，输出 shape = (B, 16, 1, 1)。
         )  # 结束特征提取层定义；这里没有张量 shape。
-        self.head = torch.nn.Linear(16, num_labels)  # 定义多标签分类头，输入 shape = (B, 16)，输出 shape = (B, num_labels)。
+        self.head = torch.nn.Sequential(  # 定义一个两层 MLP 分类头，输入是展平后的二维特征矩阵。
+            torch.nn.Linear(16 * 8 * 8, 128),  # 第一层线性映射，输入 shape = (B, 1024)，输出 shape = (B, 128)。
+            torch.nn.ReLU(),  # 给隐藏层加非线性激活，shape 不变。
+            torch.nn.Linear(128, num_labels),  # 第二层线性映射，输出多标签 logits，shape = (B, num_labels)。
+        )  # 结束 MLP 分类头定义。
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # 定义前向传播；输入图像 shape = (B, 1, 16, 16)。
-        x = self.features(x)  # 输入 CNN 特征提取层，输出 shape = (B, 16, 1, 1)。
-        x = x.flatten(1)  # 展平成二维特征矩阵，shape = (B, 16)。
+        x = self.features(x)  # 输入 CNN 特征提取层，输出 shape = (B, 16, 8, 8)。
+        x = x.flatten(1)  # 展平成二维特征矩阵，shape = (B, 16 * 8 * 8) = (B, 1024)。
         logits = self.head(x)  # 输出多标签 logits，shape = (B, num_labels)。
         return logits  # 返回多标签分类结果。
 
