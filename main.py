@@ -1,3 +1,5 @@
+from pathlib import Path  # 导入 Path，用来安全判断示例图片文件是否存在。
+
 import torch  # 导入 PyTorch，用来定义 CNN、LoRA、量化和剪枝示例；这里没有张量 shape。
 import torch.nn.utils.prune as prune  # 导入 PyTorch 的剪枝工具；这里没有张量 shape。
 
@@ -9,9 +11,11 @@ transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-img = Image.open("xxx.png")
-x = transform(img)   # shape: (1, H, W)
-x = x.unsqueeze(0)   # shape: (1, 1, H, W)
+image_path = Path("xxx.png")  # 这是灰度图读取示例用的占位路径；只有文件存在时才真正读取。
+if image_path.exists():  # 避免示例图片不存在时影响整个 main.py 运行。
+    img = Image.open(image_path)
+    x = transform(img)   # shape: (1, H, W)
+    x = x.unsqueeze(0)   # shape: (1, 1, H, W)
 
 
 #NP
@@ -38,9 +42,11 @@ class SimpleCNN(torch.nn.Module):  # 定义一个很简单的 CNN 分类模型�
         super().__init__()  # 调用父类初始化；这里没有张量 shape。
         self.features = torch.nn.Sequential(  # 定义特征提取部分；输入是图像张量，输出是特征图张量。
             torch.nn.Conv2d(1, 8, kernel_size=3, padding=1),  # 第一层卷积，输入 shape = (B, 1, 16, 16)，输出 shape = (B, 8, 16, 16)。
+            torch.nn.BatchNorm2d(8),  # 对第一层卷积输出按通道做批归一化，shape 保持为 (B, 8, 16, 16)。
             torch.nn.ReLU(),  # 做激活，shape 不变。
             torch.nn.MaxPool2d(kernel_size=2),  # 下采样，输出 shape = (B, 8, 8, 8)。
             torch.nn.Conv2d(8, 16, kernel_size=3, padding=1),  # 第二层卷积，输出 shape = (B, 16, 8, 8)。
+            torch.nn.BatchNorm2d(16),  # 对第二层卷积输出按通道做批归一化，shape 保持为 (B, 16, 8, 8)。
             torch.nn.ReLU(),  # 做激活，shape 不变。
             torch.nn.AdaptiveAvgPool2d((1, 1)),  # 做全局平均池化，输出 shape = (B, 16, 1, 1)。
         )  # 结束特征提取模块定义；这里没有张量 shape。
@@ -105,4 +111,3 @@ print("F1:", float(f1))  # 打印 F1。
 print("Sparsity:", float(sparsity))  # 打印剪枝后的稀疏率。
 print("Quantized logits shape:", quant_logits.shape)  # 打印量化分类头输出 shape。
 print("Trainable params:", int(trainable_params))  # 打印可训练参数量。
-
