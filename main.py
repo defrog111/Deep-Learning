@@ -80,6 +80,15 @@ with torch.no_grad():  # 评估阶段不需要梯度。
     hamming_loss = (preds != targets).float().mean()  # 计算 Hamming Loss，输出是标量。
     exact_match = (preds == targets).all(dim=1).float().mean()  # 计算 Exact Match Ratio，输出是标量。
 
+    if "example_batch" in locals():  # 如果顶部示例图片存在，就拿这张单图做 inference 演示。
+        inference_image = example_batch  # 这里的 shape = (1, 1, 16, 16)，batch size 等于 1。
+    else:  # 如果没有示例图片，就退回用训练 batch 里的第 1 张图做单图推理演示。
+        inference_image = images[0].unsqueeze(0)  # 从 (1, 16, 16) 补出 batch 维，变成 (1, 1, 16, 16)。
+
+    inference_logits = model(inference_image)  # 单张图片前向传播，输出 shape = (1, 4)。
+    inference_probs = torch.sigmoid(inference_logits)  # 把单图 logits 转成多标签概率，shape = (1, 4)。
+    inference_preds = (inference_probs >= 0.5).float()  # 按阈值把单图概率转成多标签预测，shape = (1, 4)。
+
 print("Image shape:", images.shape)  # 打印输入图像 shape。
 print("Target shape:", targets.shape)  # 打印多标签目标 shape。
 print("Logits shape:", logits.shape)  # 打印多标签 logits shape。
@@ -89,3 +98,6 @@ print("Micro Recall:", float(recall))  # 打印 micro Recall。
 print("Micro F1:", float(f1))  # 打印 micro F1。
 print("Hamming Loss:", float(hamming_loss))  # 打印 Hamming Loss。
 print("Exact Match Ratio:", float(exact_match))  # 打印 Exact Match Ratio。
+print("Inference image shape:", inference_image.shape)  # 打印单张推理图片 shape，说明 inference 也保留 batch 维。
+print("Inference probs:", inference_probs.squeeze(0).tolist())  # 打印单张图片每个标签的概率。
+print("Inference preds:", inference_preds.squeeze(0).tolist())  # 打印单张图片阈值化后的多标签预测。
