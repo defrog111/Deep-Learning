@@ -88,3 +88,23 @@ print("F1:", float(f1))  # 打印 F1。
 print("Sparsity:", float(sparsity))  # 打印剪枝后的稀疏率。
 print("Quantized logits shape:", quant_logits.shape)  # 打印量化分类头输出 shape。
 print("Trainable params:", int(trainable_params))  # 打印可训练参数量。
+
+
+
+from PIL import Image
+from torchvision import transforms
+
+transform = transforms.Compose([
+    transforms.Grayscale(num_output_channels=1),
+    transforms.ToTensor(),
+])
+
+img = Image.open("xxx.png")
+x = transform(img)   # shape: (1, H, W)
+x = x.unsqueeze(0)   # shape: (1, 1, H, W)
+
+
+#NP
+import numpy as np
+arr = np.random.rand(16, 16)
+x = torch.tensor(arr, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
