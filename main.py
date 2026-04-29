@@ -6,8 +6,10 @@ class DoubleConv(torch.nn.Module):  # 定义 U-Net 里常见的双卷积模块�
         super().__init__()  # 调用父类初始化函数；这里没有张量 shape。
         self.block = torch.nn.Sequential(  # 用 Sequential 串起两个卷积层；整体输入输出都是 4 维张量。
             torch.nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),  # 第一个卷积层，输入 shape = (B, in_channels, H, W)，输出 shape = (B, out_channels, H, W)。
-            torch.nn.ReLU(),  # 对卷积输出做激活，shape 不变。
+            torch.nn.BatchNorm2d(out_channels),  # 对第一个卷积输出按通道做 BatchNorm，输入输出 shape 都是 (B, out_channels, H, W)。
+            torch.nn.ReLU(),  # 对归一化后的输出做激活，shape 不变。
             torch.nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),  # 第二个卷积层，输入输出 shape 都是 (B, out_channels, H, W)。
+            torch.nn.BatchNorm2d(out_channels),  # 对第二个卷积输出按通道做 BatchNorm，输入输出 shape 都是 (B, out_channels, H, W)。
             torch.nn.ReLU(),  # 再做一次激活，shape 不变。
         )  # 结束双卷积模块定义；这里没有张量 shape。
 
