@@ -70,7 +70,7 @@ student_optimizer = torch.optim.Adam(student.parameters(), lr=0.03)  # 定义 st
 
 temperature = 2.0  # 定义蒸馏温度，用来把 teacher 和 student 分布变软。
 alpha = 0.7  # 定义软目标损失权重。
-
+  
 teacher.train()  # 切到 teacher 训练模式。
 for epoch in range(300):  # 先单独训练 teacher。
     teacher_optimizer.zero_grad()  # 清空上一轮 teacher 梯度。
