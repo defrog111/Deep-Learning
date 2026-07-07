@@ -1,0 +1,8 @@
+Retrieval-augmented generation, or RAG, combines information retrieval with text
+generation. A RAG system first searches a knowledge base for relevant passages.
+It then passes those passages as context to a model so the answer can be grounded
+in the retrieved documents.
+
+The basic RAG pipeline has four steps: load documents, split them into chunks,
+retrieve the most relevant chunks for a question, and generate an answer using
+the retrieved context.

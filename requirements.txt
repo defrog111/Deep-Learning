@@ -1,5 +1,4 @@
-torch
-transformers
-datasets
-peft
-accelerate
+langchain
+langchain-core
+langchain-text-splitters
+scikit-learn

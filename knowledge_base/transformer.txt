@@ -1,0 +1,8 @@
+A Transformer language model predicts the next token from previous tokens. The
+model uses token embeddings, positional embeddings, and self-attention blocks.
+During language model training, a causal mask prevents each position from seeing
+future tokens.
+
+Autoregressive inference repeats the same loop many times: feed the current
+context into the model, sample or choose the next token, append it to the
+context, and continue until enough new tokens have been generated.

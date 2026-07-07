@@ -1,0 +1,7 @@
+LoRA stands for Low-Rank Adaptation. It is a parameter-efficient fine-tuning
+method for large neural networks. Instead of updating every weight in the base
+model, LoRA freezes the base model and trains small low-rank adapter matrices.
+
+LoRA is useful when memory, compute, or storage are limited. A trained LoRA
+adapter is usually much smaller than the original model checkpoint, so teams can
+save and share task-specific behavior without duplicating the full base model.
