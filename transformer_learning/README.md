@@ -27,7 +27,8 @@ Matplotlib。
 | 7 | `07_attention_masks.py` | padding mask、causal mask、广播 |
 | 8 | `08_decoder_block.py` | masked self-attention、cross-attention |
 | 9 | `09_encoder_decoder_transformer.py` | 完整 Seq2Seq 数据流 |
-| 10 | `10_tiny_causal_language_model.py` | GPT 风格 causal LM、next-token loss、生成 |
+| 10 | `10_tiny_causal_lm_train.py` | GPT 风格 causal LM、next-token loss、保存 checkpoint |
+| 10 | `10_tiny_causal_lm_inference.py` | 独立加载 checkpoint、自回归生成 |
 | 11 | `11_download_iris_csv.py` | 下载、解压、清洗并保存 CSV |
 | 12 | `12_csv_transformer_classifier.py` | 特征 token、CLS、训练/验证/测试、防止泄漏 |
 | 13 | `13_csv_classifier_inference.py` | checkpoint、标准化参数、概率输出 |
@@ -38,6 +39,14 @@ Matplotlib。
 
 核心实现集中在 `components.py`，不是对 `nn.Transformer` 的简单包装。建议先读每个
 小例子，再回到 `components.py` 连起来阅读。
+
+完整任务统一把职责拆开：
+
+- `tiny_causal_lm_model.py`：只定义 tokenizer 和模型。
+- `10_tiny_causal_lm_train.py`：只负责训练与保存 checkpoint。
+- `10_tiny_causal_lm_inference.py`：只负责加载 checkpoint 与生成。
+- `12_csv_transformer_classifier.py`：CSV 分类训练。
+- `13_csv_classifier_inference.py`：CSV 分类推理。
 
 ### 官方 Encoder/Decoder API 的关键区别
 
