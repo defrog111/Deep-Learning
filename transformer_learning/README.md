@@ -33,9 +33,42 @@ Matplotlib。
 | 13 | `13_csv_classifier_inference.py` | checkpoint、标准化参数、概率输出 |
 | 14 | `14_pytorch_builtin_comparison.py` | 手写代码与官方模块的对应关系 |
 | 15 | `15_attention_visualization.py` | 查看 CLS 对各输入特征的注意力 |
+| 16 | `16_torch_transformer_encoder.py` | 官方 `nn.TransformerEncoder`、padding mask、分类 |
+| 17 | `17_torch_transformer_decoder.py` | 官方 `nn.TransformerDecoder`、causal mask、Cross-Attention |
 
 核心实现集中在 `components.py`，不是对 `nn.Transformer` 的简单包装。建议先读每个
 小例子，再回到 `components.py` 连起来阅读。
+
+### 官方 Encoder/Decoder API 的关键区别
+
+`nn.TransformerEncoder` 只接收 `src`，常用于理解整段输入；分类时通常对 Encoder
+输出做 `[CLS]` pooling 或 masked mean pooling。
+
+```python
+encoded = encoder(
+    src=encoder_input,
+    src_key_padding_mask=source_padding_mask,
+)
+```
+
+`nn.TransformerDecoder` 同时接收 `tgt` 和 Encoder 的 `memory`。`tgt_mask` 防止
+目标 token 偷看未来；`memory_key_padding_mask` 防止 Cross-Attention 关注源序列
+中的 padding。
+
+```python
+decoded = decoder(
+    tgt=target_input,
+    memory=encoder_output,
+    tgt_mask=causal_mask,
+    tgt_key_padding_mask=target_padding_mask,
+    memory_key_padding_mask=source_padding_mask,
+)
+```
+
+注意两类 mask 的语义：
+
+- `src/tgt/memory_key_padding_mask` 的 shape 通常是 `(B, T)`，`True` 表示屏蔽。
+- `tgt_mask` 的 shape 通常是 `(T, T)`，用于表达目标序列的因果关系。
 
 ## 一键运行核心例子和测试
 

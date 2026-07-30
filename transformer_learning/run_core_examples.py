@@ -18,6 +18,8 @@ EXAMPLES = [
     "09_encoder_decoder_transformer.py",
     "10_tiny_causal_language_model.py",
     "14_pytorch_builtin_comparison.py",
+    "16_torch_transformer_encoder.py",
+    "17_torch_transformer_decoder.py",
 ]
 
 for example in EXAMPLES:
