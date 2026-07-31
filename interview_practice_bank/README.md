@@ -15,8 +15,9 @@
 | `sklearn/` | 50 | Pipeline、预处理、CV、调参、模型、评估和持久化 |
 
 “包含所有知识点”无法做数学意义上的穷尽；这里覆盖的是面试、笔试和日常 ML 开发中
-最常考、最容易写错的主干知识。每个主知识点提供基础、变式、易错点和综合四种版本；
-scikit-learn 每个主知识点提供基础和综合两种版本。
+最常考、最容易写错的主干知识。Python、NumPy、PyTorch 和 ML 的每个主知识点提供
+基础、变式、易错点和综合四种不同的可执行版本；scikit-learn 每个主知识点提供基础和
+综合两种不同版本。同一核心API会以位置参数、关键字参数、不同shape和不同业务场景反复出现。
 
 ## 安装
 
@@ -59,11 +60,33 @@ CSV 题目通过 `Path(__file__)` 定位数据，因此从仓库根目录或题�
 python validate_bank.py
 ```
 
+检查 Python、NumPy、PyTorch、ML 和 scikit-learn 的必备API与高频考点覆盖：
+
+```bash
+python validate_coverage.py
+```
+
+检查同一知识点的不同难度是否只是修改数字、字符串、`print` 或 `assert`：
+
+```bash
+python audit_variant_quality.py
+```
+
+覆盖清单目前包含 359 项强制检查：Python 57 项、NumPy 74 项、PyTorch 85 项、
+ML 82 项、scikit-learn 61 项。重复度审计针对本次全面重写的这五类目录；Pandas
+仍由结构、语法、注释和运行检查负责。
+
 执行某一类或全部题目：
 
 ```bash
 python run_all.py --category pandas
 python run_all.py --category all
+```
+
+需要把任何 warning 也当作失败时，可以运行：
+
+```bash
+PYTHONWARNINGS=error python run_all.py --category all
 ```
 
 默认隐藏每题输出，只显示进度。需要观察全部结果时增加 `--show-output`。

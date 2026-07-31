@@ -13,7 +13,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 GROUP_SIZES = {
-    "pandas": 4,
     "numpy": 4,
     "pytorch": 4,
     "python": 4,
