@@ -10,9 +10,11 @@
 4. 创建batch-first输入。
 5. 取得所有时间步输出和各层最终状态。
 6. 对比顶层最后输出与最终隐藏状态。
+7. 双向RNN拼接两个方向特征。
 
 完成标准：
 - 验证shape。
+- 验证方向维。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ sequence = torch.randn(batch, steps, features)  # 创建batch-first输入。
 outputs, final_hidden = rnn(sequence)  # 取得所有时间步输出和各层最终状态。
 assert outputs.shape == (batch, steps, hidden) and final_hidden.shape == (2, batch, hidden)  # 验证shape。
 print(outputs[:, -1], final_hidden[-1])  # 对比顶层最后输出与最终隐藏状态。
+bidirectional_rnn = nn.RNN(3, 4, batch_first=True, bidirectional=True); bidirectional_output, bidirectional_hidden = bidirectional_rnn(torch.randn(2, 5, 3))  # 双向RNN拼接两个方向特征。
+assert bidirectional_output.shape == (2, 5, 8) and bidirectional_hidden.shape == (2, 2, 4)  # 验证方向维。

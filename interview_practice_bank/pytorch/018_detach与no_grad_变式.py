@@ -9,6 +9,7 @@
 3. detach与原Tensor共享数据但切断梯度。
 4. 在推理上下文中关闭梯度记录。
 5. 该运算不会构建计算图。
+6. detach切断图但可能共享存储，clone再创建独立副本。
 
 完成标准：
 - 验证三种梯度状态。
@@ -25,3 +26,5 @@ with torch.no_grad():  # 在推理上下文中关闭梯度记录。
     prediction = parameter * 4  # 该运算不会构建计算图。
 assert tracked.requires_grad and not detached.requires_grad and not prediction.requires_grad  # 验证三种梯度状态。
 print(tracked, detached, prediction)  # 输出不同状态Tensor。
+inference_input = torch.ones(2, requires_grad=True); detached_clone = inference_input.detach().clone()  # detach切断图但可能共享存储，clone再创建独立副本。
+detached_clone.add_(1); assert inference_input.tolist() == [1, 1] and detached_clone.requires_grad is False  # 验证存储和梯度均独立。

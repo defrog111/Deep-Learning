@@ -348,4 +348,135 @@ def pytorch_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "print(confusion, precision, recall, accuracy)  # 输出分类指标。",
         ],
     ]
-    return title, task, cases[family]
+    # 每组分别补充变式、易错点和综合代码，保留核心概念的间隔重复。
+    extras: list[list[list[str]]] = [
+        [
+            ["numpy_source = __import__('numpy').arange(4, dtype='float32'); shared_tensor = torch.from_numpy(numpy_source); copied_tensor = torch.tensor(numpy_source)  # from_numpy共享CPU内存，torch.tensor复制数据。", "numpy_source[0] = 99; assert shared_tensor[0].item() == 99 and copied_tensor[0].item() != 99  # 验证共享与复制差异。"],
+            ["integer_tensor = torch.tensor([1, 2]); floating_tensor = torch.tensor([0.5, 1.5]); promoted = integer_tensor + floating_tensor  # 混合dtype会按类型提升规则计算。", "assert promoted.dtype.is_floating_point and promoted.tolist() == [1.5, 3.5]  # 验证dtype promotion。"],
+            ["source_list = [1, 2, 3]; via_tensor = torch.tensor(source_list); via_as_tensor = torch.as_tensor(source_list); explicit = torch.arange(start=0, end=100, step=1, dtype=torch.int64)  # 综合比较tensor、as_tensor和关键字形式arange。", "assert torch.equal(via_tensor, via_as_tensor) and explicit.shape == (100,)  # 验证构造结果。"],
+        ],
+        [
+            ["flattened_extra = tensor.flatten(start_dim=1); restored_extra = flattened_extra.unflatten(1, (3, 4))  # 使用flatten和unflatten显式管理维度。", "assert restored_extra.shape == tensor.shape and torch.equal(restored_extra, tensor)  # 验证往返变形。"],
+            ["transposed_extra = tensor.transpose(1, 2)  # transpose通常产生非连续视图。", "assert not transposed_extra.is_contiguous() and transposed_extra.contiguous().view(tensor.size(0), -1).is_contiguous()  # view前先contiguous。"],
+            ["moved_extra = torch.movedim(tensor, 0, -1); squeezed_extra = tensor.unsqueeze(0).squeeze(0)  # 综合使用movedim、unsqueeze和squeeze。", "assert moved_extra.shape[-1] == tensor.shape[0] and torch.equal(squeezed_extra, tensor)  # 验证轴移动和长度1维。"],
+        ],
+        [
+            ["mask_values = torch.arange(12).reshape(3, 4); row_index = torch.tensor([[0], [2], [1]]); gathered = torch.gather(mask_values, 1, row_index)  # gather按指定轴和同shape索引取值。", "assert gathered.squeeze(1).tolist() == [0, 6, 9]  # 验证逐行选择。"],
+            ["masked_logits = torch.tensor([[1.0, 2.0, 3.0]]); invalid = torch.tensor([[False, True, False]]); safe_logits = masked_logits.masked_fill(invalid, float('-inf'))  # Attention中常用负无穷屏蔽无效位置。", "assert torch.softmax(safe_logits, dim=-1)[0, 1] == 0  # 验证被mask位置概率为零。"],
+            ["scatter_target = torch.zeros(2, 4); scatter_index = torch.tensor([[1], [3]]); scattered = scatter_target.scatter(1, scatter_index, 1.0)  # scatter是gather的写入对应操作。", "assert scattered.tolist() == [[0, 1, 0, 0], [0, 0, 0, 1]]  # 验证one-hot式写入。"],
+        ],
+        [
+            ["grad_input = torch.tensor(3.0, requires_grad=True); first_grad = torch.autograd.grad(grad_input**3, grad_input, create_graph=True)[0]; second_grad = torch.autograd.grad(first_grad, grad_input)[0]  # 使用autograd.grad计算一阶和二阶导。", "assert first_grad.item() == 27 and second_grad.item() == 18  # 验证高阶梯度。"],
+            ["leaf = torch.ones(2, requires_grad=True); non_leaf = leaf * 2; non_leaf.retain_grad(); non_leaf.sum().backward()  # 非叶张量默认不保存grad，需retain_grad。", "assert leaf.grad.tolist() == [2, 2] and non_leaf.grad.tolist() == [1, 1]  # 区分叶子与非叶梯度。"],
+            ["jacobian = torch.autograd.functional.jacobian(lambda value: torch.stack([value[0]**2, value[0] * value[1]]), torch.tensor([2.0, 3.0]))  # 计算向量函数Jacobian。", "assert jacobian.shape == (2, 2) and torch.allclose(jacobian, torch.tensor([[4.0, 0.0], [3.0, 2.0]]))  # 验证Jacobian。"],
+        ],
+        [
+            ["inference_input = torch.ones(2, requires_grad=True); detached_clone = inference_input.detach().clone()  # detach切断图但可能共享存储，clone再创建独立副本。", "detached_clone.add_(1); assert inference_input.tolist() == [1, 1] and detached_clone.requires_grad is False  # 验证存储和梯度均独立。"],
+            ["with torch.inference_mode():  # inference_mode比no_grad进一步关闭版本跟踪，适合纯推理。\n    inference_output = (torch.ones(3) * 2).sum()  # 执行不建图计算。", "assert inference_output.requires_grad is False  # 验证推理张量不跟踪梯度。"],
+            ["trainable = torch.tensor(2.0, requires_grad=True); frozen_branch = (trainable * 3).detach(); combined = trainable**2 + frozen_branch; combined.backward()  # 综合控制只有一条分支回传梯度。", "assert trainable.grad.item() == 4  # detach分支不贡献额外梯度3。"],
+        ],
+        [
+            ["class RegisteredState(nn.Module):  # 演示Parameter和buffer的注册差异。\n    def __init__(self):  # 初始化模块。\n        super().__init__()  # 注册Module内部结构。\n        self.weight = nn.Parameter(torch.ones(2))  # Parameter参与优化。\n        self.register_buffer('running', torch.zeros(2))  # buffer随模型保存和迁移但不求梯度。", "registered = RegisteredState(); assert list(dict(registered.named_parameters())) == ['weight'] and list(dict(registered.named_buffers())) == ['running']  # 验证注册结果。"],
+            ["plain_layers = [nn.Linear(2, 2)]; registered_layers = nn.ModuleList([nn.Linear(2, 2)])  # 普通list中的层不会被Module递归注册。", "holder = nn.Module(); holder.layers = registered_layers; assert len(list(holder.parameters())) == 2 and len(list(nn.Module().parameters())) == 0  # 验证ModuleList注册参数。"],
+            ["hook_values = []; hook_layer = nn.Linear(2, 1); handle = hook_layer.register_forward_hook(lambda module, inputs, output: hook_values.append(output.shape)); hook_layer(torch.ones(3, 2)); handle.remove()  # 注册前向hook并及时移除。", "hook_layer.weight.requires_grad_(False); assert hook_values == [torch.Size([3, 1])] and not hook_layer.weight.requires_grad  # 综合验证hook和冻结参数。"],
+        ],
+        [
+            ["accumulation_model = nn.Linear(1, 1); accumulation_optimizer = torch.optim.SGD(accumulation_model.parameters(), lr=0.01); accumulation_optimizer.zero_grad(set_to_none=True)  # 初始化梯度累积训练。", "for micro_batch in [torch.ones(2, 1), torch.full((2, 1), 2.0)]:  # 遍历两个微批次。\n    (accumulation_model(micro_batch).pow(2).mean() / 2).backward()  # loss除以累积步数保持梯度尺度。", "accumulation_optimizer.step(); assert accumulation_model.weight.grad is not None  # 累积完成后只更新一次。"],
+            ["zero_model = nn.Linear(1, 1); zero_model(torch.ones(1, 1)).sum().backward(); zero_model.zero_grad(set_to_none=True)  # set_to_none节省写零操作并便于判断未参与反传参数。", "assert all(parameter.grad is None for parameter in zero_model.parameters())  # 验证梯度被设为None。"],
+            ["amp_model = nn.Linear(2, 1); amp_optimizer = torch.optim.SGD(amp_model.parameters(), lr=0.01); amp_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu'); amp_model.to(amp_device)  # 自动选择可用设备。", "with torch.autocast(device_type=amp_device.type, enabled=amp_device.type == 'cuda'):  # CUDA可用时开启自动混合精度。\n    amp_loss = amp_model(torch.ones(2, 2, device=amp_device)).pow(2).mean()  # 前向在autocast区域执行。", "amp_loss.backward(); amp_optimizer.step(); assert torch.isfinite(amp_loss)  # CPU和GPU路径都能完成训练一步。"],
+        ],
+        [
+            ["weighted_logits = torch.tensor([[2.0, 0.0], [0.0, 2.0]]); weighted_labels = torch.tensor([0, 1]); weighted_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 3.0]), reduction='none')(weighted_logits, weighted_labels)  # 类别权重放大少数类损失。", "assert weighted_loss[1] > weighted_loss[0]  # 两样本置信度相同但第二类权重更大。"],
+            ["raw_logits = torch.tensor([[1.0, 2.0, 3.0]], requires_grad=True); correct_ce = nn.CrossEntropyLoss()(raw_logits, torch.tensor([2])); wrong_ce = nn.CrossEntropyLoss()(torch.softmax(raw_logits, dim=1), torch.tensor([2]))  # CrossEntropyLoss要求原始logits，提前softmax会改变梯度。", "assert not torch.allclose(correct_ce, wrong_ce)  # 验证常见双重softmax错误。"],
+            ["sequence_logits = torch.randn(2, 4, 3); sequence_labels = torch.tensor([[0, 1, -100, -100], [2, 1, 0, -100]]); token_loss = nn.CrossEntropyLoss(ignore_index=-100)(sequence_logits.reshape(-1, 3), sequence_labels.reshape(-1))  # 使用ignore_index忽略padding token。", "assert token_loss.ndim == 0 and torch.isfinite(token_loss)  # 验证序列分类损失。"],
+        ],
+        [
+            ["imbalanced_logits = torch.tensor([0.0, 0.0]); imbalanced_targets = torch.tensor([0.0, 1.0]); positive_weighted = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(4.0), reduction='none')(imbalanced_logits, imbalanced_targets)  # pos_weight只放大正类项。", "assert positive_weighted[1] == positive_weighted[0] * 4  # 验证正类加权。"],
+            ["binary_logits = torch.tensor([-1.0, 0.0, 1.0]); by_logit = binary_logits >= 0; by_probability = torch.sigmoid(binary_logits) >= 0.5  # 0.5概率阈值等价于0 logit阈值。", "assert torch.equal(by_logit, by_probability)  # 避免推理时不必要的sigmoid。"],
+            ["multi_logits = torch.tensor([[2.0, -1.0, 0.0]]); multi_targets = torch.tensor([[1.0, 0.0, 1.0]]); multi_loss = nn.BCEWithLogitsLoss(reduction='none')(multi_logits, multi_targets)  # 多标签分类每类独立使用BCE。", "assert multi_loss.shape == multi_targets.shape and torch.isfinite(multi_loss).all()  # 区分多标签BCE和互斥多类CE。"],
+        ],
+        [
+            ["from torch.utils.data import Dataset  # 导入自定义数据集基类。\nclass PairDataset(Dataset):  # 定义最小地图式数据集。\n    def __len__(self):  # 返回样本总数。\n        return 5  # 固定五个样本。\n    def __getitem__(self, index):  # 按索引生成样本。\n        return torch.tensor(index), torch.tensor(index % 2)  # 返回特征标签对。", "custom_batch = next(iter(DataLoader(PairDataset(), batch_size=3))); assert custom_batch[0].shape == (3,)  # 验证Dataset与默认collate。"],
+            ["from torch import nn  # 导入神经网络和序列工具。", "variable_sequences = [torch.arange(2), torch.arange(4), torch.arange(3)]; variable_loader = DataLoader(variable_sequences, batch_size=3, collate_fn=lambda batch: nn.utils.rnn.pad_sequence(batch, batch_first=True, padding_value=-1))  # 自定义collate处理变长序列。", "padded_batch = next(iter(variable_loader)); assert padded_batch.shape == (3, 4) and padded_batch[0, -1] == -1  # 验证动态padding。"],
+            ["from torch.utils.data import DistributedSampler  # 导入分布式数据采样器。", "distributed = DistributedSampler(TensorDataset(torch.arange(8)), num_replicas=2, rank=1, shuffle=False); distributed_indices = list(distributed)  # 无需初始化进程组即可演示数据分片。", "assert distributed_indices == [1, 3, 5, 7]  # 验证rank1取得互不重复的奇数索引。"],
+        ],
+        [
+            ["group_model = nn.Sequential(nn.Linear(2, 3), nn.Linear(3, 1)); group_optimizer = torch.optim.Adam([{'params': group_model[0].parameters(), 'lr': 1e-3}, {'params': group_model[1].parameters(), 'lr': 1e-2}])  # 参数组可为不同层设置学习率。", "assert [group['lr'] for group in group_optimizer.param_groups] == [1e-3, 1e-2]  # 验证分层学习率。"],
+            ["state_model = nn.Linear(1, 1); state_optimizer = torch.optim.Adam(state_model.parameters()); state_model(torch.ones(1, 1)).sum().backward(); state_optimizer.step(); optimizer_state = state_optimizer.state_dict()  # Adam更新后保存动量状态。", "assert optimizer_state['state'] and 'param_groups' in optimizer_state  # 只保存模型权重不足以无缝恢复训练。"],
+            ["compare_parameter = nn.Parameter(torch.tensor(1.0)); sgd = torch.optim.SGD([compare_parameter], lr=0.1, momentum=0.9); compare_parameter.grad = torch.tensor(2.0); sgd.step(); sgd.zero_grad(set_to_none=True)  # 综合执行优化和高效清梯度。", "assert compare_parameter.item() < 1 and compare_parameter.grad is None  # 验证参数更新与grad状态。"],
+        ],
+        [
+            ["dropout = nn.Dropout(p=0.5); dropout.train(); torch.manual_seed(1); train_output = dropout(torch.ones(100)); dropout.eval(); eval_output = dropout(torch.ones(100))  # Dropout仅在train随机置零并缩放。", "assert torch.count_nonzero(train_output) < 100 and torch.equal(eval_output, torch.ones(100))  # 验证训练推理差异。"],
+            ["batch_norm = nn.BatchNorm1d(2); batch_norm.train(); batch_norm(torch.tensor([[1.0, 2.0], [3.0, 4.0]])); running_before = batch_norm.running_mean.clone(); batch_norm.eval(); batch_norm(torch.tensor([[100.0, 200.0]]))  # eval使用并冻结running统计量。", "assert torch.equal(batch_norm.running_mean, running_before)  # 验证推理不更新BatchNorm状态。"],
+            ["mode_model = nn.Sequential(nn.BatchNorm1d(2), nn.Dropout()); mode_model.eval()  # eval递归切换所有子模块模式。", "with torch.inference_mode():  # 推理还需单独关闭梯度。\n    mode_prediction = mode_model(torch.ones(1, 2))  # 执行确定性推理。", "assert not mode_model.training and not mode_model[0].training and not mode_prediction.requires_grad  # 综合验证模式与梯度。"],
+        ],
+        [
+            ["checkpoint_model = nn.Linear(2, 1); checkpoint_optimizer = torch.optim.SGD(checkpoint_model.parameters(), lr=0.1, momentum=0.9); checkpoint = {'epoch': 3, 'model': checkpoint_model.state_dict(), 'optimizer': checkpoint_optimizer.state_dict()}  # 完整checkpoint保存轮数、模型和优化器。", "assert checkpoint['epoch'] == 3 and set(checkpoint) == {'epoch', 'model', 'optimizer'}  # 验证恢复训练必需字段。"],
+            ["source_model = nn.Linear(2, 1); incompatible_model = nn.Linear(3, 1)  # shape不同的同名权重即使strict=False也会报尺寸不匹配。", "shape_mismatch = source_model.weight.shape != incompatible_model.weight.shape; assert shape_mismatch  # 在加载前显式审计参数shape。"],
+            ["import io  # 导入内存二进制流。", "serialized_model = nn.Linear(2, 1); serialized_optimizer = torch.optim.SGD(serialized_model.parameters(), lr=0.1); serialized_checkpoint = {'epoch': 3, 'model': serialized_model.state_dict(), 'optimizer': serialized_optimizer.state_dict()}; buffer = io.BytesIO(); torch.save(serialized_checkpoint, buffer); buffer.seek(0); restored_checkpoint = torch.load(buffer, map_location='cpu', weights_only=False)  # 使用map_location跨设备恢复完整checkpoint。", "restored_model = nn.Linear(2, 1); restored_model.load_state_dict(restored_checkpoint['model']); assert restored_checkpoint['epoch'] == 3  # 综合验证序列化和权重恢复。"],
+        ],
+        [
+            ["xavier_layer = nn.Linear(8, 4); nn.init.xavier_uniform_(xavier_layer.weight); nn.init.zeros_(xavier_layer.bias)  # Xavier适合tanh或线性激活的方差传播。", "assert torch.count_nonzero(xavier_layer.bias) == 0 and torch.isfinite(xavier_layer.weight).all()  # 验证初始化。"],
+            ["orthogonal_layer = nn.Linear(4, 4, bias=False); nn.init.orthogonal_(orthogonal_layer.weight)  # 正交初始化使方阵W乘WT接近单位阵。", "assert torch.allclose(orthogonal_layer.weight @ orthogonal_layer.weight.T, torch.eye(4), atol=1e-5)  # 验证正交性。"],
+            ["fan_tensor = torch.empty(16, 8); fan_in, fan_out = nn.init._calculate_fan_in_and_fan_out(fan_tensor); nn.init.kaiming_normal_(fan_tensor, mode='fan_in', nonlinearity='relu')  # 综合理解fan_in、fan_out与Kaiming。", "assert (fan_in, fan_out) == (8, 16) and fan_tensor.std() > 0  # 验证扇入扇出和随机权重。"],
+        ],
+        [
+            ["clip_parameter = nn.Parameter(torch.tensor([10.0, -10.0])); clip_parameter.grad = torch.tensor([5.0, -5.0]); nn.utils.clip_grad_value_([clip_parameter], clip_value=1.0)  # clip_grad_value_逐元素截断梯度。", "assert clip_parameter.grad.tolist() == [1.0, -1.0]  # 区分按值裁剪和全局范数裁剪。"],
+            ["bad_parameter = nn.Parameter(torch.tensor(1.0)); bad_parameter.grad = torch.tensor(float('nan'))  # 构造非有限梯度。", "try:  # 要求裁剪器遇到非有限范数时报错。\n    nn.utils.clip_grad_norm_([bad_parameter], 1.0, error_if_nonfinite=True)  # 开启严格检查。\nexcept RuntimeError:  # 捕获预期错误。\n    nonfinite_detected = True  # 记录检测成功。", "assert nonfinite_detected  # 验证NaN梯度防护。"],
+            ["parameters_for_clip = [nn.Parameter(torch.ones(2)), nn.Parameter(torch.ones(2))]; [setattr(parameter, 'grad', torch.full_like(parameter, 3.0)) for parameter in parameters_for_clip]; original_norm = nn.utils.clip_grad_norm_(parameters_for_clip, max_norm=1.0)  # 对全部参数统一计算全局范数。", "new_norm = torch.sqrt(sum(parameter.grad.pow(2).sum() for parameter in parameters_for_clip)); assert original_norm > 1 and new_norm <= 1.00001  # 验证综合裁剪结果。"],
+        ],
+        [
+            ["embedding_bag = nn.EmbeddingBag(6, 3, mode='mean'); flat_tokens = torch.tensor([1, 2, 3, 4]); offsets = torch.tensor([0, 2]); bag_output = embedding_bag(flat_tokens, offsets)  # EmbeddingBag无需显式padding即可聚合集合式token。", "assert bag_output.shape == (2, 3)  # 验证两个bag的输出shape。"],
+            ["padding_embedding = nn.Embedding(5, 2, padding_idx=0); padding_embedding(torch.tensor([[0, 1]])).sum().backward()  # padding_idx对应行不累计梯度。", "assert torch.count_nonzero(padding_embedding.weight.grad[0]) == 0 and torch.count_nonzero(padding_embedding.weight.grad[1]) > 0  # 验证padding梯度屏蔽。"],
+            ["token_ids = torch.tensor([[1, 2, 0], [3, 0, 0]]); lengths = torch.tensor([2, 1]); embedded_tokens = nn.Embedding(5, 4, padding_idx=0)(token_ids); packed_tokens = nn.utils.rnn.pack_padded_sequence(embedded_tokens, lengths, batch_first=True, enforce_sorted=False)  # 综合Embedding、padding和pack。", "assert packed_tokens.data.shape == (3, 4)  # pack后只保留三个有效token。"],
+        ],
+        [
+            ["bidirectional_rnn = nn.RNN(3, 4, batch_first=True, bidirectional=True); bidirectional_output, bidirectional_hidden = bidirectional_rnn(torch.randn(2, 5, 3))  # 双向RNN拼接两个方向特征。", "assert bidirectional_output.shape == (2, 5, 8) and bidirectional_hidden.shape == (2, 2, 4)  # 验证方向维。"],
+            ["time_major_rnn = nn.RNN(3, 4, batch_first=False); time_output, _ = time_major_rnn(torch.randn(5, 2, 3))  # batch_first=False输入顺序为序列、批次、特征。", "assert time_output.shape == (5, 2, 4)  # 防止混淆batch和sequence轴。"],
+            ["stacked_rnn = nn.RNN(3, 4, num_layers=2, dropout=0.2, batch_first=True); stacked_output, stacked_hidden = stacked_rnn(torch.randn(2, 5, 3))  # dropout只作用于多层RNN的层间连接。", "assert stacked_hidden.shape == (2, 2, 4) and stacked_output.shape == (2, 5, 4)  # 综合验证层数与shape。"],
+        ],
+        [
+            ["packed_lstm = nn.LSTM(3, 4, batch_first=True); lengths_lstm = torch.tensor([5, 3]); packed_input = nn.utils.rnn.pack_padded_sequence(torch.randn(2, 5, 3), lengths_lstm, batch_first=True, enforce_sorted=False); packed_output, (packed_h, packed_c) = packed_lstm(packed_input)  # LSTM直接处理PackedSequence。", "assert packed_h.shape == packed_c.shape == (1, 2, 4)  # 验证h和c状态。"],
+            ["projection_lstm = nn.LSTM(3, 6, proj_size=4, batch_first=True); projection_output, (projection_h, projection_c) = projection_lstm(torch.randn(2, 5, 3))  # 投影LSTM的输出和h为proj_size，c仍为hidden_size。", "assert projection_output.shape[-1] == 4 and projection_h.shape[-1] == 4 and projection_c.shape[-1] == 6  # 验证投影shape陷阱。"],
+            ["bi_lstm = nn.LSTM(3, 4, num_layers=2, bidirectional=True, batch_first=True); bi_output, (bi_h, bi_c) = bi_lstm(torch.randn(2, 5, 3))  # 综合多层双向LSTM。", "assert bi_output.shape == (2, 5, 8) and bi_h.shape == bi_c.shape == (4, 2, 4)  # 层和方向合并在状态首维。"],
+        ],
+        [
+            ["bi_gru = nn.GRU(3, 4, batch_first=True, bidirectional=True); bi_gru_output, bi_gru_hidden = bi_gru(torch.randn(2, 5, 3))  # GRU只有h没有LSTM的c。", "assert bi_gru_output.shape == (2, 5, 8) and bi_gru_hidden.shape == (2, 2, 4)  # 验证双向GRU。"],
+            ["gru_cell = nn.GRUCell(3, 4); cell_hidden = torch.zeros(2, 4); cell_hidden = gru_cell(torch.randn(2, 3), cell_hidden)  # GRUCell手动控制单时间步循环。", "assert cell_hidden.shape == (2, 4)  # 区分GRU模块和GRUCell。"],
+            ["packed_gru = nn.GRU(3, 4, batch_first=True); gru_lengths = torch.tensor([4, 2]); gru_packed = nn.utils.rnn.pack_padded_sequence(torch.randn(2, 4, 3), gru_lengths, batch_first=True, enforce_sorted=False); gru_packed_output, gru_hidden = packed_gru(gru_packed)  # 综合变长序列GRU。", "assert gru_packed_output.data.shape[0] == 6 and gru_hidden.shape == (1, 2, 4)  # 验证有效步数和状态shape。"],
+        ],
+        [
+            ["group_conv = nn.Conv2d(4, 8, kernel_size=3, padding=1, groups=2); group_output = group_conv(torch.randn(2, 4, 16, 16))  # groups=2把输入输出通道分成两组卷积。", "assert group_output.shape == (2, 8, 16, 16) and group_conv.weight.shape == (8, 2, 3, 3)  # 验证分组卷积权重shape。"],
+            ["dilated_conv = nn.Conv2d(1, 1, kernel_size=3, dilation=2, padding=2); dilated_output = dilated_conv(torch.randn(1, 1, 10, 10))  # dilation=2使有效卷积核尺寸为5。", "assert dilated_output.shape[-2:] == (10, 10)  # 验证padding保持空间尺寸。"],
+            ["depthwise = nn.Conv2d(3, 3, kernel_size=3, padding=1, groups=3); pointwise = nn.Conv2d(3, 6, kernel_size=1); separable_output = pointwise(depthwise(torch.randn(2, 3, 8, 8)))  # 综合深度可分离卷积。", "assert separable_output.shape == (2, 6, 8, 8)  # 验证depthwise加pointwise。"],
+        ],
+        [
+            ["pool_input = torch.arange(16, dtype=torch.float32).reshape(1, 1, 4, 4); max_values, max_indices = nn.MaxPool2d(2, return_indices=True)(pool_input)  # 最大池化可返回位置用于unpool。", "assert max_values.tolist() == [[[[5, 7], [13, 15]]]] and max_indices.shape == max_values.shape  # 验证池化值与索引。"],
+            ["ceil_pool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)(torch.ones(1, 1, 4, 4)); floor_pool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=False)(torch.ones(1, 1, 4, 4))  # ceil_mode决定是否保留不完整末尾窗口。", "assert ceil_pool.shape[-1] == 2 and floor_pool.shape[-1] == 1  # 验证输出尺寸陷阱。"],
+            ["mixed_pool_input = torch.randn(2, 3, 7, 9); global_average = nn.AdaptiveAvgPool2d(1)(mixed_pool_input).flatten(1); fixed_max = nn.AdaptiveMaxPool2d((2, 3))(mixed_pool_input)  # 综合全局平均和固定shape最大池化。", "assert global_average.shape == (2, 3) and fixed_max.shape == (2, 3, 2, 3)  # 验证自适应池化。"],
+        ],
+        [
+            ["batch_attention = nn.MultiheadAttention(8, 2, batch_first=True); attention_tokens = torch.randn(2, 4, 8); padding_mask = torch.tensor([[False, False, True, True], [False, False, False, True]]); masked_attention, masked_weights = batch_attention(attention_tokens, attention_tokens, attention_tokens, key_padding_mask=padding_mask, need_weights=True)  # key_padding_mask按batch屏蔽key位置。", "assert masked_attention.shape == attention_tokens.shape and masked_weights.shape == (2, 4, 4)  # 验证batch_first输出与权重。"],
+            ["causal_attention_module = nn.MultiheadAttention(8, 2, batch_first=True); causal_tokens = torch.randn(2, 4, 8); causal_mask = torch.triu(torch.ones(4, 4, dtype=torch.bool), diagonal=1); causal_attention, causal_weights = causal_attention_module(causal_tokens, causal_tokens, causal_tokens, attn_mask=causal_mask, need_weights=True)  # 上三角布尔mask阻止查看未来token。", "assert torch.count_nonzero(causal_weights[:, 0, 1:]) == 0  # 第一个query只能关注自身。"],
+            ["head_attention_module = nn.MultiheadAttention(8, 2, batch_first=True); head_tokens = torch.randn(2, 4, 8); head_output, per_head_weights = head_attention_module(head_tokens, head_tokens, head_tokens, need_weights=True, average_attn_weights=False)  # 保留每个head的Attention权重。", "assert per_head_weights.shape == (2, 2, 4, 4) and torch.allclose(per_head_weights.sum(-1), torch.ones(2, 2, 4), atol=1e-5)  # 综合验证head维和概率和。"],
+        ],
+        [
+            ["decoder_layer = nn.TransformerDecoderLayer(d_model=8, nhead=2, dim_feedforward=16, batch_first=True, dropout=0.0); decoder = nn.TransformerDecoder(decoder_layer, num_layers=2); target_tokens = torch.randn(2, 4, 8); memory_tokens = torch.randn(2, 3, 8); decoded = decoder(target_tokens, memory_tokens)  # 原生TransformerDecoder包含masked self-attention和cross-attention。", "assert decoded.shape == target_tokens.shape  # 验证Decoder保持目标序列shape。"],
+            ["masked_decoder_layer = nn.TransformerDecoderLayer(8, 2, 16, batch_first=True, dropout=0.0); masked_decoder = nn.TransformerDecoder(masked_decoder_layer, 1); masked_targets = torch.randn(2, 4, 8); masked_memory = torch.randn(2, 3, 8); decoder_mask = torch.triu(torch.ones(4, 4, dtype=torch.bool), diagonal=1); decoder_padding = torch.tensor([[False, False, True, True], [False, False, False, True]]); masked_decoded = masked_decoder(masked_targets, masked_memory, tgt_mask=decoder_mask, tgt_key_padding_mask=decoder_padding)  # causal mask和padding mask都用bool，避免类型不匹配警告。", "assert decoder_mask.shape == (4, 4) and masked_decoded.shape == masked_targets.shape  # 区分两个mask的shape和用途。"],
+            ["full_memory = torch.randn(2, 3, 8); full_targets = torch.randn(2, 4, 8); full_decoder_mask = nn.Transformer.generate_square_subsequent_mask(4); full_decoder_layer = nn.TransformerDecoderLayer(8, 2, 16, batch_first=True, dropout=0.0); full_decoder = nn.TransformerDecoder(full_decoder_layer, 1); encoder_layer_full = nn.TransformerEncoderLayer(8, 2, 16, batch_first=True, norm_first=True, dropout=0.0); encoder_full = nn.TransformerEncoder(encoder_layer_full, 1, enable_nested_tensor=False); source_padding = torch.tensor([[False, False, True], [False, False, False]]); encoded_memory = encoder_full(full_memory, src_key_padding_mask=source_padding); seq2seq_output = full_decoder(full_targets, encoded_memory, tgt_mask=full_decoder_mask)  # 综合原生Encoder、Decoder、padding和causal mask。", "assert encoded_memory.shape == full_memory.shape and seq2seq_output.shape == full_targets.shape  # 验证完整Encoder-Decoder数据流。"],
+        ],
+        [
+            ["cosine_parameter = nn.Parameter(torch.tensor(1.0)); cosine_optimizer = torch.optim.SGD([cosine_parameter], lr=0.1); cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(cosine_optimizer, T_max=4); cosine_history = []  # 创建余弦退火调度器。", "for _ in range(4):  # 模拟四个epoch。\n    cosine_optimizer.step(); cosine_scheduler.step(); cosine_history.append(cosine_scheduler.get_last_lr()[0])  # optimizer后调用scheduler。", "assert cosine_history[-1] < cosine_history[0]  # 验证余弦下降。"],
+            ["plateau_parameter = nn.Parameter(torch.tensor(1.0)); plateau_optimizer = torch.optim.SGD([plateau_parameter], lr=0.1); plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(plateau_optimizer, mode='min', patience=0, factor=0.5); [plateau_scheduler.step(metric) for metric in [1.0, 1.1, 1.2]]  # Plateau调度器step接收验证指标而不是epoch。", "assert plateau_optimizer.param_groups[0]['lr'] < 0.1  # 验证无改进时降学习率。"],
+            ["cycle_parameter = nn.Parameter(torch.tensor(1.0)); cycle_optimizer = torch.optim.SGD([cycle_parameter], lr=0.01); one_cycle = torch.optim.lr_scheduler.OneCycleLR(cycle_optimizer, max_lr=0.1, total_steps=5); cycle_lrs = []  # OneCycle按batch而不是epoch更新。", "for _ in range(5):  # 模拟五个batch。\n    cycle_optimizer.step(); one_cycle.step(); cycle_lrs.append(cycle_optimizer.param_groups[0]['lr'])  # 每个batch更新一次。", "assert max(cycle_lrs) > cycle_lrs[-1]  # 综合验证先升后降轨迹。"],
+        ],
+        [
+            ["score_matrix = torch.tensor([[0.1, 0.8, 0.1], [0.4, 0.3, 0.3]]); top2 = score_matrix.topk(2, dim=1).indices; metric_targets = torch.tensor([1, 0]); top2_accuracy = top2.eq(metric_targets[:, None]).any(1).float().mean()  # 计算Top-2准确率。", "assert top2_accuracy == 1  # 验证两个目标都进入前二。"],
+            ["zero_confusion = torch.tensor([[5, 0], [0, 0]], dtype=torch.float32); safe_precision = zero_confusion.diag() / zero_confusion.sum(0).clamp_min(1)  # 无预测类别的precision分母需防零。", "assert torch.isfinite(safe_precision).all() and safe_precision[1] == 0  # 验证零除防护。"],
+            ["multi_predictions = torch.tensor([[1, 0, 1], [0, 1, 0]], dtype=torch.bool); multi_targets = torch.tensor([[1, 1, 0], [0, 1, 0]], dtype=torch.bool); micro_tp = (multi_predictions & multi_targets).sum(); micro_fp = (multi_predictions & ~multi_targets).sum(); micro_fn = (~multi_predictions & multi_targets).sum(); micro_f1 = 2 * micro_tp / (2 * micro_tp + micro_fp + micro_fn)  # 综合计算多标签micro-F1。", "assert torch.isclose(micro_f1, torch.tensor(2 / 3))  # 验证TP、FP、FN公式。"],
+        ],
+    ]
+    code = list(cases[family])
+    if variant > 1:
+        code.extend(extras[family][variant - 2])
+    return title, task, code

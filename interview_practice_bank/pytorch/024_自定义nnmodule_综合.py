@@ -12,6 +12,8 @@
 6. 返回三分类logits。
 7. 实例化模型。
 8. 输入随变式变化的batch。
+9. 注册前向hook并及时移除。
+10. 综合验证hook和冻结参数。
 
 完成标准：
 - 验证最后一维是类别数。
@@ -32,3 +34,5 @@ model = TinyMLP()  # 实例化模型。
 output = model(torch.randn(6, 4))  # 输入随变式变化的batch。
 assert output.shape == (output.size(0), 3)  # 验证最后一维是类别数。
 print(model, output.shape, sum(parameter.numel() for parameter in model.parameters()))  # 输出结构、shape和参数量。
+hook_values = []; hook_layer = nn.Linear(2, 1); handle = hook_layer.register_forward_hook(lambda module, inputs, output: hook_values.append(output.shape)); hook_layer(torch.ones(3, 2)); handle.remove()  # 注册前向hook并及时移除。
+hook_layer.weight.requires_grad_(False); assert hook_values == [torch.Size([3, 1])] and not hook_layer.weight.requires_grad  # 综合验证hook和冻结参数。

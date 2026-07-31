@@ -12,6 +12,8 @@
 6. 安全加载仅含Tensor的checkpoint。
 7. 创建相同结构模型。
 8. 恢复参数。
+9. 使用map_location跨设备恢复完整checkpoint。
+10. 综合验证序列化和权重恢复。
 
 完成标准：
 - 验证参数完全一致。
@@ -34,3 +36,6 @@ with tempfile.TemporaryDirectory() as folder:  # 使用自动清理的临时目�
     restored.load_state_dict(checkpoint['model_state'])  # 恢复参数。
 assert all(torch.equal(a, b) for a, b in zip(model.parameters(), restored.parameters()))  # 验证参数完全一致。
 print(checkpoint['epoch'])  # 输出恢复的训练元数据。
+import io  # 导入内存二进制流。
+serialized_model = nn.Linear(2, 1); serialized_optimizer = torch.optim.SGD(serialized_model.parameters(), lr=0.1); serialized_checkpoint = {'epoch': 3, 'model': serialized_model.state_dict(), 'optimizer': serialized_optimizer.state_dict()}; buffer = io.BytesIO(); torch.save(serialized_checkpoint, buffer); buffer.seek(0); restored_checkpoint = torch.load(buffer, map_location='cpu', weights_only=False)  # 使用map_location跨设备恢复完整checkpoint。
+restored_model = nn.Linear(2, 1); restored_model.load_state_dict(restored_checkpoint['model']); assert restored_checkpoint['epoch'] == 3  # 综合验证序列化和权重恢复。

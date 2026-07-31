@@ -10,9 +10,12 @@
 4. 计算原始梯度。
 5. 按总范数裁剪并返回裁剪前范数。
 6. 计算裁剪后总范数。
+7. clip_grad_value_逐元素截断梯度。
+8. 区分按值裁剪和全局范数裁剪。
 
 完成标准：
 - 验证梯度范数不超过阈值。
+- 区分按值裁剪和全局范数裁剪。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +31,5 @@ before = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 按
 after = torch.sqrt(sum(parameter.grad.square().sum() for parameter in model.parameters()))  # 计算裁剪后总范数。
 assert after <= 1.00001  # 验证梯度范数不超过阈值。
 print(before.item(), after.item())  # 输出裁剪前后范数。
+clip_parameter = nn.Parameter(torch.tensor([10.0, -10.0])); clip_parameter.grad = torch.tensor([5.0, -5.0]); nn.utils.clip_grad_value_([clip_parameter], clip_value=1.0)  # clip_grad_value_逐元素截断梯度。
+assert clip_parameter.grad.tolist() == [1.0, -1.0]  # 区分按值裁剪和全局范数裁剪。

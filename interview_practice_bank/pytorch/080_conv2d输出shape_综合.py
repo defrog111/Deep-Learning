@@ -10,9 +10,11 @@
 4. 创建NCHW图像batch。
 5. 运行卷积。
 6. 根据卷积公式计算输出边长。
+7. 综合深度可分离卷积。
 
 完成标准：
 - 验证输出shape。
+- 验证depthwise加pointwise。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ features = conv(images)  # 运行卷积。
 expected = (height + 2 - kernel) // 2 + 1  # 根据卷积公式计算输出边长。
 assert features.shape == (4, 8, expected, expected)  # 验证输出shape。
 print(features.shape, expected)  # 输出实际与公式结果。
+depthwise = nn.Conv2d(3, 3, kernel_size=3, padding=1, groups=3); pointwise = nn.Conv2d(3, 6, kernel_size=1); separable_output = pointwise(depthwise(torch.randn(2, 3, 8, 8)))  # 综合深度可分离卷积。
+assert separable_output.shape == (2, 6, 8, 8)  # 验证depthwise加pointwise。

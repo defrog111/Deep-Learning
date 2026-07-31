@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证学习率未增长。
+- 验证余弦下降。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -36,3 +37,7 @@ for _ in range(6):  # 模拟六个epoch。
     history.append(scheduler.get_last_lr()[0])  # 记录当前学习率。
 assert history[-1] <= history[0]  # 验证学习率未增长。
 print(history)  # 输出调度轨迹。
+cosine_parameter = nn.Parameter(torch.tensor(1.0)); cosine_optimizer = torch.optim.SGD([cosine_parameter], lr=0.1); cosine_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(cosine_optimizer, T_max=4); cosine_history = []  # 创建余弦退火调度器。
+for _ in range(4):  # 模拟四个epoch。
+    cosine_optimizer.step(); cosine_scheduler.step(); cosine_history.append(cosine_scheduler.get_last_lr()[0])  # optimizer后调用scheduler。
+assert cosine_history[-1] < cosine_history[0]  # 验证余弦下降。

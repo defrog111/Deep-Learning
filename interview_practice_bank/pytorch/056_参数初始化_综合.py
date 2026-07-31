@@ -9,9 +9,11 @@
 3. 为ReLU网络使用Kaiming初始化变式4。
 4. 偏置初始化为零。
 5. 取得扇入扇出用于解释方差。
+6. 综合理解fan_in、fan_out与Kaiming。
 
 完成标准：
 - 验证偏置为零。
+- 验证扇入扇出和随机权重。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +28,5 @@ nn.init.zeros_(layer.bias)  # 偏置初始化为零。
 fan_in, fan_out = nn.init._calculate_fan_in_and_fan_out(layer.weight)  # 取得扇入扇出用于解释方差。
 assert torch.count_nonzero(layer.bias) == 0  # 验证偏置为零。
 print(layer.weight.mean().item(), layer.weight.std().item(), fan_in, fan_out)  # 输出初始化统计。
+fan_tensor = torch.empty(16, 8); fan_in, fan_out = nn.init._calculate_fan_in_and_fan_out(fan_tensor); nn.init.kaiming_normal_(fan_tensor, mode='fan_in', nonlinearity='relu')  # 综合理解fan_in、fan_out与Kaiming。
+assert (fan_in, fan_out) == (8, 16) and fan_tensor.std() > 0  # 验证扇入扇出和随机权重。

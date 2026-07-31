@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证eval输出确定性。
+- 验证推理不更新BatchNorm状态。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -35,3 +36,5 @@ with torch.no_grad():  # 推理时关闭梯度记录。
     eval_output_2 = model(x)  # 第二次推理。
 assert torch.allclose(eval_output_1, eval_output_2)  # 验证eval输出确定性。
 print(torch.allclose(train_output, eval_output_1))  # 比较训练态与推理态。
+batch_norm = nn.BatchNorm1d(2); batch_norm.train(); batch_norm(torch.tensor([[1.0, 2.0], [3.0, 4.0]])); running_before = batch_norm.running_mean.clone(); batch_norm.eval(); batch_norm(torch.tensor([[100.0, 200.0]]))  # eval使用并冻结running统计量。
+assert torch.equal(batch_norm.running_mean, running_before)  # 验证推理不更新BatchNorm状态。

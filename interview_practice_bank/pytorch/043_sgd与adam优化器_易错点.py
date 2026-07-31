@@ -16,7 +16,7 @@
 10. 清梯度。
 
 完成标准：
-- 关键结果的shape、类型或数值符合题目要求。
+- 只保存模型权重不足以无缝恢复训练。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +37,5 @@ for model, optimizer in zip([model_sgd, model_adam], optimizers):  # 分别执�
     loss.backward()  # 算梯度。
     optimizer.step()  # 更新参数。
 print(model_sgd.weight, model_adam.weight)  # 对比一步后的参数。
+state_model = nn.Linear(1, 1); state_optimizer = torch.optim.Adam(state_model.parameters()); state_model(torch.ones(1, 1)).sum().backward(); state_optimizer.step(); optimizer_state = state_optimizer.state_dict()  # Adam更新后保存动量状态。
+assert optimizer_state['state'] and 'param_groups' in optimizer_state  # 只保存模型权重不足以无缝恢复训练。

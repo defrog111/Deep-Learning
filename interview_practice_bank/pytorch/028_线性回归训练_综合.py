@@ -36,3 +36,7 @@ for _ in range(150):  # 执行固定轮数训练。
     optimizer.step()  # 更新参数。
 assert loss.item() < 0.01  # 验证模型学会线性关系。
 print(model.weight.item(), model.bias.item(), loss.item())  # 输出拟合参数和损失。
+amp_model = nn.Linear(2, 1); amp_optimizer = torch.optim.SGD(amp_model.parameters(), lr=0.01); amp_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu'); amp_model.to(amp_device)  # 自动选择可用设备。
+with torch.autocast(device_type=amp_device.type, enabled=amp_device.type == 'cuda'):  # CUDA可用时开启自动混合精度。
+    amp_loss = amp_model(torch.ones(2, 2, device=amp_device)).pow(2).mean()  # 前向在autocast区域执行。
+amp_loss.backward(); amp_optimizer.step(); assert torch.isfinite(amp_loss)  # CPU和GPU路径都能完成训练一步。

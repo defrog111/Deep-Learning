@@ -12,9 +12,11 @@
 6. 安全加载仅含Tensor的checkpoint。
 7. 创建相同结构模型。
 8. 恢复参数。
+9. 完整checkpoint保存轮数、模型和优化器。
 
 完成标准：
 - 验证参数完全一致。
+- 验证恢复训练必需字段。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -34,3 +36,5 @@ with tempfile.TemporaryDirectory() as folder:  # 使用自动清理的临时目�
     restored.load_state_dict(checkpoint['model_state'])  # 恢复参数。
 assert all(torch.equal(a, b) for a, b in zip(model.parameters(), restored.parameters()))  # 验证参数完全一致。
 print(checkpoint['epoch'])  # 输出恢复的训练元数据。
+checkpoint_model = nn.Linear(2, 1); checkpoint_optimizer = torch.optim.SGD(checkpoint_model.parameters(), lr=0.1, momentum=0.9); checkpoint = {'epoch': 3, 'model': checkpoint_model.state_dict(), 'optimizer': checkpoint_optimizer.state_dict()}  # 完整checkpoint保存轮数、模型和优化器。
+assert checkpoint['epoch'] == 3 and set(checkpoint) == {'epoch', 'model', 'optimizer'}  # 验证恢复训练必需字段。

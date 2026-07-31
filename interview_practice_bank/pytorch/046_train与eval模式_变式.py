@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证eval输出确定性。
+- 验证训练推理差异。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -35,3 +36,5 @@ with torch.no_grad():  # 推理时关闭梯度记录。
     eval_output_2 = model(x)  # 第二次推理。
 assert torch.allclose(eval_output_1, eval_output_2)  # 验证eval输出确定性。
 print(torch.allclose(train_output, eval_output_1))  # 比较训练态与推理态。
+dropout = nn.Dropout(p=0.5); dropout.train(); torch.manual_seed(1); train_output = dropout(torch.ones(100)); dropout.eval(); eval_output = dropout(torch.ones(100))  # Dropout仅在train随机置零并缩放。
+assert torch.count_nonzero(train_output) < 100 and torch.equal(eval_output, torch.ones(100))  # 验证训练推理差异。

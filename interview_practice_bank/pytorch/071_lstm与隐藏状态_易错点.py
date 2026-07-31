@@ -10,10 +10,12 @@
 4. LSTM返回hidden和cell两类状态。
 5. 双向输出特征为2×hidden。
 6. 层数×方向数为4。
+7. 投影LSTM的输出和h为proj_size，c仍为hidden_size。
 
 完成标准：
 - 双向输出特征为2×hidden。
 - 层数×方向数为4。
+- 验证投影shape陷阱。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ outputs, (hidden, cell) = lstm(sequence)  # LSTM返回hidden和cell两类状态�
 assert outputs.shape == (4, 6, 14)  # 双向输出特征为2×hidden。
 assert hidden.shape == cell.shape == (4, 4, 7)  # 层数×方向数为4。
 print(outputs.shape, hidden.shape, cell.shape)  # 输出关键shape。
+projection_lstm = nn.LSTM(3, 6, proj_size=4, batch_first=True); projection_output, (projection_h, projection_c) = projection_lstm(torch.randn(2, 5, 3))  # 投影LSTM的输出和h为proj_size，c仍为hidden_size。
+assert projection_output.shape[-1] == 4 and projection_h.shape[-1] == 4 and projection_c.shape[-1] == 6  # 验证投影shape陷阱。

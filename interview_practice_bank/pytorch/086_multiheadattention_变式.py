@@ -9,9 +9,11 @@
 3. 创建token表示。
 4. True表示屏蔽key。
 5. 执行Self-Attention。
+6. key_padding_mask按batch屏蔽key位置。
 
 完成标准：
 - 验证输出和逐头权重shape。
+- 验证batch_first输出与权重。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +28,5 @@ padding_mask = torch.tensor([[False, False, False, True, True], [False, False, F
 output, weights = attention(tokens, tokens, tokens, key_padding_mask=padding_mask, need_weights=True, average_attn_weights=False)  # 执行Self-Attention。
 assert output.shape == tokens.shape and weights.shape == (2, 4, 5, 5)  # 验证输出和逐头权重shape。
 print(output.shape, weights[0, 0])  # 输出shape和一个head权重。
+batch_attention = nn.MultiheadAttention(8, 2, batch_first=True); attention_tokens = torch.randn(2, 4, 8); padding_mask = torch.tensor([[False, False, True, True], [False, False, False, True]]); masked_attention, masked_weights = batch_attention(attention_tokens, attention_tokens, attention_tokens, key_padding_mask=padding_mask, need_weights=True)  # key_padding_mask按batch屏蔽key位置。
+assert masked_attention.shape == attention_tokens.shape and masked_weights.shape == (2, 4, 4)  # 验证batch_first输出与权重。

@@ -12,9 +12,12 @@
 6. 使用最终隐藏状态分类。
 7. 创建类别标签。
 8. 计算分类损失。
+9. GRUCell手动控制单时间步循环。
+10. 区分GRU模块和GRUCell。
 
 完成标准：
 - 验证分类输出shape。
+- 区分GRU模块和GRUCell。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +36,5 @@ loss = nn.CrossEntropyLoss()(logits, labels)  # 计算分类损失。
 loss.backward()  # 验证整个模型可反向传播。
 assert logits.shape == (5, 3)  # 验证分类输出shape。
 print(loss.item(), outputs.shape, hidden.shape)  # 输出损失和状态shape。
+gru_cell = nn.GRUCell(3, 4); cell_hidden = torch.zeros(2, 4); cell_hidden = gru_cell(torch.randn(2, 3), cell_hidden)  # GRUCell手动控制单时间步循环。
+assert cell_hidden.shape == (2, 4)  # 区分GRU模块和GRUCell。

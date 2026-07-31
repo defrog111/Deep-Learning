@@ -9,9 +9,12 @@
 3. 创建token表示。
 4. True表示屏蔽key。
 5. 执行Self-Attention。
+6. 上三角布尔mask阻止查看未来token。
+7. 第一个query只能关注自身。
 
 完成标准：
 - 验证输出和逐头权重shape。
+- 第一个query只能关注自身。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +29,5 @@ padding_mask = torch.tensor([[False, False, False, True, True], [False, False, F
 output, weights = attention(tokens, tokens, tokens, key_padding_mask=padding_mask, need_weights=True, average_attn_weights=False)  # 执行Self-Attention。
 assert output.shape == tokens.shape and weights.shape == (2, 4, 5, 5)  # 验证输出和逐头权重shape。
 print(output.shape, weights[0, 0])  # 输出shape和一个head权重。
+causal_attention_module = nn.MultiheadAttention(8, 2, batch_first=True); causal_tokens = torch.randn(2, 4, 8); causal_mask = torch.triu(torch.ones(4, 4, dtype=torch.bool), diagonal=1); causal_attention, causal_weights = causal_attention_module(causal_tokens, causal_tokens, causal_tokens, attn_mask=causal_mask, need_weights=True)  # 上三角布尔mask阻止查看未来token。
+assert torch.count_nonzero(causal_weights[:, 0, 1:]) == 0  # 第一个query只能关注自身。

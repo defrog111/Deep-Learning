@@ -8,9 +8,11 @@
 2. 构建标量计算图。
 3. 反向传播计算dy/dx。
 4. 手算解析梯度。
+5. 计算向量函数Jacobian。
 
 完成标准：
 - 验证Autograd结果。
+- 验证Jacobian。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +25,5 @@ y.backward()  # 反向传播计算dy/dx。
 expected = 3 * x.detach() ** 2 + 4 * x.detach() - 1  # 手算解析梯度。
 assert torch.allclose(x.grad, expected)  # 验证Autograd结果。
 print(y.item(), x.grad.item(), y.grad_fn)  # 输出函数值、梯度和计算图节点。
+jacobian = torch.autograd.functional.jacobian(lambda value: torch.stack([value[0]**2, value[0] * value[1]]), torch.tensor([2.0, 3.0]))  # 计算向量函数Jacobian。
+assert jacobian.shape == (2, 2) and torch.allclose(jacobian, torch.tensor([[4.0, 0.0], [3.0, 2.0]]))  # 验证Jacobian。

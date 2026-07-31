@@ -36,3 +36,7 @@ for _ in range(150):  # 执行固定轮数训练。
     optimizer.step()  # 更新参数。
 assert loss.item() < 0.01  # 验证模型学会线性关系。
 print(model.weight.item(), model.bias.item(), loss.item())  # 输出拟合参数和损失。
+accumulation_model = nn.Linear(1, 1); accumulation_optimizer = torch.optim.SGD(accumulation_model.parameters(), lr=0.01); accumulation_optimizer.zero_grad(set_to_none=True)  # 初始化梯度累积训练。
+for micro_batch in [torch.ones(2, 1), torch.full((2, 1), 2.0)]:  # 遍历两个微批次。
+    (accumulation_model(micro_batch).pow(2).mean() / 2).backward()  # loss除以累积步数保持梯度尺度。
+accumulation_optimizer.step(); assert accumulation_model.weight.grad is not None  # 累积完成后只更新一次。

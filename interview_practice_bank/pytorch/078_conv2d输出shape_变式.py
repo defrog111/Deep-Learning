@@ -10,9 +10,11 @@
 4. 创建NCHW图像batch。
 5. 运行卷积。
 6. 根据卷积公式计算输出边长。
+7. groups=2把输入输出通道分成两组卷积。
 
 完成标准：
 - 验证输出shape。
+- 验证分组卷积权重shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ features = conv(images)  # 运行卷积。
 expected = (height + 2 - kernel) // 2 + 1  # 根据卷积公式计算输出边长。
 assert features.shape == (4, 8, expected, expected)  # 验证输出shape。
 print(features.shape, expected)  # 输出实际与公式结果。
+group_conv = nn.Conv2d(4, 8, kernel_size=3, padding=1, groups=2); group_output = group_conv(torch.randn(2, 4, 16, 16))  # groups=2把输入输出通道分成两组卷积。
+assert group_output.shape == (2, 8, 16, 16) and group_conv.weight.shape == (8, 2, 3, 3)  # 验证分组卷积权重shape。

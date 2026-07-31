@@ -9,9 +9,11 @@
 3. 使用to转换dtype并返回新Tensor。
 4. 自动选择可用计算设备。
 5. 把数据移动到目标设备。
+6. 混合dtype会按类型提升规则计算。
 
 完成标准：
 - 验证shape和类型。
+- 验证dtype promotion。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 自动�
 on_device = tensor.to(device)  # 把数据移动到目标设备。
 assert tensor.shape == (2, 2) and converted.dtype == torch.float64  # 验证shape和类型。
 print(tensor, zeros, on_device.device)  # 输出Tensor与设备。
+integer_tensor = torch.tensor([1, 2]); floating_tensor = torch.tensor([0.5, 1.5]); promoted = integer_tensor + floating_tensor  # 混合dtype会按类型提升规则计算。
+assert promoted.dtype.is_floating_point and promoted.tolist() == [1.5, 3.5]  # 验证dtype promotion。

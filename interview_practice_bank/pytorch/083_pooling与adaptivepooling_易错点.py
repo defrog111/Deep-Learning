@@ -8,9 +8,11 @@
 2. 最大池化把空间尺寸减半。
 3. 自适应池化直接指定输出尺寸。
 4. 全局平均池化得到每通道特征。
+5. ceil_mode决定是否保留不完整末尾窗口。
 
 完成标准：
 - 验证shape。
+- 验证输出尺寸陷阱。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ adaptive = nn.AdaptiveAvgPool2d((3, 3))(features)  # 自适应池化直接指定
 global_average = nn.AdaptiveAvgPool2d(1)(features).flatten(1)  # 全局平均池化得到每通道特征。
 assert max_pooled.shape == (2, 3, 4, 4) and global_average.shape == (2, 3)  # 验证shape。
 print(max_pooled.shape, adaptive.shape, global_average)  # 输出池化结果。
+ceil_pool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)(torch.ones(1, 1, 4, 4)); floor_pool = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=False)(torch.ones(1, 1, 4, 4))  # ceil_mode决定是否保留不完整末尾窗口。
+assert ceil_pool.shape[-1] == 2 and floor_pool.shape[-1] == 1  # 验证输出尺寸陷阱。

@@ -26,3 +26,10 @@ loader = DataLoader(dataset, batch_size=3, shuffle=True, generator=torch.Generat
 batch_features, batch_labels = next(iter(loader))  # 取得第一个batch。
 assert len(dataset) == 10 and len(batch_features) <= 3  # 验证样本数和batch大小。
 print(batch_features.shape, batch_labels)  # 输出batch。
+from torch.utils.data import Dataset  # 导入自定义数据集基类。
+class PairDataset(Dataset):  # 定义最小地图式数据集。
+    def __len__(self):  # 返回样本总数。
+        return 5  # 固定五个样本。
+    def __getitem__(self, index):  # 按索引生成样本。
+        return torch.tensor(index), torch.tensor(index % 2)  # 返回特征标签对。
+custom_batch = next(iter(DataLoader(PairDataset(), batch_size=3))); assert custom_batch[0].shape == (3,)  # 验证Dataset与默认collate。

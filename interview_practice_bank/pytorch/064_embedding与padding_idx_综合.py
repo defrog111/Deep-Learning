@@ -10,9 +10,12 @@
 4. 构造用于反向传播的损失。
 5. 计算Embedding权重梯度。
 6. padding_idx对应行不更新。
+7. 综合Embedding、padding和pack。
+8. pack后只保留三个有效token。
 
 完成标准：
 - padding_idx对应行不更新。
+- pack后只保留三个有效token。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +30,5 @@ loss = vectors.square().sum()  # 构造用于反向传播的损失。
 loss.backward()  # 计算Embedding权重梯度。
 assert torch.count_nonzero(embedding.weight.grad[0]) == 0  # padding_idx对应行不更新。
 print(vectors.shape, embedding.weight.grad[0])  # 输出shape和PAD梯度。
+token_ids = torch.tensor([[1, 2, 0], [3, 0, 0]]); lengths = torch.tensor([2, 1]); embedded_tokens = nn.Embedding(5, 4, padding_idx=0)(token_ids); packed_tokens = nn.utils.rnn.pack_padded_sequence(embedded_tokens, lengths, batch_first=True, enforce_sorted=False)  # 综合Embedding、padding和pack。
+assert packed_tokens.data.shape == (3, 4)  # pack后只保留三个有效token。

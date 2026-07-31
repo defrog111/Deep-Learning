@@ -10,9 +10,12 @@
 4. 反向传播。
 5. 推理阶段用sigmoid得到正类概率。
 6. 使用可调阈值得到类别。
+7. 多标签分类每类独立使用BCE。
+8. 区分多标签BCE和互斥多类CE。
 
 完成标准：
 - 验证预测shape。
+- 区分多标签BCE和互斥多类CE。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +31,5 @@ probabilities = logits.detach().sigmoid()  # 推理阶段用sigmoid得到正类�
 predictions = probabilities.ge(0.48000000000000004).int()  # 使用可调阈值得到类别。
 assert predictions.shape == targets.shape  # 验证预测shape。
 print(loss.item(), probabilities, predictions)  # 输出二分类结果。
+multi_logits = torch.tensor([[2.0, -1.0, 0.0]]); multi_targets = torch.tensor([[1.0, 0.0, 1.0]]); multi_loss = nn.BCEWithLogitsLoss(reduction='none')(multi_logits, multi_targets)  # 多标签分类每类独立使用BCE。
+assert multi_loss.shape == multi_targets.shape and torch.isfinite(multi_loss).all()  # 区分多标签BCE和互斥多类CE。

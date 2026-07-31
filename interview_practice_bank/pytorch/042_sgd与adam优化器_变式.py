@@ -16,7 +16,7 @@
 10. 清梯度。
 
 完成标准：
-- 关键结果的shape、类型或数值符合题目要求。
+- 验证分层学习率。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +37,5 @@ for model, optimizer in zip([model_sgd, model_adam], optimizers):  # 分别执�
     loss.backward()  # 算梯度。
     optimizer.step()  # 更新参数。
 print(model_sgd.weight, model_adam.weight)  # 对比一步后的参数。
+group_model = nn.Sequential(nn.Linear(2, 3), nn.Linear(3, 1)); group_optimizer = torch.optim.Adam([{'params': group_model[0].parameters(), 'lr': 1e-3}, {'params': group_model[1].parameters(), 'lr': 1e-2}])  # 参数组可为不同层设置学习率。
+assert [group['lr'] for group in group_optimizer.param_groups] == [1e-3, 1e-2]  # 验证分层学习率。

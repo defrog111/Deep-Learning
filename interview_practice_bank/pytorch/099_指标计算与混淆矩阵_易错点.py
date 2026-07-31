@@ -13,9 +13,11 @@
 7. 按预测列计算precision。
 8. 按真实行计算recall。
 9. 计算整体准确率。
+10. 无预测类别的precision分母需防零。
 
 完成标准：
 - 验证每个样本被统计一次。
+- 验证零除防护。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ recall = true_positive / confusion.sum(1).clamp_min(1)  # 按真实行计算reca
 accuracy = true_positive.sum() / confusion.sum()  # 计算整体准确率。
 assert confusion.sum() == len(targets)  # 验证每个样本被统计一次。
 print(confusion, precision, recall, accuracy)  # 输出分类指标。
+zero_confusion = torch.tensor([[5, 0], [0, 0]], dtype=torch.float32); safe_precision = zero_confusion.diag() / zero_confusion.sum(0).clamp_min(1)  # 无预测类别的precision分母需防零。
+assert torch.isfinite(safe_precision).all() and safe_precision[1] == 0  # 验证零除防护。

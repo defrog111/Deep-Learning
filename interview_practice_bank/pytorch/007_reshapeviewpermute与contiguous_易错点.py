@@ -9,9 +9,12 @@
 3. permute通常产生非连续视图。
 4. 先连续化再使用view展平。
 5. reshape必要时自动复制以满足布局。
+6. transpose通常产生非连续视图。
+7. view前先contiguous。
 
 完成标准：
 - 验证元素数不变。
+- view前先contiguous。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,5 @@ flattened = permuted.contiguous().view(-1)  # 先连续化再使用view展平。
 reshaped = permuted.reshape(4, 6)  # reshape必要时自动复制以满足布局。
 assert flattened.numel() == tensor.numel() and reshaped.shape == (4, 6)  # 验证元素数不变。
 print(is_contiguous_before, tensor.stride(), permuted.stride())  # 输出连续性和步幅。
+transposed_extra = tensor.transpose(1, 2)  # transpose通常产生非连续视图。
+assert not transposed_extra.is_contiguous() and transposed_extra.contiguous().view(tensor.size(0), -1).is_contiguous()  # view前先contiguous。

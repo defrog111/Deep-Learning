@@ -16,7 +16,7 @@
 10. 清梯度。
 
 完成标准：
-- 关键结果的shape、类型或数值符合题目要求。
+- 验证参数更新与grad状态。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +37,5 @@ for model, optimizer in zip([model_sgd, model_adam], optimizers):  # 分别执�
     loss.backward()  # 算梯度。
     optimizer.step()  # 更新参数。
 print(model_sgd.weight, model_adam.weight)  # 对比一步后的参数。
+compare_parameter = nn.Parameter(torch.tensor(1.0)); sgd = torch.optim.SGD([compare_parameter], lr=0.1, momentum=0.9); compare_parameter.grad = torch.tensor(2.0); sgd.step(); sgd.zero_grad(set_to_none=True)  # 综合执行优化和高效清梯度。
+assert compare_parameter.item() < 1 and compare_parameter.grad is None  # 验证参数更新与grad状态。

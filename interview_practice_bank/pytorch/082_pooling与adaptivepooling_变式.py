@@ -8,9 +8,11 @@
 2. 最大池化把空间尺寸减半。
 3. 自适应池化直接指定输出尺寸。
 4. 全局平均池化得到每通道特征。
+5. 最大池化可返回位置用于unpool。
 
 完成标准：
 - 验证shape。
+- 验证池化值与索引。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ adaptive = nn.AdaptiveAvgPool2d((2, 2))(features)  # 自适应池化直接指定
 global_average = nn.AdaptiveAvgPool2d(1)(features).flatten(1)  # 全局平均池化得到每通道特征。
 assert max_pooled.shape == (2, 3, 4, 4) and global_average.shape == (2, 3)  # 验证shape。
 print(max_pooled.shape, adaptive.shape, global_average)  # 输出池化结果。
+pool_input = torch.arange(16, dtype=torch.float32).reshape(1, 1, 4, 4); max_values, max_indices = nn.MaxPool2d(2, return_indices=True)(pool_input)  # 最大池化可返回位置用于unpool。
+assert max_values.tolist() == [[[[5, 7], [13, 15]]]] and max_indices.shape == max_values.shape  # 验证池化值与索引。

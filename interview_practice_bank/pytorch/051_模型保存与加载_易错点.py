@@ -12,6 +12,8 @@
 6. 安全加载仅含Tensor的checkpoint。
 7. 创建相同结构模型。
 8. 恢复参数。
+9. shape不同的同名权重即使strict=False也会报尺寸不匹配。
+10. 在加载前显式审计参数shape。
 
 完成标准：
 - 验证参数完全一致。
@@ -34,3 +36,5 @@ with tempfile.TemporaryDirectory() as folder:  # 使用自动清理的临时目�
     restored.load_state_dict(checkpoint['model_state'])  # 恢复参数。
 assert all(torch.equal(a, b) for a, b in zip(model.parameters(), restored.parameters()))  # 验证参数完全一致。
 print(checkpoint['epoch'])  # 输出恢复的训练元数据。
+source_model = nn.Linear(2, 1); incompatible_model = nn.Linear(3, 1)  # shape不同的同名权重即使strict=False也会报尺寸不匹配。
+shape_mismatch = source_model.weight.shape != incompatible_model.weight.shape; assert shape_mismatch  # 在加载前显式审计参数shape。

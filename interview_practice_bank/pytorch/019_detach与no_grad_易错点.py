@@ -9,9 +9,12 @@
 3. detach与原Tensor共享数据但切断梯度。
 4. 在推理上下文中关闭梯度记录。
 5. 该运算不会构建计算图。
+6. inference_mode比no_grad进一步关闭版本跟踪，适合纯推理。
+    inference_output = (torch.ones(3) * 2).sum()  # 执行不建图计算。
 
 完成标准：
 - 验证三种梯度状态。
+- 验证推理张量不跟踪梯度。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,6 @@ with torch.no_grad():  # 在推理上下文中关闭梯度记录。
     prediction = parameter * 4  # 该运算不会构建计算图。
 assert tracked.requires_grad and not detached.requires_grad and not prediction.requires_grad  # 验证三种梯度状态。
 print(tracked, detached, prediction)  # 输出不同状态Tensor。
+with torch.inference_mode():  # inference_mode比no_grad进一步关闭版本跟踪，适合纯推理。
+    inference_output = (torch.ones(3) * 2).sum()  # 执行不建图计算。
+assert inference_output.requires_grad is False  # 验证推理张量不跟踪梯度。

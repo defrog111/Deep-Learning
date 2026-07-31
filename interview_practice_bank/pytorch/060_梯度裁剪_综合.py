@@ -10,6 +10,7 @@
 4. 计算原始梯度。
 5. 按总范数裁剪并返回裁剪前范数。
 6. 计算裁剪后总范数。
+7. 对全部参数统一计算全局范数。
 
 完成标准：
 - 验证梯度范数不超过阈值。
@@ -28,3 +29,5 @@ before = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)  # 按
 after = torch.sqrt(sum(parameter.grad.square().sum() for parameter in model.parameters()))  # 计算裁剪后总范数。
 assert after <= 1.00001  # 验证梯度范数不超过阈值。
 print(before.item(), after.item())  # 输出裁剪前后范数。
+parameters_for_clip = [nn.Parameter(torch.ones(2)), nn.Parameter(torch.ones(2))]; [setattr(parameter, 'grad', torch.full_like(parameter, 3.0)) for parameter in parameters_for_clip]; original_norm = nn.utils.clip_grad_norm_(parameters_for_clip, max_norm=1.0)  # 对全部参数统一计算全局范数。
+new_norm = torch.sqrt(sum(parameter.grad.pow(2).sum() for parameter in parameters_for_clip)); assert original_norm > 1 and new_norm <= 1.00001  # 验证综合裁剪结果。

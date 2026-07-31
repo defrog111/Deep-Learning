@@ -11,9 +11,11 @@
 5. 定义PAD mask。
 6. 编码时屏蔽PAD key。
 7. masked mean pooling。
+8. 原生TransformerDecoder包含masked self-attention和cross-attention。
 
 完成标准：
 - 验证序列与池化shape。
+- 验证Decoder保持目标序列shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -30,3 +32,5 @@ encoded = encoder(tokens, src_key_padding_mask=padding_mask)  # 编码时屏蔽P
 pooled = (encoded * (~padding_mask).unsqueeze(-1)).sum(1) / (~padding_mask).sum(1, keepdim=True)  # masked mean pooling。
 assert encoded.shape == tokens.shape and pooled.shape == (2, 16)  # 验证序列与池化shape。
 print(encoded.shape, pooled.shape)  # 输出Encoder结果。
+decoder_layer = nn.TransformerDecoderLayer(d_model=8, nhead=2, dim_feedforward=16, batch_first=True, dropout=0.0); decoder = nn.TransformerDecoder(decoder_layer, num_layers=2); target_tokens = torch.randn(2, 4, 8); memory_tokens = torch.randn(2, 3, 8); decoded = decoder(target_tokens, memory_tokens)  # 原生TransformerDecoder包含masked self-attention和cross-attention。
+assert decoded.shape == target_tokens.shape  # 验证Decoder保持目标序列shape。

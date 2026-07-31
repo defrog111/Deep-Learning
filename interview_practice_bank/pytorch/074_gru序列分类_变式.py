@@ -12,9 +12,11 @@
 6. 使用最终隐藏状态分类。
 7. 创建类别标签。
 8. 计算分类损失。
+9. GRU只有h没有LSTM的c。
 
 完成标准：
 - 验证分类输出shape。
+- 验证双向GRU。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ loss = nn.CrossEntropyLoss()(logits, labels)  # 计算分类损失。
 loss.backward()  # 验证整个模型可反向传播。
 assert logits.shape == (5, 3)  # 验证分类输出shape。
 print(loss.item(), outputs.shape, hidden.shape)  # 输出损失和状态shape。
+bi_gru = nn.GRU(3, 4, batch_first=True, bidirectional=True); bi_gru_output, bi_gru_hidden = bi_gru(torch.randn(2, 5, 3))  # GRU只有h没有LSTM的c。
+assert bi_gru_output.shape == (2, 5, 8) and bi_gru_hidden.shape == (2, 2, 4)  # 验证双向GRU。

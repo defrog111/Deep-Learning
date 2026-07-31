@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证模型学会线性关系。
+- 验证梯度被设为None。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -36,3 +37,5 @@ for _ in range(150):  # 执行固定轮数训练。
     optimizer.step()  # 更新参数。
 assert loss.item() < 0.01  # 验证模型学会线性关系。
 print(model.weight.item(), model.bias.item(), loss.item())  # 输出拟合参数和损失。
+zero_model = nn.Linear(1, 1); zero_model(torch.ones(1, 1)).sum().backward(); zero_model.zero_grad(set_to_none=True)  # set_to_none节省写零操作并便于判断未参与反传参数。
+assert all(parameter.grad is None for parameter in zero_model.parameters())  # 验证梯度被设为None。

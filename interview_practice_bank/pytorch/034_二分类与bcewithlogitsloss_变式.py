@@ -10,9 +10,11 @@
 4. 反向传播。
 5. 推理阶段用sigmoid得到正类概率。
 6. 使用可调阈值得到类别。
+7. pos_weight只放大正类项。
 
 完成标准：
 - 验证预测shape。
+- 验证正类加权。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ probabilities = logits.detach().sigmoid()  # 推理阶段用sigmoid得到正类�
 predictions = probabilities.ge(0.44).int()  # 使用可调阈值得到类别。
 assert predictions.shape == targets.shape  # 验证预测shape。
 print(loss.item(), probabilities, predictions)  # 输出二分类结果。
+imbalanced_logits = torch.tensor([0.0, 0.0]); imbalanced_targets = torch.tensor([0.0, 1.0]); positive_weighted = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(4.0), reduction='none')(imbalanced_logits, imbalanced_targets)  # pos_weight只放大正类项。
+assert positive_weighted[1] == positive_weighted[0] * 4  # 验证正类加权。

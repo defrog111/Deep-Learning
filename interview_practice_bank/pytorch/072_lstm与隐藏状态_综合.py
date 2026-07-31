@@ -10,10 +10,13 @@
 4. LSTM返回hidden和cell两类状态。
 5. 双向输出特征为2×hidden。
 6. 层数×方向数为4。
+7. 综合多层双向LSTM。
+8. 层和方向合并在状态首维。
 
 完成标准：
 - 双向输出特征为2×hidden。
 - 层数×方向数为4。
+- 层和方向合并在状态首维。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +31,5 @@ outputs, (hidden, cell) = lstm(sequence)  # LSTM返回hidden和cell两类状态�
 assert outputs.shape == (4, 6, 14)  # 双向输出特征为2×hidden。
 assert hidden.shape == cell.shape == (4, 4, 7)  # 层数×方向数为4。
 print(outputs.shape, hidden.shape, cell.shape)  # 输出关键shape。
+bi_lstm = nn.LSTM(3, 4, num_layers=2, bidirectional=True, batch_first=True); bi_output, (bi_h, bi_c) = bi_lstm(torch.randn(2, 5, 3))  # 综合多层双向LSTM。
+assert bi_output.shape == (2, 5, 8) and bi_h.shape == bi_c.shape == (4, 2, 4)  # 层和方向合并在状态首维。

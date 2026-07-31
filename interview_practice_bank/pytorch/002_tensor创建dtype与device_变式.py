@@ -9,6 +9,7 @@
 3. 使用to转换dtype并返回新Tensor。
 4. 自动选择可用计算设备。
 5. 把数据移动到目标设备。
+6. from_numpy共享CPU内存，torch.tensor复制数据。
 
 完成标准：
 - 验证shape和类型。
@@ -25,3 +26,5 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 自动�
 on_device = tensor.to(device)  # 把数据移动到目标设备。
 assert tensor.shape == (2, 2) and converted.dtype == torch.float64  # 验证shape和类型。
 print(tensor, zeros, on_device.device)  # 输出Tensor与设备。
+numpy_source = __import__('numpy').arange(4, dtype='float32'); shared_tensor = torch.from_numpy(numpy_source); copied_tensor = torch.tensor(numpy_source)  # from_numpy共享CPU内存，torch.tensor复制数据。
+numpy_source[0] = 99; assert shared_tensor[0].item() == 99 and copied_tensor[0].item() != 99  # 验证共享与复制差异。

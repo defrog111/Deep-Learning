@@ -12,9 +12,11 @@
 6. 使用最终隐藏状态分类。
 7. 创建类别标签。
 8. 计算分类损失。
+9. 综合变长序列GRU。
 
 完成标准：
 - 验证分类输出shape。
+- 验证有效步数和状态shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ loss = nn.CrossEntropyLoss()(logits, labels)  # 计算分类损失。
 loss.backward()  # 验证整个模型可反向传播。
 assert logits.shape == (5, 3)  # 验证分类输出shape。
 print(loss.item(), outputs.shape, hidden.shape)  # 输出损失和状态shape。
+packed_gru = nn.GRU(3, 4, batch_first=True); gru_lengths = torch.tensor([4, 2]); gru_packed = nn.utils.rnn.pack_padded_sequence(torch.randn(2, 4, 3), gru_lengths, batch_first=True, enforce_sorted=False); gru_packed_output, gru_hidden = packed_gru(gru_packed)  # 综合变长序列GRU。
+assert gru_packed_output.data.shape[0] == 6 and gru_hidden.shape == (1, 2, 4)  # 验证有效步数和状态shape。

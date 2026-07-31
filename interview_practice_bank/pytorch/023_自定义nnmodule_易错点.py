@@ -12,6 +12,7 @@
 6. 返回三分类logits。
 7. 实例化模型。
 8. 输入随变式变化的batch。
+9. 普通list中的层不会被Module递归注册。
 
 完成标准：
 - 验证最后一维是类别数。
@@ -32,3 +33,5 @@ model = TinyMLP()  # 实例化模型。
 output = model(torch.randn(5, 4))  # 输入随变式变化的batch。
 assert output.shape == (output.size(0), 3)  # 验证最后一维是类别数。
 print(model, output.shape, sum(parameter.numel() for parameter in model.parameters()))  # 输出结构、shape和参数量。
+plain_layers = [nn.Linear(2, 2)]; registered_layers = nn.ModuleList([nn.Linear(2, 2)])  # 普通list中的层不会被Module递归注册。
+holder = nn.Module(); holder.layers = registered_layers; assert len(list(holder.parameters())) == 2 and len(list(nn.Module().parameters())) == 0  # 验证ModuleList注册参数。

@@ -12,6 +12,11 @@
 6. 返回三分类logits。
 7. 实例化模型。
 8. 输入随变式变化的batch。
+9. 演示Parameter和buffer的注册差异。
+    def __init__(self):  # 初始化模块。
+        super().__init__()  # 注册Module内部结构。
+        self.weight = nn.Parameter(torch.ones(2))  # Parameter参与优化。
+        self.register_buffer('running', torch.zeros(2))  # buffer随模型保存和迁移但不求梯度。
 
 完成标准：
 - 验证最后一维是类别数。
@@ -32,3 +37,9 @@ model = TinyMLP()  # 实例化模型。
 output = model(torch.randn(4, 4))  # 输入随变式变化的batch。
 assert output.shape == (output.size(0), 3)  # 验证最后一维是类别数。
 print(model, output.shape, sum(parameter.numel() for parameter in model.parameters()))  # 输出结构、shape和参数量。
+class RegisteredState(nn.Module):  # 演示Parameter和buffer的注册差异。
+    def __init__(self):  # 初始化模块。
+        super().__init__()  # 注册Module内部结构。
+        self.weight = nn.Parameter(torch.ones(2))  # Parameter参与优化。
+        self.register_buffer('running', torch.zeros(2))  # buffer随模型保存和迁移但不求梯度。
+registered = RegisteredState(); assert list(dict(registered.named_parameters())) == ['weight'] and list(dict(registered.named_buffers())) == ['running']  # 验证注册结果。
