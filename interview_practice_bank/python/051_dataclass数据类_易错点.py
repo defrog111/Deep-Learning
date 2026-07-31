@@ -1,0 +1,17 @@
+"""
+题目 051：dataclass数据类_易错点
+
+要求：完成“dataclass数据类”的易错点题，并说明时间复杂度、对象身份或协议行为。
+先自己实现，再运行本文件查看参考代码结果。
+"""
+
+from dataclasses import dataclass, field  # 导入数据类工具。
+@dataclass(order=True, frozen=True)  # 自动生成比较、repr并设为不可变。
+class Student:  # 定义值对象。
+    score: int  # 排序首先使用分数。
+    name: str = field(compare=False)  # 姓名不参与排序比较。
+students = [Student(80, 'A'), Student(85, 'B')]  # 创建数据类实例。
+best = max(students)  # 使用自动生成的顺序方法。
+mapping = {student: student.name for student in students}  # frozen数据类可哈希可作字典键。
+assert best.name == 'B' and len(mapping) == 2  # 验证排序和哈希。
+print(students, best)  # 输出数据类。

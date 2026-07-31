@@ -1,0 +1,14 @@
+"""
+题目 003：可变对象与不可变对象_易错点
+
+要求：完成“可变对象与不可变对象”的易错点题，并说明时间复杂度、对象身份或协议行为。
+先自己实现，再运行本文件查看参考代码结果。
+"""
+
+immutable = (1, 2, 3)  # tuple是不可变对象。
+mutable = [1, 2, 3]  # list是可变对象。
+same_list = mutable  # 赋值只复制引用而不复制对象。
+mutable.append(5)  # 原地修改列表。
+new_tuple = immutable + (4,)  # 拼接tuple会创建新对象。
+assert same_list is mutable and new_tuple is not immutable  # 验证身份语义。
+print(mutable, immutable, new_tuple, id(mutable))  # 输出对象和值。

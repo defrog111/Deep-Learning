@@ -1,0 +1,9 @@
+employee_id,name,department,city,salary,join_date,manager_id
+1,Alice,Engineering,Seattle,125000,2020-03-15,
+2,Bob,Sales,Austin,92000,2021-06-01,5
+3,Carol,Engineering,Seattle,118000,2019-11-20,1
+4,David,Finance,New York,105000,2022-01-10,6
+5,Eva,Sales,Austin,135000,2018-08-05,
+6,Frank,Finance,New York,142000,2017-04-18,
+7,Grace,Engineering,Boston,110000,2023-02-12,1
+8,Henry,Sales,Boston,88000,2024-05-22,5

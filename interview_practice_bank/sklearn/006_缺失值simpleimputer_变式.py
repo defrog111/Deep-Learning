@@ -1,0 +1,16 @@
+"""
+题目 006：缺失值SimpleImputer_变式
+
+要求：完成“缺失值SimpleImputer”的综合题，说明fit、transform和predict各自只能使用哪些数据。
+先自己实现，再运行本文件查看参考代码结果。
+"""
+
+import numpy as np  # 导入 NumPy。
+from sklearn.impute import SimpleImputer  # 导入缺失值填充器。
+train = np.array([[1.0, np.nan], [2.0, 4.0], [3.0, 8.0]])  # 创建含NaN训练数据。
+test = np.array([[np.nan, 100.0]])  # 创建含缺失测试样本。
+imputer = SimpleImputer(strategy='mean').fit(train)  # 只用训练数据拟合填充值。
+filled_train = imputer.transform(train)  # 填充训练集。
+filled_test = imputer.transform(test)  # 用训练填充值处理测试集。
+assert not np.isnan(filled_train).any() and not np.isnan(filled_test).any()  # 验证无剩余NaN。
+print(imputer.statistics_, filled_test)  # 输出填充值和结果。

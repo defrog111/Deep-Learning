@@ -1,0 +1,14 @@
+"""
+题目 009：loc与iloc选择_基础
+
+要求：完成“loc与iloc选择”的基础题，并解释输出的 shape、索引和数据类型。
+先自己实现，再运行本文件查看参考代码结果。
+"""
+
+import pandas as pd  # 导入 Pandas。
+frame = pd.DataFrame({'name': ['A', 'B', 'C'], 'score': [78, 92, 85]}, index=[10, 20, 30])  # 创建非默认索引。
+by_label = frame.loc[20, 'score']  # loc 使用索引标签选择。
+by_position = frame.iloc[1, 1]  # iloc 使用整数位置选择。
+subset = frame.loc[frame['score'].gt(80), ['name', 'score']]  # 组合行条件和列选择。
+assert by_label == by_position == 92  # 证明本例标签20恰好位于位置1。
+print(subset)  # 输出筛选结果。
