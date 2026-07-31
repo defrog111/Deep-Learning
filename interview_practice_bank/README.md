@@ -1,6 +1,7 @@
 # Python / Data / ML 高频题库
 
-本目录包含 550 道独立、可运行的练习。每一个 `.py` 文件只放一道题，文件顶部包含
+本目录包含 592 道独立、可运行的练习，其中原题库550题、CSV专项42题。每一个题目
+`.py` 文件只放一道题，文件顶部包含
 中文要求、逐步操作过程和完成标准，后面是带逐行中文注释的参考代码。
 
 ## 题量
@@ -13,6 +14,7 @@
 | `python/` | 100 | 数据结构、函数、OOP、迭代器、装饰器、标准库和复杂度 |
 | `ml/` | 100 | 损失、正则化、验证、指标、经典算法、漂移和可复现性 |
 | `sklearn/` | 50 | Pipeline、预处理、CV、调参、模型、评估和持久化 |
+| `csv_data_processing/` | 42 | 每题从CSV读取，覆盖清洗、连接、时间序列、特征工程和模型数据管道 |
 
 “包含所有知识点”无法做数学意义上的穷尽；这里覆盖的是面试、笔试和日常 ML 开发中
 最常考、最容易写错的主干知识。Python、NumPy、PyTorch 和 ML 的每个主知识点提供
@@ -52,6 +54,9 @@ python pytorch/085_multiheadattention_基础.py
 
 CSV 题目通过 `Path(__file__)` 定位数据，因此从仓库根目录或题库目录运行都可以。
 
+CSV专项还提供客户、脏订单、传感器和评论数据；详见
+[`csv_data_processing/README.md`](csv_data_processing/README.md)。
+
 ## 自动检查
 
 检查数量、Python 语法以及每行参考代码是否带注释：
@@ -81,6 +86,12 @@ ML 82 项、scikit-learn 61 项。重复度审计针对本次全面重写的这�
 ```bash
 python run_all.py --category pandas
 python run_all.py --category all
+```
+
+检查并运行42个CSV专项例子：
+
+```bash
+python validate_csv_examples.py
 ```
 
 需要把任何 warning 也当作失败时，可以运行：

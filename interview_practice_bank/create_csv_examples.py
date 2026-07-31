@@ -1,0 +1,648 @@
+"""生成40个从CSV读取开始的数据处理练习。"""
+
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+
+ROOT = Path(__file__).parent
+OUTPUT = ROOT / "csv_data_processing"
+
+
+def case(title: str, task: str, *code: str) -> tuple[str, str, list[str]]:
+    """声明一道CSV练习。"""
+    return title, task, list(code)
+
+
+CASES = [
+    case(
+        "读取CSV并检查结构",
+        "读取销售CSV，依次检查shape、列名、dtype、前两行和缺失值数量。",
+        "from pathlib import Path  # 导入跨平台路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 从CSV读取完整表格。",
+        "missing = frame.isna().sum()  # 按列统计缺失值。",
+        "assert frame.shape[1] == 9 and frame.columns[0] == 'order_id'  # 验证列数和首列名称。",
+        "print(frame.shape, frame.dtypes, frame.head(2), missing, sep='\\n')  # 输出结构检查结果。",
+    ),
+    case(
+        "读取CSV时指定dtype",
+        "读取员工CSV时为ID使用可空整数、部门使用category，并比较转换后的内存和类型。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'employees.csv'  # 定位员工CSV。",
+        "frame = pd.read_csv(csv_path, dtype={'employee_id': 'Int64', 'manager_id': 'Int64', 'department': 'category'})  # 在读取入口指定稳定dtype。",
+        "memory_bytes = frame.memory_usage(deep=True).sum()  # 计算包含字符串内容的内存占用。",
+        "assert str(frame['manager_id'].dtype) == 'Int64' and str(frame['department'].dtype) == 'category'  # 验证可空整数和分类类型。",
+        "print(frame.dtypes, memory_bytes, sep='\\n')  # 输出类型和内存。",
+    ),
+    case(
+        "usecols与nrows选择读取",
+        "只读取销售CSV的四列和前五行，减少不必要的IO与内存。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "columns = ['order_id', 'region', 'quantity', 'unit_price']  # 定义真正需要的列。",
+        "frame = pd.read_csv(csv_path, usecols=columns, nrows=5)  # 在解析阶段限制列和行。",
+        "assert frame.shape == (5, 4) and set(frame.columns) == set(columns)  # 验证选择读取范围。",
+        "print(frame)  # 输出小范围数据。",
+    ),
+    case(
+        "parse_dates读取日期",
+        "读取销售CSV时直接解析日期，再提取年、月、星期和季度。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['date'])  # 在读取时把date解析为datetime64。",
+        "frame = frame.assign(year=frame['date'].dt.year, month=frame['date'].dt.month, weekday=frame['date'].dt.day_name(), quarter=frame['date'].dt.quarter)  # 创建日期特征。",
+        "assert frame['date'].dtype.kind == 'M' and frame['month'].between(1, 12).all()  # 验证日期类型和月份范围。",
+        "print(frame[['date', 'year', 'month', 'weekday', 'quarter']].head())  # 输出日期特征。",
+    ),
+    case(
+        "读取脏CSV并识别问题",
+        "读取脏订单CSV，检查空值、重复订单、状态拼写和金额字符串问题。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 保留原始脏值用于审计。",
+        "audit = {'missing': frame.isna().sum().to_dict(), 'duplicate_orders': int(frame.duplicated('order_id').sum()), 'statuses': sorted(frame['status'].dropna().unique())}  # 汇总常见质量问题。",
+        "assert audit['duplicate_orders'] == 1 and audit['missing']['amount'] == 1  # 验证识别出重复和缺失金额。",
+        "print(audit)  # 输出数据质量审计。",
+    ),
+    case(
+        "自定义缺失值标记",
+        "读取传感器CSV时把missing状态和空字符串作为缺失标记，并统计每台设备缺失量。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, na_values=['', 'missing'], keep_default_na=True)  # 扩展默认缺失值标记。",
+        "missing_by_device = frame.groupby('device_id')[['temperature', 'humidity']].apply(lambda group: group.isna().sum())  # 按设备统计传感器缺失。",
+        "assert frame[['temperature', 'humidity']].isna().any().any()  # 验证数值缺失被识别。",
+        "print(missing_by_device)  # 输出设备缺失统计。",
+    ),
+    case(
+        "chunksize分块读取CSV",
+        "使用chunksize逐块读取销售CSV，在不一次载入全表的情况下累计地区销售额。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "partial_totals = []  # 保存每个数据块的地区汇总。",
+        "for chunk in pd.read_csv(csv_path, chunksize=4):  # 每次只解析四行。",
+        "    chunk['net'] = chunk['quantity'] * chunk['unit_price'] * (1 - chunk['discount'])  # 在当前块计算净额。",
+        "    partial_totals.append(chunk.groupby('region')['net'].sum())  # 保存当前块分组结果。",
+        "totals = pd.concat(partial_totals, axis=1).fillna(0).sum(axis=1)  # 合并并再次求和得到全局结果。",
+        "assert totals.index.is_unique and totals.gt(0).all()  # 验证每个地区只有一个正数总额。",
+        "print(totals.sort_values(ascending=False))  # 输出流式聚合结果。",
+    ),
+    case(
+        "读取UTF8文本CSV",
+        "读取评论CSV，使用string dtype保存文本，并安全处理缺失评论。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'reviews.csv'  # 定位评论CSV。",
+        "frame = pd.read_csv(csv_path, encoding='utf-8', dtype={'review_text': 'string', 'tags': 'string'})  # 显式使用UTF-8和Pandas字符串类型。",
+        "frame['review_text'] = frame['review_text'].fillna('')  # 用空文本填补缺失评论。",
+        "assert str(frame['review_text'].dtype) == 'string' and not frame['review_text'].isna().any()  # 验证文本类型和缺失处理。",
+        "print(frame[['review_id', 'review_text']].head())  # 输出评论文本。",
+    ),
+    case(
+        "识别并删除重复记录",
+        "读取脏订单CSV，分别找出重复订单的所有行，并按订单号保留最后一条。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取订单。",
+        "duplicate_rows = frame[frame.duplicated('order_id', keep=False)]  # 标记重复键的全部记录。",
+        "deduplicated = frame.drop_duplicates('order_id', keep='last')  # 每个订单保留最后一条。",
+        "assert len(duplicate_rows) == 2 and deduplicated['order_id'].is_unique  # 验证重复识别和唯一结果。",
+        "print(duplicate_rows, deduplicated.tail(), sep='\\n')  # 对比重复行和去重结果。",
+    ),
+    case(
+        "标准化列名与文本",
+        "读取脏订单CSV，把状态和渠道统一为去空格的小写形式。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取脏文本数据。",
+        "frame.columns = frame.columns.str.strip().str.lower().str.replace(' ', '_')  # 统一列名风格。",
+        "frame['status'] = frame['status'].astype('string').str.strip().str.lower()  # 向量化清洗状态。",
+        "frame['channel'] = frame['channel'].astype('string').str.strip().str.title()  # 统一渠道首字母大写。",
+        "assert set(frame['status']) <= {'completed', 'pending', 'cancelled', 'returned'}  # 验证状态词汇已归一化。",
+        "print(frame[['status', 'channel']].drop_duplicates())  # 输出清洗后的类别组合。",
+    ),
+    case(
+        "货币字符串转数值",
+        "读取脏订单CSV，删除金额中的美元符号和千位逗号，再安全转换为数值。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取含货币字符串的订单。",
+        "clean_amount = frame['amount'].astype('string').str.replace('$', '', regex=False).str.replace(',', '', regex=False)  # 删除显示符号。",
+        "frame['amount_number'] = pd.to_numeric(clean_amount, errors='coerce')  # 非法或缺失金额转换为NaN。",
+        "assert frame['amount_number'].dtype.kind == 'f' and frame['amount_number'].max() == 1250  # 验证数值类型和千位金额。",
+        "print(frame[['amount', 'amount_number']])  # 对比原始与数值金额。",
+    ),
+    case(
+        "混合日期安全转换",
+        "读取脏订单CSV，用format=mixed处理不同日期格式，并把非法日期转换为NaT。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 先按字符串读取日期。",
+        "frame['parsed_date'] = pd.to_datetime(frame['order_date'], format='mixed', errors='coerce')  # 解析混合格式并容忍非法值。",
+        "invalid_rows = frame[frame['parsed_date'].isna()]  # 取得无法解析的原始记录。",
+        "assert len(invalid_rows) == 1 and invalid_rows.iloc[0]['order_date'] == 'not-a-date'  # 验证坏日期被隔离。",
+        "print(invalid_rows[['order_id', 'order_date']])  # 输出待人工修复记录。",
+    ),
+    case(
+        "分组统计量填补缺失",
+        "读取传感器CSV，使用每台设备自己的温度中位数填补缺失值。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取传感器数据。",
+        "device_median = frame.groupby('device_id')['temperature'].transform('median')  # 返回与原表等长的设备中位数。",
+        "frame['temperature_filled'] = frame['temperature'].fillna(device_median)  # 按行使用对应设备统计量填补。",
+        "assert not frame['temperature_filled'].isna().any()  # 验证温度缺失全部解决。",
+        "print(frame.loc[frame['temperature'].isna(), ['device_id', 'temperature', 'temperature_filled']])  # 查看被填补的行。",
+    ),
+    case(
+        "按时间插值缺失值",
+        "读取传感器CSV并按设备、时间排序，在每台设备内部线性插值温度。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['timestamp']).sort_values(['device_id', 'timestamp'])  # 解析并建立正确时序。",
+        "frame['temperature_interpolated'] = frame.groupby('device_id')['temperature'].transform(lambda values: values.interpolate(limit_direction='both'))  # 只在设备内部插值。",
+        "assert not frame['temperature_interpolated'].isna().any()  # 验证边界与内部缺失均被处理。",
+        "print(frame.loc[frame['temperature'].isna(), ['device_id', 'timestamp', 'temperature_interpolated']])  # 输出插值结果。",
+    ),
+    case(
+        "IQR检测并裁剪异常值",
+        "读取传感器CSV，用IQR规则识别异常温度，并使用clip限制到上下界。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取温度数据。",
+        "first_quartile, third_quartile = frame['temperature'].quantile([0.25, 0.75])  # 计算四分位数。",
+        "iqr = third_quartile - first_quartile  # 计算四分位距。",
+        "lower, upper = first_quartile - 1.5 * iqr, third_quartile + 1.5 * iqr  # 定义Tukey异常界限。",
+        "outliers = frame[~frame['temperature'].between(lower, upper) & frame['temperature'].notna()]  # 筛选非缺失异常值。",
+        "frame['temperature_clipped'] = frame['temperature'].clip(lower, upper)  # 温莎化裁剪异常值。",
+        "assert len(outliers) >= 1 and frame['temperature_clipped'].max() <= upper  # 验证异常识别和裁剪。",
+        "print(outliers[['device_id', 'timestamp', 'temperature']], lower, upper)  # 输出异常记录和边界。",
+    ),
+    case(
+        "布尔筛选与query",
+        "读取销售CSV，计算净销售额，并用布尔mask和query两种方式筛选高价值电子产品订单。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame.eval('quantity * unit_price * (1 - discount)')  # 使用eval计算净额。",
+        "minimum = 300  # 定义高价值阈值。",
+        "target_category = 'Electronics'  # 定义需要筛选的类别。",
+        "by_mask = frame[(frame['category'] == 'Electronics') & frame['net'].ge(minimum)]  # 使用布尔mask筛选。",
+        "by_query = frame.query('category == @target_category and net >= @minimum')  # 使用query并引用两个外部变量。",
+        "assert by_mask.index.equals(by_query.index)  # 验证两种筛选形式等价。",
+        "print(by_query[['order_id', 'product', 'net']])  # 输出高价值订单。",
+    ),
+    case(
+        "assign与链式特征工程",
+        "读取销售CSV，使用assign一次创建原价、折扣金额、净额和平均单价特征。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "featured = frame.assign(gross=lambda data: data['quantity'] * data['unit_price'], discount_amount=lambda data: data['gross'] * data['discount'], net=lambda data: data['gross'] - data['discount_amount'], unit_net=lambda data: data['net'] / data['quantity'])  # 按声明顺序引用新列。",
+        "assert (featured['net'] <= featured['gross']).all() and featured[['gross', 'discount_amount', 'net', 'unit_net']].notna().all().all()  # 验证金额关系。",
+        "print(featured[['order_id', 'gross', 'discount_amount', 'net', 'unit_net']].head())  # 输出衍生特征。",
+    ),
+    case(
+        "多列排序排名与TopN",
+        "读取销售CSV，计算净额、地区内排名，并取得每个地区最高订单。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame['quantity'] * frame['unit_price'] * (1 - frame['discount'])  # 计算排序指标。",
+        "frame['region_rank'] = frame.groupby('region')['net'].rank(method='dense', ascending=False).astype(int)  # 计算地区内无跳号排名。",
+        "top_each_region = frame.sort_values(['region', 'net', 'order_id'], ascending=[True, False, True]).groupby('region', as_index=False).head(1)  # 每区保留第一名并指定并列规则。",
+        "assert top_each_region['region'].is_unique and top_each_region['region_rank'].eq(1).all()  # 验证每区一条第一名。",
+        "print(top_each_region[['region', 'order_id', 'net', 'region_rank']])  # 输出地区Top1。",
+    ),
+    case(
+        "GroupBy命名聚合",
+        "读取销售CSV，按地区计算净额总和、订单数、平均订单和最大折扣。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame['quantity'] * frame['unit_price'] * (1 - frame['discount'])  # 计算净额。",
+        "summary = frame.groupby('region', as_index=False).agg(total_net=('net', 'sum'), order_count=('order_id', 'nunique'), average_net=('net', 'mean'), max_discount=('discount', 'max'))  # 使用命名聚合生成平坦列名。",
+        "assert summary['order_count'].sum() == frame['order_id'].nunique()  # 验证订单数量守恒。",
+        "print(summary.sort_values('total_net', ascending=False))  # 输出地区汇总。",
+    ),
+    case(
+        "GroupBy transform计算占比",
+        "读取销售CSV，计算每笔订单净额占所在地区总净额的比例。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame['quantity'] * frame['unit_price'] * (1 - frame['discount'])  # 计算订单净额。",
+        "frame['region_total'] = frame.groupby('region')['net'].transform('sum')  # 把地区总额广播回原始行。",
+        "frame['region_share'] = frame['net'] / frame['region_total']  # 计算组内占比。",
+        "assert frame.groupby('region')['region_share'].sum().round(10).eq(1).all()  # 验证各地区占比和为1。",
+        "print(frame[['order_id', 'region', 'net', 'region_share']].head())  # 输出组内占比。",
+    ),
+    case(
+        "GroupBy filter筛选整个组",
+        "读取销售CSV，只保留订单总净额超过1500的地区的全部原始订单。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame['quantity'] * frame['unit_price'] * (1 - frame['discount'])  # 计算净额。",
+        "large_regions = frame.groupby('region').filter(lambda group: group['net'].sum() > 1500)  # filter按组判断但返回原始行。",
+        "assert large_regions.groupby('region')['net'].sum().gt(1500).all()  # 验证保留组满足条件。",
+        "print(large_regions[['order_id', 'region', 'net']])  # 输出被保留地区的订单。",
+    ),
+    case(
+        "merge客户与订单",
+        "读取客户CSV和脏订单CSV，清洗订单金额后执行many-to-one左连接。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "data_folder = Path(__file__).parents[1] / 'data'  # 定位共享数据目录。",
+        "customers = pd.read_csv(data_folder / 'customers.csv')  # 读取客户主表。",
+        "orders = pd.read_csv(data_folder / 'orders_dirty.csv').drop_duplicates('order_id')  # 读取并去重订单。",
+        "orders['amount'] = pd.to_numeric(orders['amount'].astype('string').str.replace(r'[$,]', '', regex=True), errors='coerce')  # 清洗金额。",
+        "merged = orders.merge(customers, on='customer_id', how='left', validate='many_to_one', indicator=True)  # 验证多订单对一客户关系。",
+        "assert len(merged) == len(orders) and (merged['_merge'] == 'left_only').sum() == 1  # 验证左连接保行并发现未知客户。",
+        "print(merged[['order_id', 'customer_id', 'customer_name', 'amount', '_merge']])  # 输出连接结果。",
+    ),
+    case(
+        "merge indicator反连接",
+        "读取客户和订单CSV，找出没有任何订单的客户以及找不到客户的订单。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "data_folder = Path(__file__).parents[1] / 'data'  # 定位共享数据目录。",
+        "customers = pd.read_csv(data_folder / 'customers.csv')  # 读取客户主表。",
+        "orders = pd.read_csv(data_folder / 'orders_dirty.csv').drop_duplicates('order_id')  # 读取唯一订单。",
+        "left_only = 'left_only'  # 定义反连接的indicator标记。",
+        "customer_audit = customers.merge(orders[['customer_id']].drop_duplicates(), on='customer_id', how='left', indicator=True)  # 从客户侧检查订单匹配。",
+        "customers_without_orders = customer_audit.query('_merge == @left_only')  # 取得没有订单的客户。",
+        "order_audit = orders.merge(customers[['customer_id']], on='customer_id', how='left', indicator=True)  # 从订单侧检查客户匹配。",
+        "unknown_customer_orders = order_audit.query('_merge == @left_only')  # 取得孤儿订单。",
+        "assert len(customers_without_orders) == 0 and unknown_customer_orders['customer_id'].tolist() == ['C999']  # 验证两个反连接结果。",
+        "print(customers_without_orders, unknown_customer_orders[['order_id', 'customer_id']], sep='\\n')  # 输出数据完整性问题。",
+    ),
+    case(
+        "merge validate捕获关系错误",
+        "读取客户和原始脏订单CSV，演示错误的一对一假设会被validate拒绝。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "data_folder = Path(__file__).parents[1] / 'data'  # 定位共享数据目录。",
+        "customers = pd.read_csv(data_folder / 'customers.csv')  # 读取唯一客户。",
+        "orders = pd.read_csv(data_folder / 'orders_dirty.csv')  # 保留重复订单以演示错误。",
+        "try:  # 尝试声明不成立的一对一关系。",
+        "    orders.merge(customers, on='customer_id', validate='one_to_one')  # customer_id在订单侧会重复。",
+        "except pd.errors.MergeError as error:  # 捕获关系验证错误。",
+        "    merge_error = str(error)  # 保存清晰错误信息。",
+        "assert 'not a one-to-one' in merge_error  # 验证validate阻止静默行数膨胀。",
+        "print(merge_error)  # 输出关系错误说明。",
+    ),
+    case(
+        "concat合并分区CSV数据",
+        "读取销售CSV，模拟按月份分区后重新纵向拼接，并用keys保留来源。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['date'])  # 读取并解析日期。",
+        "partitions = {str(month): group.copy() for month, group in frame.groupby(frame['date'].dt.to_period('M'))}  # 模拟按月文件分区。",
+        "combined = pd.concat(partitions, names=['source_month', 'row'])  # 用字典keys生成来源层级索引。",
+        "assert len(combined) == len(frame) and combined.index.names == ['source_month', 'row']  # 验证行数和来源索引。",
+        "print(combined[['order_id', 'date']].head())  # 输出带来源的拼接结果。",
+    ),
+    case(
+        "pivot_table透视汇总",
+        "读取销售CSV，以地区为行、类别为列计算净销售额，并添加总计。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sales.csv'  # 定位销售CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取销售数据。",
+        "frame['net'] = frame['quantity'] * frame['unit_price'] * (1 - frame['discount'])  # 计算净额。",
+        "pivot = frame.pivot_table(index='region', columns='category', values='net', aggfunc='sum', fill_value=0, margins=True, margins_name='Total')  # 创建交叉汇总及总计。",
+        "assert 'Total' in pivot.index and 'Total' in pivot.columns  # 验证行列总计存在。",
+        "print(pivot)  # 输出销售透视表。",
+    ),
+    case(
+        "melt宽表转长表",
+        "读取传感器CSV，把温度和湿度两列转换为metric/value长表。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['timestamp'])  # 读取宽表。",
+        "long_frame = frame.melt(id_vars=['timestamp', 'device_id', 'status'], value_vars=['temperature', 'humidity'], var_name='metric', value_name='value')  # 把两个测量列堆叠成长表。",
+        "assert len(long_frame) == len(frame) * 2 and set(long_frame['metric']) == {'temperature', 'humidity'}  # 验证行数扩展和指标类别。",
+        "print(long_frame.head())  # 输出长表。",
+    ),
+    case(
+        "crosstab交叉频数与比例",
+        "读取评论CSV，计算评分和月份的交叉频数及按月归一化比例。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'reviews.csv'  # 定位评论CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['created_at'])  # 读取评论和日期。",
+        "frame['month'] = frame['created_at'].dt.to_period('M').astype(str)  # 创建月份标签。",
+        "counts = pd.crosstab(frame['month'], frame['rating'], margins=True)  # 计算频数和总计。",
+        "row_proportions = pd.crosstab(frame['month'], frame['rating'], normalize='index')  # 每个月内部归一化。",
+        "assert row_proportions.sum(axis=1).round(10).eq(1).all()  # 验证每月比例和为1。",
+        "print(counts, row_proportions, sep='\\n')  # 输出频数和比例。",
+    ),
+    case(
+        "explode展开多值标签",
+        "读取评论CSV，把竖线分隔的tags拆成列表并展开为一行一个标签。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'reviews.csv'  # 定位评论CSV。",
+        "frame = pd.read_csv(csv_path, dtype={'tags': 'string'})  # 读取标签字符串。",
+        "frame['tag_list'] = frame['tags'].str.split('|')  # 向量化拆分为列表。",
+        "exploded = frame.explode('tag_list', ignore_index=True).rename(columns={'tag_list': 'tag'})  # 每个标签展开成独立行。",
+        "tag_counts = exploded['tag'].value_counts()  # 统计标签频率。",
+        "assert len(exploded) == len(frame) * 2 and tag_counts.index.notna().all()  # 验证每条评论的两个标签均被展开。",
+        "print(tag_counts)  # 输出标签热度。",
+    ),
+    case(
+        "cut与qcut连续值分箱",
+        "读取客户CSV，分别用业务固定边界和等频分位数对年龄分箱。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'customers.csv'  # 定位客户CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取客户年龄。",
+        "frame['age_band'] = pd.cut(frame['age'], bins=[0, 29, 39, 49, float('inf')], labels=['under30', '30s', '40s', '50plus'], include_lowest=True)  # 按业务边界分箱。",
+        "frame['age_quantile'] = pd.qcut(frame['age'], q=4, labels=['Q1', 'Q2', 'Q3', 'Q4'])  # 按样本数量近似等分。",
+        "assert not frame[['age_band', 'age_quantile']].isna().any().any()  # 验证所有年龄落入分箱。",
+        "print(frame[['customer_name', 'age', 'age_band', 'age_quantile']])  # 对比两种分箱。",
+    ),
+    case(
+        "时间序列resample重采样",
+        "读取传感器CSV，把每台设备的小时数据重采样为每日均值和有效观测数。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['timestamp']).set_index('timestamp')  # 使用时间索引。",
+        "daily = frame.groupby('device_id')[['temperature', 'humidity']].resample('D').agg(temperature_mean=('temperature', 'mean'), humidity_mean=('humidity', 'mean'), valid_temperature=('temperature', 'count')).reset_index()  # 显式选择数值列后按设备和天重采样。",
+        "assert len(daily) == frame['device_id'].nunique() * 2 and daily['valid_temperature'].gt(0).all()  # 验证每设备每天一行。",
+        "print(daily)  # 输出每日汇总。",
+    ),
+    case(
+        "rolling移动窗口统计",
+        "读取传感器CSV，按设备计算3期移动平均和移动标准差。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['timestamp']).sort_values(['device_id', 'timestamp'])  # 建立设备内时间顺序。",
+        "frame['temperature_ma3'] = frame.groupby('device_id')['temperature'].transform(lambda values: values.rolling(3, min_periods=1).mean())  # 计算3期移动均值。",
+        "frame['temperature_std3'] = frame.groupby('device_id')['temperature'].transform(lambda values: values.rolling(3, min_periods=2).std())  # 至少两点才计算标准差。",
+        "assert frame.groupby('device_id')['temperature_ma3'].first().notna().all()  # 验证每台设备首行有均值。",
+        "print(frame[['timestamp', 'device_id', 'temperature', 'temperature_ma3', 'temperature_std3']].head(8))  # 输出窗口特征。",
+    ),
+    case(
+        "shift差分与变化率",
+        "读取传感器CSV，按设备计算上一时刻温度、温度差和百分比变化。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'sensor_readings.csv'  # 定位传感器CSV。",
+        "frame = pd.read_csv(csv_path, parse_dates=['timestamp']).sort_values(['device_id', 'timestamp'])  # 建立设备内时序。",
+        "grouped_temperature = frame.groupby('device_id')['temperature']  # 缓存分组列。",
+        "frame['previous_temperature'] = grouped_temperature.shift(1)  # 取得同设备上一条温度。",
+        "frame['temperature_difference'] = grouped_temperature.diff()  # 计算一阶差分。",
+        "frame['temperature_pct_change'] = grouped_temperature.pct_change(fill_method=None)  # 计算变化率且不自动填缺失。",
+        "assert frame.groupby('device_id').head(1)['previous_temperature'].isna().all()  # 使用head保留NaN并验证每台设备首行没有历史值。",
+        "print(frame[['device_id', 'timestamp', 'temperature', 'previous_temperature', 'temperature_difference', 'temperature_pct_change']].head(8))  # 输出滞后特征。",
+    ),
+    case(
+        "字符串正则提取与词频",
+        "读取评论CSV，清洗大小写和标点，提取包含delivery或refund的评论并统计单词。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'reviews.csv'  # 定位评论CSV。",
+        "frame = pd.read_csv(csv_path, dtype={'review_text': 'string'})  # 读取可空文本。",
+        "frame['clean_text'] = frame['review_text'].fillna('').str.strip().str.lower().str.replace(r'[^a-z\\s]', '', regex=True)  # 清洗空白、大小写和标点。",
+        "matched = frame[frame['clean_text'].str.contains(r'\\b(?:delivery|refund)\\b', regex=True, na=False)]  # 使用非捕获组和单词边界筛选主题评论。",
+        "word_counts = frame['clean_text'].str.split().explode().value_counts()  # 拆词、展开并统计频率。",
+        "assert len(matched) >= 2 and 'delivery' in word_counts.index  # 验证主题筛选和词频。",
+        "print(matched[['review_id', 'clean_text']], word_counts.head(), sep='\\n')  # 输出匹配评论和高频词。",
+    ),
+    case(
+        "Categorical有序类别",
+        "读取脏订单CSV，清洗状态并建立有业务顺序的Categorical类型。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位订单CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取订单状态。",
+        "clean_status = frame['status'].str.strip().str.lower()  # 标准化状态文本。",
+        "status_type = pd.CategoricalDtype(categories=['pending', 'completed', 'returned', 'cancelled'], ordered=True)  # 定义业务顺序。",
+        "frame['status_category'] = clean_status.astype(status_type)  # 转换为有序分类数据。",
+        "sorted_orders = frame.sort_values('status_category')  # 按类别顺序而非字母排序。",
+        "assert str(frame['status_category'].dtype) == 'category' and frame['status_category'].cat.ordered  # 验证有序分类类型。",
+        "print(sorted_orders[['order_id', 'status_category']])  # 输出业务顺序结果。",
+    ),
+    case(
+        "索引对齐与安全赋值",
+        "读取客户CSV，设置customer_id索引，并把乱序的风险分数按标签自动对齐。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'customers.csv'  # 定位客户CSV。",
+        "frame = pd.read_csv(csv_path).set_index('customer_id')  # 使用稳定业务键作为索引。",
+        "risk = pd.Series({'C003': 0.8, 'C001': 0.2, 'C002': 0.5}, name='risk')  # 创建顺序不同且只覆盖部分客户的Series。",
+        "frame.loc[:, 'risk'] = risk  # 按索引标签对齐赋值而非按位置。",
+        "assert frame.loc['C003', 'risk'] == 0.8 and frame['risk'].isna().sum() == len(frame) - len(risk)  # 验证标签对齐和未匹配缺失。",
+        "print(frame[['customer_name', 'risk']])  # 输出对齐结果。",
+    ),
+    case(
+        "DataFrame转NumPy矩阵",
+        "读取Iris CSV，把数值特征转换为NumPy矩阵，完成标准化和协方差计算。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import numpy as np  # 导入NumPy。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[2] / 'transformer_learning' / 'data' / 'iris.csv'  # 定位项目中的Iris CSV。",
+        "frame = pd.read_csv(csv_path)  # 从CSV读取Iris。",
+        "matrix = frame.select_dtypes(include='number').to_numpy(dtype=np.float32, copy=True)  # 选择数值列并复制为float32矩阵。",
+        "standardized = (matrix - matrix.mean(axis=0, keepdims=True)) / matrix.std(axis=0, keepdims=True)  # 按特征标准化。",
+        "covariance = np.cov(standardized, rowvar=False)  # 计算特征协方差矩阵。",
+        "assert matrix.shape[1] == 4 and np.allclose(standardized.mean(0), 0, atol=1e-6) and covariance.shape == (4, 4)  # 验证矩阵和统计结果。",
+        "print(matrix.shape, covariance, sep='\\n')  # 输出shape和协方差。",
+    ),
+    case(
+        "CSV到sklearn预处理Pipeline",
+        "读取客户CSV，使用ColumnTransformer分别标准化数值列和独热编码类别列。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import numpy as np  # 导入NumPy用于数值检查。",
+        "import pandas as pd  # 导入Pandas。",
+        "from sklearn.compose import ColumnTransformer  # 导入列转换器。",
+        "from sklearn.preprocessing import OneHotEncoder, StandardScaler  # 导入数值和类别转换器。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'customers.csv'  # 定位客户CSV。",
+        "frame = pd.read_csv(csv_path)  # 读取混合类型客户特征。",
+        "preprocessor = ColumnTransformer([('numeric', StandardScaler(), ['age']), ('category', OneHotEncoder(handle_unknown='ignore', sparse_output=False), ['segment', 'city'])])  # 为不同列配置转换。",
+        "matrix = preprocessor.fit_transform(frame)  # 只在训练示例数据上拟合并转换。",
+        "feature_names = preprocessor.get_feature_names_out()  # 取得转换后列名。",
+        "assert matrix.shape[0] == len(frame) and np.isfinite(matrix).all() and len(feature_names) == matrix.shape[1]  # 验证样本数、数值和特征名。",
+        "print(feature_names, matrix[:2], sep='\\n')  # 输出特征空间。",
+    ),
+    case(
+        "CSV分类训练测试切分",
+        "读取Iris CSV，编码标签、分层切分训练测试集，并验证类别比例。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import numpy as np  # 导入NumPy。",
+        "import pandas as pd  # 导入Pandas。",
+        "from sklearn.model_selection import train_test_split  # 导入切分函数。",
+        "from sklearn.preprocessing import LabelEncoder  # 导入标签编码器。",
+        "csv_path = Path(__file__).parents[2] / 'transformer_learning' / 'data' / 'iris.csv'  # 定位Iris CSV。",
+        "frame = pd.read_csv(csv_path)  # 从CSV读取分类数据。",
+        "features = frame.drop(columns='species').to_numpy(dtype=np.float32)  # 提取数值特征。",
+        "encoder = LabelEncoder(); labels = encoder.fit_transform(frame['species'])  # 把类别名称编码为0到K减1。",
+        "train_x, test_x, train_y, test_y = train_test_split(features, labels, test_size=0.2, random_state=42, stratify=labels)  # 分层切分保持类别比例。",
+        "assert train_x.shape == (120, 4) and test_x.shape == (30, 4) and np.array_equal(np.bincount(test_y), [10, 10, 10])  # 验证shape和测试类别数。",
+        "print(encoder.classes_, train_x.shape, test_x.shape)  # 输出标签映射和集合shape。",
+    ),
+    case(
+        "CSV到PyTorch Dataset",
+        "读取Iris CSV，把特征和标签转换为TensorDataset，再用DataLoader产生batch。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "import torch  # 导入PyTorch。",
+        "from sklearn.preprocessing import LabelEncoder  # 导入标签编码器。",
+        "from torch.utils.data import DataLoader, TensorDataset  # 导入张量数据集和加载器。",
+        "csv_path = Path(__file__).parents[2] / 'transformer_learning' / 'data' / 'iris.csv'  # 定位Iris CSV。",
+        "frame = pd.read_csv(csv_path)  # 从CSV读取数据。",
+        "feature_tensor = torch.tensor(frame.drop(columns='species').to_numpy(), dtype=torch.float32)  # 转换数值特征为float32张量。",
+        "label_tensor = torch.tensor(LabelEncoder().fit_transform(frame['species']), dtype=torch.long)  # CrossEntropyLoss标签使用long。",
+        "loader = DataLoader(TensorDataset(feature_tensor, label_tensor), batch_size=16, shuffle=True, generator=torch.Generator().manual_seed(42))  # 创建可复现随机batch。",
+        "batch_features, batch_labels = next(iter(loader))  # 取得第一个batch。",
+        "assert batch_features.shape == (16, 4) and batch_labels.dtype == torch.long  # 验证batch shape和标签dtype。",
+        "print(batch_features.shape, batch_labels[:5])  # 输出batch信息。",
+    ),
+    case(
+        "清洗后导出CSV并读回",
+        "读取脏订单CSV，清洗金额、状态和重复值，写入临时CSV后再次读回验证。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import tempfile  # 导入自动清理临时目录。",
+        "import pandas as pd  # 导入Pandas。",
+        "csv_path = Path(__file__).parents[1] / 'data' / 'orders_dirty.csv'  # 定位脏订单CSV。",
+        "frame = pd.read_csv(csv_path).drop_duplicates('order_id').copy()  # 读取并建立独立清洗表。",
+        "frame['status'] = frame['status'].str.strip().str.lower()  # 清洗状态。",
+        "frame['amount'] = pd.to_numeric(frame['amount'].astype('string').str.replace(r'[$,]', '', regex=True), errors='coerce')  # 清洗金额。",
+        "with tempfile.TemporaryDirectory() as folder:  # 创建自动删除的临时目录。",
+        "    output_path = Path(folder) / 'orders_clean.csv'  # 定义输出CSV。",
+        "    frame.to_csv(output_path, index=False, date_format='%Y-%m-%d')  # 不写DataFrame索引。",
+        "    restored = pd.read_csv(output_path)  # 从导出CSV重新读取。",
+        "assert restored.shape == frame.shape and restored['order_id'].is_unique  # 验证往返行列数和业务键。",
+        "print(restored.head())  # 输出恢复数据。",
+    ),
+    case(
+        "端到端CSV数据处理流水线",
+        "读取客户、订单和评论三个CSV，完成清洗、连接、聚合和客户特征表构建。",
+        "from pathlib import Path  # 导入路径工具。",
+        "import pandas as pd  # 导入Pandas。",
+        "data_folder = Path(__file__).parents[1] / 'data'  # 定位共享数据目录。",
+        "customers = pd.read_csv(data_folder / 'customers.csv', parse_dates=['signup_date'])  # 读取客户主表。",
+        "orders = pd.read_csv(data_folder / 'orders_dirty.csv').drop_duplicates('order_id').copy()  # 读取并去重订单。",
+        "reviews = pd.read_csv(data_folder / 'reviews.csv', parse_dates=['created_at'])  # 读取评论。",
+        "orders['amount'] = pd.to_numeric(orders['amount'].astype('string').str.replace(r'[$,]', '', regex=True), errors='coerce')  # 金额转数值。",
+        "orders['status'] = orders['status'].str.strip().str.lower()  # 状态标准化。",
+        "completed_status = 'completed'  # 定义已完成订单状态。",
+        "completed = orders.query('status == @completed_status')  # 只使用已完成订单构建消费特征。",
+        "order_features = completed.groupby('customer_id').agg(completed_orders=('order_id', 'nunique'), total_spend=('amount', 'sum'), average_order=('amount', 'mean'), last_order=('order_date', 'max'))  # 聚合订单特征。",
+        "review_features = reviews.groupby('customer_id').agg(review_count=('review_id', 'nunique'), average_rating=('rating', 'mean'))  # 聚合评论特征。",
+        "customer_features = customers.set_index('customer_id').join(order_features).join(review_features)  # 以客户主表左连接两类特征。",
+        "customer_features[['completed_orders', 'total_spend', 'review_count']] = customer_features[['completed_orders', 'total_spend', 'review_count']].fillna(0)  # 无行为客户的计数金额填零。",
+        "customer_features['days_as_customer'] = (pd.Timestamp('2025-03-31') - customer_features['signup_date']).dt.days  # 计算客户存续天数。",
+        "assert len(customer_features) == len(customers) and customer_features.index.is_unique and customer_features['total_spend'].ge(0).all()  # 验证客户粒度、唯一性和金额。",
+        "print(customer_features.sort_values('total_spend', ascending=False))  # 输出最终客户特征表。",
+    ),
+]
+
+
+def steps_from_code(code: list[str]) -> list[str]:
+    """从逐行注释提取题目操作步骤。"""
+    steps: list[str] = []
+    for line in code:
+        stripped = line.lstrip()
+        if stripped.startswith(("import ", "from ", "assert ", "print(", "except ")):
+            continue
+        if "#" not in line:
+            continue
+        comment = line.split("#", 1)[1].strip().rstrip("。")
+        if comment and comment not in steps:
+            steps.append(comment)
+    return steps[:10]
+
+
+def render(number: int, title: str, task: str, code: list[str]) -> None:
+    """写出一个含中文步骤和逐行注释的独立练习文件。"""
+    safe_title = title.lower().replace("/", "_").replace(" ", "_")
+    path = OUTPUT / f"{number:03d}_{safe_title}.py"
+    header = [
+        '"""',
+        f"CSV数据处理练习 {number:03d}：{title}",
+        "",
+        f"题目：{task}",
+        "",
+        "操作过程：",
+        *[f"{index}. {step}。" for index, step in enumerate(steps_from_code(code), 1)],
+        "",
+        "完成标准：",
+        "- 必须使用pd.read_csv从磁盘载入CSV。",
+        "- 脚本能够独立运行且assert全部通过。",
+        "- 先自己实现，再对照下面逐行中文注释的参考代码。",
+        '"""',
+        "",
+    ]
+    path.write_text("\n".join(header + code) + "\n", encoding="utf-8")
+
+
+def main() -> None:
+    """清理旧生成文件并重新生成全部CSV练习。"""
+    if OUTPUT.exists():
+        shutil.rmtree(OUTPUT)
+    OUTPUT.mkdir(parents=True)
+    for number, (title, task, code) in enumerate(CASES, 1):
+        render(number, title, task, code)
+    readme = """# CSV 数据处理专项练习
+
+本目录包含 42 个独立、可运行的例子。每个例子都从 `pd.read_csv(...)` 开始，
+不会用代码临时构造 DataFrame 来绕过 CSV 读取。
+
+建议学习顺序：
+
+1. `001–008`：读取参数、dtype、日期、缺失标记、分块和文本。
+2. `009–015`：重复值、文本/金额/日期清洗、填补、插值和异常值。
+3. `016–021`：筛选、特征工程、排序、GroupBy 聚合与 transform/filter。
+4. `022–030`：merge、反连接、关系验证、concat、pivot、melt、crosstab、explode、分箱。
+5. `031–036`：resample、rolling、shift、正则文本、Categorical 和索引对齐。
+6. `037–042`：NumPy、sklearn、训练测试切分、PyTorch、CSV导出和端到端流水线。
+
+运行单题：
+
+```bash
+python csv_data_processing/011_货币字符串转数值.py
+```
+
+验证并运行全部题目：
+
+```bash
+python validate_csv_examples.py
+```
+
+使用的数据位于上级 `data/` 目录，Iris 例子复用项目 `transformer_learning/data/iris.csv`。
+"""
+    (OUTPUT / "README.md").write_text(readme, encoding="utf-8")
+    print(f"已生成 {len(CASES)} 个CSV数据处理练习。")
+
+
+if __name__ == "__main__":
+    main()

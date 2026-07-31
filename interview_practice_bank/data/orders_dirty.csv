@@ -1,0 +1,13 @@
+order_id,customer_id,order_date,amount,status,promo_code,channel
+O001,C001,2025-01-03,"$1,250.00",Completed,NEW10,Web
+O002,C002,2025-01-05,$240.50,completed,,Store
+O003,C003,2025/01/08,$89.99, Pending ,SAVE5,web
+O004,C001,2025-01-12,$450.00,CANCELLED,,Mobile
+O005,C004,not-a-date,$720.00,Completed,VIP20,Store
+O006,C005,2025-02-02,,Completed,,Web
+O007,C006,2025-02-03,$35.75,pending,NEW10,Mobile
+O008,C999,2025-02-10,$190.00,Completed,,Web
+O009,C007,2025-02-14,"$1,100.00",Completed,VIP20,Store
+O010,C008,2025-02-18,$64.20,Returned,,web
+O010,C008,2025-02-18,$64.20,Returned,,web
+O011,C003,2025-03-01,$310.40,COMPLETED,SAVE5,Mobile

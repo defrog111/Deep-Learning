@@ -1,0 +1,11 @@
+review_id,customer_id,rating,review_text,tags,created_at
+R001,C001,5," Fast delivery and GREAT product! ","delivery|quality",2025-01-04
+R002,C002,3,"Packaging was damaged, item works.","packaging|quality",2025-01-07
+R003,C003,1,"Late delivery; requested refund.","delivery|refund",2025-01-11
+R004,C004,4,"Good value for money.","value|quality",2025-01-15
+R005,C005,5,"Excellent support from the team.","support|service",2025-02-03
+R006,C006,2,"App crashed twice during checkout.","app|checkout",2025-02-05
+R007,C007,4,"Easy ordering and quick pickup.","ordering|pickup",2025-02-15
+R008,C008,3,,"missing_text|service",2025-02-20
+R009,C001,5,"Would buy again!!!","loyalty|quality",2025-03-02
+R010,C003,2,"Refund process was too slow.","refund|service",2025-03-05
