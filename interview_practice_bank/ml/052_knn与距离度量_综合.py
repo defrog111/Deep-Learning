@@ -11,9 +11,12 @@
 5. KNN分类常使用奇数k减少平票。
 6. 找到最近k个样本。
 7. 多数投票。
+8. 高维中最近和最远距离趋于相似。
+9. 综合演示维度灾难。
 
 完成标准：
 - 验证合法类别。
+- 综合演示维度灾难。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +32,5 @@ neighbors = np.argsort(distances)[:k]  # 找到最近k个样本。
 prediction = np.bincount(labels[neighbors], minlength=2).argmax()  # 多数投票。
 assert prediction in (0, 1)  # 验证合法类别。
 print(distances, neighbors, prediction)  # 输出邻居和预测。
+rng_dimension = np.random.default_rng(0); low_dim = rng_dimension.random((1000, 2)); high_dim = rng_dimension.random((1000, 50)); low_ratio = np.linalg.norm(low_dim, axis=1).min() / np.linalg.norm(low_dim, axis=1).max(); high_ratio = np.linalg.norm(high_dim, axis=1).min() / np.linalg.norm(high_dim, axis=1).max()  # 高维中最近和最远距离趋于相似。
+assert high_ratio > low_ratio  # 综合演示维度灾难。

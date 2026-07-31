@@ -11,9 +11,11 @@
 5. 分配到最近中心。
 6. 更新为簇均值。
 7. 计算簇内平方和。
+8. KMeans++按到最近中心距离平方选新中心。
 
 完成标准：
 - 验证简单数据被正确聚类。
+- 验证概率初始化。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ for _ in range(5):  # 交替执行分配和更新。
 inertia = np.sum((points - centers[assignments]) ** 2)  # 计算簇内平方和。
 assert inertia <= 1.0  # 验证简单数据被正确聚类。
 print(assignments, centers, inertia)  # 输出聚类结果。
+rng_kpp = np.random.default_rng(2); points_kpp = np.array([[0.0], [1.0], [9.0], [10.0]]); first_center = points_kpp[0]; squared_nearest = ((points_kpp - first_center)**2).ravel(); second_center = points_kpp[rng_kpp.choice(len(points_kpp), p=squared_nearest / squared_nearest.sum())]  # KMeans++按到最近中心距离平方选新中心。
+assert second_center.shape == (1,)  # 验证概率初始化。

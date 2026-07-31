@@ -11,9 +11,11 @@
 5. 分配到最近中心。
 6. 更新为簇均值。
 7. 计算簇内平方和。
+8. DBSCAN用eps邻域和min_samples识别密度及噪声。
 
 完成标准：
 - 验证简单数据被正确聚类。
+- 验证离群点。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ for _ in range(5):  # 交替执行分配和更新。
 inertia = np.sum((points - centers[assignments]) ** 2)  # 计算簇内平方和。
 assert inertia <= 1.0  # 验证简单数据被正确聚类。
 print(assignments, centers, inertia)  # 输出聚类结果。
+dbscan_points = np.array([[0.0], [0.1], [5.0], [5.1], [20.0]]); dbscan_distances = np.abs(dbscan_points - dbscan_points.T); neighbor_counts = (dbscan_distances <= 0.2).sum(1); core_mask = neighbor_counts >= 2; noise_candidate = ~core_mask  # DBSCAN用eps邻域和min_samples识别密度及噪声。
+assert noise_candidate.tolist() == [False, False, False, False, True]  # 验证离群点。

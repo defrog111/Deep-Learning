@@ -11,9 +11,11 @@
 5. 计算功能间隔。
 6. 计算hinge loss。
 7. 除以权重范数得到几何间隔。
+8. 间隔内或边界上的样本影响hinge loss。
 
 完成标准：
 - 验证损失非负。
+- 验证支持向量候选。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ hinge = np.maximum(0, 1 - margins)  # 计算hinge loss。
 geometric_margin = margins / np.linalg.norm(weights)  # 除以权重范数得到几何间隔。
 assert np.all(hinge >= 0)  # 验证损失非负。
 print(scores, margins, hinge, geometric_margin)  # 输出SVM关键量。
+svm_scores = np.array([2.0, 0.5, -1.5]); svm_labels = np.array([1.0, 1.0, -1.0]); margins = svm_labels * svm_scores; support_candidates = margins <= 1  # 间隔内或边界上的样本影响hinge loss。
+assert support_candidates.tolist() == [False, True, False]  # 验证支持向量候选。

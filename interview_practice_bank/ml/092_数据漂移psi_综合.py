@@ -11,9 +11,12 @@
 5. 汇总Population Stability Index。
 6. 使用示例阈值判断漂移。
 7. PSI理论上非负。
+8. Jensen-Shannon是对称且有界的分布漂移指标。
+9. 综合验证对称性。
 
 完成标准：
 - PSI理论上非负。
+- 综合验证对称性。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +31,5 @@ psi = psi_parts.sum()  # 汇总Population Stability Index。
 drift_detected = psi > 0.2  # 使用示例阈值判断漂移。
 assert psi >= 0  # PSI理论上非负。
 print(psi_parts, psi, drift_detected)  # 输出漂移指标。
+p_distribution = np.array([0.8, 0.2]); q_distribution = np.array([0.5, 0.5]); midpoint = (p_distribution + q_distribution) / 2; kl = lambda left, right: np.sum(left * np.log(left / right)); js_divergence = 0.5 * kl(p_distribution, midpoint) + 0.5 * kl(q_distribution, midpoint)  # Jensen-Shannon是对称且有界的分布漂移指标。
+assert js_divergence >= 0 and np.isclose(js_divergence, 0.5 * kl(q_distribution, midpoint) + 0.5 * kl(p_distribution, midpoint))  # 综合验证对称性。

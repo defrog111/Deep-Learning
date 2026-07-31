@@ -13,9 +13,11 @@
 7. 计算查准率。
 8. 计算查全率。
 9. 计算F1调和平均。
+10. 综合计算多标签micro-F1。
 
 完成标准：
 - 验证混淆矩阵覆盖全部样本。
+- 验证样本类别展开后的整体指标。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ recall = tp / (tp + fn)  # 计算查全率。
 f1 = 2 * precision * recall / (precision + recall)  # 计算F1调和平均。
 assert tp + fp + fn + tn == len(targets)  # 验证混淆矩阵覆盖全部样本。
 print(tp, fp, fn, tn, precision, recall, f1)  # 输出分类指标。
+multilabel_true = np.array([[1, 1, 0], [0, 1, 0]], dtype=bool); multilabel_pred = np.array([[1, 0, 1], [0, 1, 0]], dtype=bool); micro_tp = (multilabel_true & multilabel_pred).sum(); micro_fp = (~multilabel_true & multilabel_pred).sum(); micro_fn = (multilabel_true & ~multilabel_pred).sum(); micro_f1 = 2 * micro_tp / (2 * micro_tp + micro_fp + micro_fn)  # 综合计算多标签micro-F1。
+assert np.isclose(micro_f1, 2 / 3)  # 验证样本类别展开后的整体指标。

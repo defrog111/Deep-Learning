@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证最优模型出现在第3轮零基索引。
+- 验证监控对象陷阱。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +38,5 @@ for epoch, loss in enumerate(validation_loss):  # 逐轮检查验证损失。
             break  # 退出训练循环。
 assert best_epoch == 3  # 验证最优模型出现在第3轮零基索引。
 print(best_epoch, best_loss, epoch)  # 输出最佳和停止轮次。
+training_loss_history = np.array([1.0, 0.7, 0.5, 0.3]); validation_loss_history = np.array([1.1, 0.8, 0.6, 0.9]); wrong_epoch = training_loss_history.argmin(); correct_epoch = validation_loss_history.argmin()  # 早停只能根据验证指标，不能看训练损失。
+assert wrong_epoch == 3 and correct_epoch == 2  # 验证监控对象陷阱。

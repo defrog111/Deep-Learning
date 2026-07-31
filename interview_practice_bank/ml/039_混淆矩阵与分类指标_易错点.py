@@ -13,9 +13,11 @@
 7. 计算查准率。
 8. 计算查全率。
 9. 计算F1调和平均。
+10. specificity关注负类，balanced accuracy平均两类召回。
 
 完成标准：
 - 验证混淆矩阵覆盖全部样本。
+- 验证不平衡指标。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ recall = tp / (tp + fn)  # 计算查全率。
 f1 = 2 * precision * recall / (precision + recall)  # 计算F1调和平均。
 assert tp + fp + fn + tn == len(targets)  # 验证混淆矩阵覆盖全部样本。
 print(tp, fp, fn, tn, precision, recall, f1)  # 输出分类指标。
+binary_confusion = np.array([[90, 10], [5, 15]]); tn, fp, fn, tp = binary_confusion.ravel(); specificity = tn / (tn + fp); balanced_accuracy = (tp / (tp + fn) + specificity) / 2  # specificity关注负类，balanced accuracy平均两类召回。
+assert np.isclose(specificity, 0.9) and np.isclose(balanced_accuracy, 0.825)  # 验证不平衡指标。

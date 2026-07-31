@@ -10,9 +10,11 @@
 4. 判断增加数据是否改善高方差。
 5. 设置期望泛化差距。
 6. 根据目标判断是否继续收集数据。
+7. 随数据增加间距缩小说明继续加数据可能有帮助。
 
 完成标准：
 - 验证学习曲线趋势。
+- 验证高方差学习曲线。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ target_gap = 0.06  # 设置期望泛化差距。
 needs_more_data = gaps[-1] > target_gap  # 根据目标判断是否继续收集数据。
 assert more_data_helped  # 验证学习曲线趋势。
 print(train_sizes, gaps, needs_more_data)  # 输出学习曲线诊断。
+sample_sizes = np.array([20, 50, 100, 200]); train_curve = np.array([0.99, 0.95, 0.9, 0.86]); valid_curve = np.array([0.55, 0.65, 0.75, 0.82]); shrinking_gap = train_curve - valid_curve  # 随数据增加间距缩小说明继续加数据可能有帮助。
+assert shrinking_gap[-1] < shrinking_gap[0]  # 验证高方差学习曲线。

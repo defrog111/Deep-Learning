@@ -11,9 +11,11 @@
 5. 计算准确率。
 6. 构造更极端的概率。
 7. 比较校准误差。
+8. ECE按bin加权置信度与准确率差。
 
 完成标准：
 - 验证Brier范围。
+- 验证校准误差范围。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ overconfident = np.clip(probabilities * 1.1, 0, 1)  # 构造更极端的概率�
 overconfident_brier = np.mean((overconfident - targets) ** 2)  # 比较校准误差。
 assert 0 <= brier <= 1  # 验证Brier范围。
 print(brier, accuracy, overconfident_brier)  # 输出概率与硬指标。
+calibration_probabilities = np.array([0.1, 0.2, 0.8, 0.9]); calibration_labels = np.array([0, 1, 1, 1]); calibration_bins = np.array([0, 0, 1, 1]); bin_gaps = [abs(calibration_probabilities[calibration_bins == index].mean() - calibration_labels[calibration_bins == index].mean()) for index in range(2)]; ece = sum((calibration_bins == index).mean() * bin_gaps[index] for index in range(2))  # ECE按bin加权置信度与准确率差。
+assert 0 <= ece <= 1  # 验证校准误差范围。

@@ -10,9 +10,11 @@
 4. 防止对0取log。
 5. 手算二元交叉熵。
 6. 使用阈值转类别。
+7. 减去每行最大值稳定计算softmax。
 
 完成标准：
 - 验证概率范围。
+- 验证多分类概率。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ log_loss = -(labels * np.log(probabilities + epsilon) + (1 - labels) * np.log(1 
 predictions = probabilities >= 0.5  # 使用阈值转类别。
 assert np.all((0 < probabilities) & (probabilities < 1))  # 验证概率范围。
 print(probabilities, predictions, log_loss)  # 输出逻辑回归结果。
+multi_logits = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]); shifted_logits = multi_logits - multi_logits.max(axis=1, keepdims=True); softmax = np.exp(shifted_logits) / np.exp(shifted_logits).sum(axis=1, keepdims=True)  # 减去每行最大值稳定计算softmax。
+assert np.allclose(softmax.sum(1), 1) and softmax.argmax(1).tolist() == [0, 2]  # 验证多分类概率。

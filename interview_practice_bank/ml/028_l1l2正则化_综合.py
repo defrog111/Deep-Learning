@@ -11,9 +11,12 @@
 5. 计算非零处L1次梯度。
 6. 计算L2梯度。
 7. 正则项应非负。
+8. 正交设计下Lasso等价于软阈值。
+9. 综合验证L1产生稀疏系数。
 
 完成标准：
 - 正则项应非负。
+- 综合验证L1产生稀疏系数。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +31,5 @@ l1_subgradient = strength * np.sign(weights)  # 计算非零处L1次梯度。
 l2_gradient = 2 * strength * weights  # 计算L2梯度。
 assert l1_penalty >= 0 and l2_penalty >= 0  # 正则项应非负。
 print(l1_penalty, l2_penalty, l1_subgradient, l2_gradient)  # 输出惩罚和梯度。
+orthogonal_design = np.eye(3); sparse_target = np.array([3.0, 0.1, -2.0]); threshold = 0.5; lasso_closed_form = np.sign(sparse_target) * np.maximum(np.abs(sparse_target) - threshold, 0)  # 正交设计下Lasso等价于软阈值。
+assert lasso_closed_form.tolist() == [2.5, 0.0, -1.5]  # 综合验证L1产生稀疏系数。

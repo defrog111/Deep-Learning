@@ -9,9 +9,11 @@
 3. Z-score标准化使均值0方差1。
 4. 计算每列极值。
 5. Min-Max归一化到[0,1]。
+6. 综合先log1p减小偏态再标准化。
 
 完成标准：
 - 验证缩放性质。
+- 验证组合变换。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ minimum, maximum = matrix.min(0), matrix.max(0)  # 计算每列极值。
 normalized = (matrix - minimum) / (maximum - minimum)  # Min-Max归一化到[0,1]。
 assert np.allclose(standardized.mean(0), 0) and np.allclose(normalized.min(0), 0)  # 验证缩放性质。
 print(standardized, '\n', normalized)  # 输出两种缩放。
+skewed = np.array([0.0, 1.0, 9.0, 99.0]); log_transformed = np.log1p(skewed); standardized_log = (log_transformed - log_transformed.mean()) / log_transformed.std()  # 综合先log1p减小偏态再标准化。
+assert np.isclose(standardized_log.mean(), 0) and np.isclose(standardized_log.std(), 1)  # 验证组合变换。

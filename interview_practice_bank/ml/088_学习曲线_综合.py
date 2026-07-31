@@ -10,9 +10,11 @@
 4. 判断增加数据是否改善高方差。
 5. 设置期望泛化差距。
 6. 根据目标判断是否继续收集数据。
+7. 综合用log-log斜率估计算法随样本量的经验复杂度。
 
 完成标准：
 - 验证学习曲线趋势。
+- 验证二次扩展趋势。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ target_gap = 0.12  # 设置期望泛化差距。
 needs_more_data = gaps[-1] > target_gap  # 根据目标判断是否继续收集数据。
 assert more_data_helped  # 验证学习曲线趋势。
 print(train_sizes, gaps, needs_more_data)  # 输出学习曲线诊断。
+compute_sizes = np.array([10, 20, 40, 80]); fit_times = compute_sizes**2; log_slope = np.polyfit(np.log(compute_sizes), np.log(fit_times), 1)[0]  # 综合用log-log斜率估计算法随样本量的经验复杂度。
+assert np.isclose(log_slope, 2)  # 验证二次扩展趋势。

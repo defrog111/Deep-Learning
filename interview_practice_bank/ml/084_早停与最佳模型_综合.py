@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证最优模型出现在第3轮零基索引。
+- 验证最佳模型恢复。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +38,5 @@ for epoch, loss in enumerate(validation_loss):  # 逐轮检查验证损失。
             break  # 退出训练循环。
 assert best_epoch == 3  # 验证最优模型出现在第3轮零基索引。
 print(best_epoch, best_loss, epoch)  # 输出最佳和停止轮次。
+model_states = [{'weight': value} for value in [0.1, 0.2, 0.3, 0.4]]; validation_losses = np.array([0.9, 0.6, 0.5, 0.8]); best_epoch = validation_losses.argmin(); restored_state = dict(model_states[best_epoch])  # 综合保存并恢复最佳epoch而非最后epoch。
+assert restored_state == {'weight': 0.3} and best_epoch != len(model_states) - 1  # 验证最佳模型恢复。

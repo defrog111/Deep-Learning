@@ -13,9 +13,11 @@
 7. 计算查准率。
 8. 计算查全率。
 9. 计算F1调和平均。
+10. 比较macro和按支持度weighted平均。
 
 完成标准：
 - 验证混淆矩阵覆盖全部样本。
+- 验证多分类指标范围。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +35,5 @@ recall = tp / (tp + fn)  # 计算查全率。
 f1 = 2 * precision * recall / (precision + recall)  # 计算F1调和平均。
 assert tp + fp + fn + tn == len(targets)  # 验证混淆矩阵覆盖全部样本。
 print(tp, fp, fn, tn, precision, recall, f1)  # 输出分类指标。
+multi_confusion = np.array([[5, 1, 0], [2, 3, 1], [0, 1, 7]]); per_class_recall = np.diag(multi_confusion) / multi_confusion.sum(axis=1); macro_recall = per_class_recall.mean(); weighted_recall = np.average(per_class_recall, weights=multi_confusion.sum(axis=1))  # 比较macro和按支持度weighted平均。
+assert 0 <= macro_recall <= 1 and 0 <= weighted_recall <= 1  # 验证多分类指标范围。

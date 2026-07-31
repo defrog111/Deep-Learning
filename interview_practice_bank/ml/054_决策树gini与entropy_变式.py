@@ -12,9 +12,11 @@
 6. 构造右子节点类别计数。
 7. 计算切分后加权Gini。
 8. 不纯度下降即切分收益。
+9. 计算entropy信息增益。
 
 完成标准：
 - 验证该切分改善纯度。
+- 验证有效切分不增加加权不纯度。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +33,5 @@ weighted_gini = (left_counts.sum() * (1 - np.sum((left_counts / left_counts.sum(
 gain = gini - weighted_gini  # 不纯度下降即切分收益。
 assert gain > 0  # 验证该切分改善纯度。
 print(gini, entropy, weighted_gini, gain)  # 输出树切分指标。
+parent_counts = np.array([6, 4]); left_counts = np.array([4, 1]); right_counts = parent_counts - left_counts; entropy_fn = lambda counts: -(counts[counts > 0] / counts.sum() * np.log2(counts[counts > 0] / counts.sum())).sum(); information_gain = entropy_fn(parent_counts) - (left_counts.sum() * entropy_fn(left_counts) + right_counts.sum() * entropy_fn(right_counts)) / parent_counts.sum()  # 计算entropy信息增益。
+assert information_gain >= 0  # 验证有效切分不增加加权不纯度。

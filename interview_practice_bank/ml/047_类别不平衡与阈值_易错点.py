@@ -10,9 +10,12 @@
 4. 把概率转类别。
 5. 计算少数类召回率。
 6. 计算常见balanced类别权重。
+7. 阈值应依据业务成本而非固定0.5。
+8. 高漏报成本下选择召回更高的方案。
 
 完成标准：
 - 验证每类一个权重。
+- 高漏报成本下选择召回更高的方案。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +30,5 @@ recall = np.sum(predictions & (targets == 1)) / np.sum(targets == 1)  # 计算�
 balanced_weight = len(targets) / (2 * np.bincount(targets))  # 计算常见balanced类别权重。
 assert len(balanced_weight) == 2  # 验证每类一个权重。
 print(threshold, predictions, recall, balanced_weight)  # 输出阈值和不平衡处理信息。
+costs = {'fp': 1, 'fn': 10}; candidate_confusions = [np.array([[90, 5], [4, 1]]), np.array([[80, 15], [1, 4]])]; business_costs = [matrix[0, 1] * costs['fp'] + matrix[1, 0] * costs['fn'] for matrix in candidate_confusions]  # 阈值应依据业务成本而非固定0.5。
+assert np.argmin(business_costs) == 1  # 高漏报成本下选择召回更高的方案。

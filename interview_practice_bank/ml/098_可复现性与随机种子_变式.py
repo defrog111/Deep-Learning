@@ -10,10 +10,12 @@
 4. 采样Python随机数。
 5. 采样NumPy随机数。
 6. 重置Python种子验证复现。
+7. 并行任务应派生独立随机流而不是共用全局状态。
 
 完成标准：
 - 验证Python随机序列复现。
 - 验证NumPy随机序列复现。
+- 验证可复现但相互独立。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -30,3 +32,5 @@ random.seed(seed)  # 重置Python种子验证复现。
 assert python_values == [random.random() for _ in range(3)]  # 验证Python随机序列复现。
 assert np.allclose(numpy_values, np.random.default_rng(seed).normal(size=3))  # 验证NumPy随机序列复现。
 print(seed, python_values, numpy_values)  # 输出可复现样本。
+base_seed = 42; child_sequences = np.random.SeedSequence(base_seed).spawn(2); child_values = [np.random.default_rng(sequence).normal(size=3) for sequence in child_sequences]  # 并行任务应派生独立随机流而不是共用全局状态。
+assert not np.array_equal(child_values[0], child_values[1])  # 验证可复现但相互独立。

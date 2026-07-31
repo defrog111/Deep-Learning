@@ -12,9 +12,13 @@
 6. 计算预测残差。
 7. 更新权重。
 8. 更新偏置。
+9. 初始化动量梯度下降。
+for _ in range(100):  # 迭代优化一维二次函数。
+    gradient = 2 * (momentum_weight - 3); velocity = 0.9 * velocity + gradient; momentum_weight -= 0.05 * velocity  # 累积历史梯度并更新。
 
 完成标准：
 - 验证收敛到真实参数。
+- 验证动量收敛到最优点。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +35,7 @@ for _ in range(500):  # 迭代梯度下降。
     bias -= learning_rate * 2 * np.mean(errors)  # 更新偏置。
 assert abs(weight - 2) < 0.05 and abs(bias - 1) < 0.1  # 验证收敛到真实参数。
 print(weight, bias)  # 输出优化结果。
+momentum_weight = 0.0; velocity = 0.0  # 初始化动量梯度下降。
+for _ in range(100):  # 迭代优化一维二次函数。
+    gradient = 2 * (momentum_weight - 3); velocity = 0.9 * velocity + gradient; momentum_weight -= 0.05 * velocity  # 累积历史梯度并更新。
+assert abs(momentum_weight - 3) < 0.1  # 验证动量收敛到最优点。

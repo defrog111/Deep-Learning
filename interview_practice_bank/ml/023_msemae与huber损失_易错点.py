@@ -12,9 +12,11 @@
 6. 设置Huber转折点。
 7. 分段计算Huber损失。
 8. 本例离群点使MSE明显更大。
+9. MSE平方放大离群点，MAE线性增长。
 
 完成标准：
 - 本例离群点使MSE明显更大。
+- 验证鲁棒性差异。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -30,3 +32,5 @@ delta = 5.0  # 设置Huber转折点。
 huber = np.mean(np.where(np.abs(errors) <= delta, 0.5 * errors**2, delta * (np.abs(errors) - 0.5 * delta)))  # 分段计算Huber损失。
 assert mse > mae  # 本例离群点使MSE明显更大。
 print(mse, mae, huber)  # 输出三种回归损失。
+outlier_errors = np.array([0.0, 1.0, 100.0]); mse_contribution = outlier_errors**2; mae_contribution = np.abs(outlier_errors)  # MSE平方放大离群点，MAE线性增长。
+assert mse_contribution[-1] / mse_contribution[1] > mae_contribution[-1] / mae_contribution[1]  # 验证鲁棒性差异。

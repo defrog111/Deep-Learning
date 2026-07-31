@@ -12,9 +12,11 @@
 6. 选取第一个主成分用于变式2。
 7. 投影到低维空间。
 8. 计算解释方差比。
+9. PCA对特征尺度敏感。
 
 完成标准：
 - 验证降维shape。
+- 验证标准化必要性。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +33,5 @@ projected = centered @ components  # 投影到低维空间。
 explained_ratio = eigenvalues[order] / eigenvalues.sum()  # 计算解释方差比。
 assert projected.shape == (4, 1)  # 验证降维shape。
 print(components, projected, explained_ratio)  # 输出PCA结果。
+pca_scaled_data = np.array([[1.0, 100.0], [2.0, 110.0], [3.0, 120.0]]); raw_variance = pca_scaled_data.var(0); scaled_pca_data = (pca_scaled_data - pca_scaled_data.mean(0)) / pca_scaled_data.std(0); scaled_variance = scaled_pca_data.var(0)  # PCA对特征尺度敏感。
+assert raw_variance[1] > raw_variance[0] and np.allclose(scaled_variance, 1)  # 验证标准化必要性。

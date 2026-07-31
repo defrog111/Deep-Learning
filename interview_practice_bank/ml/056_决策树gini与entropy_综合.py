@@ -12,9 +12,12 @@
 6. 构造右子节点类别计数。
 7. 计算切分后加权Gini。
 8. 不纯度下降即切分收益。
+9. 综合叶节点概率、不纯度和预测。
+10. 两种指标量纲不同但纯度趋势一致。
 
 完成标准：
 - 验证该切分改善纯度。
+- 两种指标量纲不同但纯度趋势一致。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +34,5 @@ weighted_gini = (left_counts.sum() * (1 - np.sum((left_counts / left_counts.sum(
 gain = gini - weighted_gini  # 不纯度下降即切分收益。
 assert gain > 0  # 验证该切分改善纯度。
 print(gini, entropy, weighted_gini, gain)  # 输出树切分指标。
+leaf_probabilities = np.array([0.7, 0.3]); leaf_gini = 1 - np.sum(leaf_probabilities**2); leaf_entropy = -np.sum(leaf_probabilities * np.log2(leaf_probabilities)); leaf_prediction = leaf_probabilities.argmax()  # 综合叶节点概率、不纯度和预测。
+assert leaf_gini < leaf_entropy and leaf_prediction == 0  # 两种指标量纲不同但纯度趋势一致。

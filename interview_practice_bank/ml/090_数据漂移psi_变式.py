@@ -11,9 +11,11 @@
 5. 汇总Population Stability Index。
 6. 使用示例阈值判断漂移。
 7. PSI理论上非负。
+8. Total Variation衡量离散分布整体差异。
 
 完成标准：
 - PSI理论上非负。
+- 验证漂移距离。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ psi = psi_parts.sum()  # 汇总Population Stability Index。
 drift_detected = psi > 0.1  # 使用示例阈值判断漂移。
 assert psi >= 0  # PSI理论上非负。
 print(psi_parts, psi, drift_detected)  # 输出漂移指标。
+reference_categories = np.array([0.5, 0.3, 0.2]); current_categories = np.array([0.4, 0.4, 0.2]); total_variation = 0.5 * np.abs(reference_categories - current_categories).sum()  # Total Variation衡量离散分布整体差异。
+assert np.isclose(total_variation, 0.1)  # 验证漂移距离。

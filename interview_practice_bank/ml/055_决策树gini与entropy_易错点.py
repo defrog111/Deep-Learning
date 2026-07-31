@@ -12,9 +12,11 @@
 6. 构造右子节点类别计数。
 7. 计算切分后加权Gini。
 8. 不纯度下降即切分收益。
+9. 不能用训练准确率选择树深，否则总偏向复杂树。
 
 完成标准：
 - 验证该切分改善纯度。
+- 验证预剪枝需看验证集。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +33,5 @@ weighted_gini = (left_counts.sum() * (1 - np.sum((left_counts / left_counts.sum(
 gain = gini - weighted_gini  # 不纯度下降即切分收益。
 assert gain > 0  # 验证该切分改善纯度。
 print(gini, entropy, weighted_gini, gain)  # 输出树切分指标。
+deep_train_scores = np.array([0.8, 0.95, 1.0]); deep_valid_scores = np.array([0.78, 0.82, 0.65]); best_depth_index = deep_valid_scores.argmax()  # 不能用训练准确率选择树深，否则总偏向复杂树。
+assert best_depth_index == 1 and deep_train_scores.argmax() != best_depth_index  # 验证预剪枝需看验证集。

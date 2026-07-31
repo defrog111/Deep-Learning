@@ -435,4 +435,131 @@ def ml_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "print(seed, python_values, numpy_values)  # 输出可复现样本。",
         ],
     ]
-    return title, task, cases[family]
+    # 各主题的变式、易错点、综合代码；基础公式会间隔重复，但考察角度不同。
+    extras: list[list[list[str]]] = [
+        [[], [], []],  # 第001至004题已在函数开头分别完整实现四种不同场景。
+        [
+            ["robust_data = np.array([1.0, 2.0, 3.0, 100.0]); robust_scaled = (robust_data - np.median(robust_data)) / (np.percentile(robust_data, 75) - np.percentile(robust_data, 25))  # Robust缩放使用中位数和IQR降低离群值影响。", "assert np.median(robust_scaled) == 0  # 验证中心位于中位数。"],
+            ["constant_feature = np.ones(4); safe_denominator = np.where(constant_feature.std() == 0, 1.0, constant_feature.std()); safe_standardized = (constant_feature - constant_feature.mean()) / safe_denominator  # 常数列标准差为零，必须防止除零。", "assert np.isfinite(safe_standardized).all() and np.allclose(safe_standardized, 0)  # 验证安全处理。"],
+            ["skewed = np.array([0.0, 1.0, 9.0, 99.0]); log_transformed = np.log1p(skewed); standardized_log = (log_transformed - log_transformed.mean()) / log_transformed.std()  # 综合先log1p减小偏态再标准化。", "assert np.isclose(standardized_log.mean(), 0) and np.isclose(standardized_log.std(), 1)  # 验证组合变换。"],
+        ],
+        [
+            ["ridge_design = np.c_[np.ones(5), np.arange(5), np.arange(5)**2]; ridge_target = np.array([1, 2, 5, 10, 17.0]); ridge_penalty = np.diag([0.0, 1.0, 1.0]); ridge_weights = np.linalg.solve(ridge_design.T @ ridge_design + ridge_penalty, ridge_design.T @ ridge_target)  # Ridge正规方程通常不惩罚截距。", "assert ridge_weights.shape == (3,) and np.isfinite(ridge_weights).all()  # 验证正则化解。"],
+            ["collinear = np.c_[np.arange(5.0), 2 * np.arange(5.0)]; collinear_rank = np.linalg.matrix_rank(collinear); stable_weights = np.linalg.pinv(collinear) @ np.arange(5.0)  # 完全共线使XTX不可逆，应使用lstsq或伪逆。", "assert collinear_rank == 1 and np.isfinite(stable_weights).all()  # 验证多重共线性陷阱。"],
+            ["diagnostic_x = np.arange(1, 8.0); diagnostic_y = 2 * diagnostic_x + np.array([-1, 0, 1, 0, -1, 0, 1]); diagnostic_coef = np.polyfit(diagnostic_x, diagnostic_y, 1); diagnostic_residuals = diagnostic_y - np.polyval(diagnostic_coef, diagnostic_x)  # 综合拟合并检查残差。", "assert abs(diagnostic_residuals.mean()) < 1e-12 and diagnostic_residuals.shape == diagnostic_y.shape  # 含截距OLS残差均值接近零。"],
+        ],
+        [
+            ["momentum_weight = 0.0; velocity = 0.0  # 初始化动量梯度下降。\nfor _ in range(100):  # 迭代优化一维二次函数。\n    gradient = 2 * (momentum_weight - 3); velocity = 0.9 * velocity + gradient; momentum_weight -= 0.05 * velocity  # 累积历史梯度并更新。", "assert abs(momentum_weight - 3) < 0.1  # 验证动量收敛到最优点。"],
+            ["large_scale_x = np.array([1000.0, 2000.0]); unstable_weight = 1.0; unstable_gradient = 2 * np.mean((unstable_weight * large_scale_x) * large_scale_x); unstable_weight -= 0.1 * unstable_gradient  # 未缩放特征配大步长会产生巨大更新。", "assert abs(unstable_weight) > 1000  # 验证尺度影响收敛稳定性。"],
+            ["adam_value = 0.0; first_moment = second_moment = 0.0  # 初始化Adam的一阶二阶矩。\nfor step in range(1, 101):  # 迭代最小化(value-3)^2。\n    gradient = 2 * (adam_value - 3); first_moment = 0.9 * first_moment + 0.1 * gradient; second_moment = 0.999 * second_moment + 0.001 * gradient**2; corrected_first = first_moment / (1 - 0.9**step); corrected_second = second_moment / (1 - 0.999**step); adam_value -= 0.1 * corrected_first / (np.sqrt(corrected_second) + 1e-8)  # 偏差修正后更新。", "assert abs(adam_value - 3) < 0.1  # 验证Adam综合实现。"],
+        ],
+        [
+            ["multi_logits = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]); shifted_logits = multi_logits - multi_logits.max(axis=1, keepdims=True); softmax = np.exp(shifted_logits) / np.exp(shifted_logits).sum(axis=1, keepdims=True)  # 减去每行最大值稳定计算softmax。", "assert np.allclose(softmax.sum(1), 1) and softmax.argmax(1).tolist() == [0, 2]  # 验证多分类概率。"],
+            ["extreme_logits = np.array([-1000.0, 1000.0]); stable_losses = np.maximum(extreme_logits, 0) - extreme_logits * np.array([0.0, 1.0]) + np.log1p(np.exp(-np.abs(extreme_logits)))  # 直接按logits计算BCE避免sigmoid上溢下溢。", "assert np.isfinite(stable_losses).all() and np.allclose(stable_losses, 0)  # 验证数值稳定性。"],
+            ["log_prob_feature = np.array([[np.log(0.8), np.log(0.2)], [np.log(0.3), np.log(0.7)]]); log_prior = np.log(np.array([0.5, 0.5])); naive_bayes_scores = log_prob_feature.sum(axis=0) + log_prior; naive_bayes_prediction = naive_bayes_scores.argmax()  # 综合用log概率实现朴素贝叶斯分类思想。", "assert naive_bayes_prediction in (0, 1) and np.isfinite(naive_bayes_scores).all()  # 验证概率模型计算。"],
+        ],
+        [
+            ["quantile_errors = np.array([-2.0, -1.0, 1.0, 3.0]); quantile = 0.8; pinball = np.maximum(quantile * quantile_errors, (quantile - 1) * quantile_errors)  # Pinball损失用于分位数回归且对正负误差不对称。", "assert pinball.tolist() == [0.3999999999999999, 0.19999999999999996, 0.8, 2.4000000000000004]  # 验证高分位更惩罚低估。"],
+            ["outlier_errors = np.array([0.0, 1.0, 100.0]); mse_contribution = outlier_errors**2; mae_contribution = np.abs(outlier_errors)  # MSE平方放大离群点，MAE线性增长。", "assert mse_contribution[-1] / mse_contribution[1] > mae_contribution[-1] / mae_contribution[1]  # 验证鲁棒性差异。"],
+            ["log_cosh_errors = np.array([-10.0, 0.0, 10.0]); log_cosh = np.logaddexp(log_cosh_errors, -log_cosh_errors) - np.log(2)  # log-cosh在零附近像MSE、大误差时像MAE。", "assert np.isfinite(log_cosh).all() and log_cosh[0] == log_cosh[-1]  # 验证平滑对称损失。"],
+        ],
+        [
+            ["elastic_weights = np.array([-2.0, 0.5, 3.0]); l1_strength, l2_strength = 0.2, 0.3; elastic_penalty = l1_strength * np.abs(elastic_weights).sum() + l2_strength * (elastic_weights**2).sum()  # Elastic Net组合L1稀疏与L2稳定。", "assert elastic_penalty > 0  # 验证组合正则项。"],
+            ["scaled_equivalent = np.array([1.0, 1000.0]); same_effect_weights = np.array([1.0, 0.001]); unequal_penalty = np.abs(same_effect_weights)  # 未标准化时同等预测作用的特征受到完全不同L1惩罚。", "assert unequal_penalty[0] / unequal_penalty[1] == 1000  # 验证正则化前必须关注尺度。"],
+            ["orthogonal_design = np.eye(3); sparse_target = np.array([3.0, 0.1, -2.0]); threshold = 0.5; lasso_closed_form = np.sign(sparse_target) * np.maximum(np.abs(sparse_target) - threshold, 0)  # 正交设计下Lasso等价于软阈值。", "assert lasso_closed_form.tolist() == [2.5, 0.0, -1.5]  # 综合验证L1产生稀疏系数。"],
+        ],
+        [
+            ["rng_bias = np.random.default_rng(42); population = rng_bias.normal(size=200); bootstrap_means = np.array([rng_bias.choice(population, size=len(population), replace=True).mean() for _ in range(200)])  # Bootstrap重采样估计统计量方差。", "assert bootstrap_means.std() > 0 and abs(bootstrap_means.mean() - population.mean()) < 0.1  # 验证抽样分布。"],
+            ["training_errors = np.array([0.5, 0.2, 0.05]); validation_errors = np.array([0.55, 0.3, 0.8]); gaps = validation_errors - training_errors; selected_by_test_wrong = validation_errors.argmin()  # 若数组代表测试误差，用它选复杂度会造成测试集泄漏。", "assert gaps[-1] > gaps[0] and selected_by_test_wrong == 1  # 识别高方差与错误选择动作。"],
+            ["ensemble_errors = np.array([[1.0, -1.0, 0.5], [-1.0, 1.0, -0.5], [0.5, -0.5, 0.0]]); individual_variance = ensemble_errors.var(axis=1).mean(); averaged_variance = ensemble_errors.mean(axis=0).var()  # 平均低相关模型可降低方差。", "assert averaged_variance < individual_variance  # 综合解释bagging改善高方差。"],
+        ],
+        [
+            ["labels_cv = np.array([0] * 8 + [1] * 4); class_zero_cv = np.flatnonzero(labels_cv == 0); class_one_cv = np.flatnonzero(labels_cv == 1); stratified_folds = [np.r_[class_zero_cv[index::4], class_one_cv[index::4]] for index in range(4)]  # 手工构造保持类别比例的分层K折。", "assert all(np.isclose(labels_cv[fold].mean(), labels_cv.mean()) for fold in stratified_folds)  # 验证每折比例。"],
+            ["groups_cv = np.repeat(np.arange(6), 2); validation_group = 2; validation_indices = np.flatnonzero(groups_cv == validation_group); training_indices = np.flatnonzero(groups_cv != validation_group)  # Group CV保证同一主体不跨训练验证。", "assert not set(groups_cv[training_indices]) & set(groups_cv[validation_indices])  # 验证组间隔离。"],
+            ["outer_folds = [np.arange(0, 4), np.arange(4, 8)]; nested_counts = []  # 外层评估泛化，内层选择超参数。\nfor outer_validation in outer_folds:  # 遍历外层验证块。\n    outer_training = np.setdiff1d(np.arange(8), outer_validation); inner_validation = outer_training[::2]; inner_training = np.setdiff1d(outer_training, inner_validation); nested_counts.append((len(inner_training), len(inner_validation), len(outer_validation)))  # 只在外层训练集内部再切分。", "assert nested_counts == [(2, 2, 4), (2, 2, 4)]  # 综合验证nested CV层级。"],
+        ],
+        [
+            ["multi_confusion = np.array([[5, 1, 0], [2, 3, 1], [0, 1, 7]]); per_class_recall = np.diag(multi_confusion) / multi_confusion.sum(axis=1); macro_recall = per_class_recall.mean(); weighted_recall = np.average(per_class_recall, weights=multi_confusion.sum(axis=1))  # 比较macro和按支持度weighted平均。", "assert 0 <= macro_recall <= 1 and 0 <= weighted_recall <= 1  # 验证多分类指标范围。"],
+            ["binary_confusion = np.array([[90, 10], [5, 15]]); tn, fp, fn, tp = binary_confusion.ravel(); specificity = tn / (tn + fp); balanced_accuracy = (tp / (tp + fn) + specificity) / 2  # specificity关注负类，balanced accuracy平均两类召回。", "assert np.isclose(specificity, 0.9) and np.isclose(balanced_accuracy, 0.825)  # 验证不平衡指标。"],
+            ["multilabel_true = np.array([[1, 1, 0], [0, 1, 0]], dtype=bool); multilabel_pred = np.array([[1, 0, 1], [0, 1, 0]], dtype=bool); micro_tp = (multilabel_true & multilabel_pred).sum(); micro_fp = (~multilabel_true & multilabel_pred).sum(); micro_fn = (multilabel_true & ~multilabel_pred).sum(); micro_f1 = 2 * micro_tp / (2 * micro_tp + micro_fp + micro_fn)  # 综合计算多标签micro-F1。", "assert np.isclose(micro_f1, 2 / 3)  # 验证样本类别展开后的整体指标。"],
+        ],
+        [
+            ["precision_points = np.array([1.0, 0.75, 0.5]); recall_points = np.array([0.0, 0.5, 1.0]); pr_auc = np.trapezoid(precision_points, recall_points)  # PR-AUC在正类稀少时比ROC-AUC更关注正类质量。", "assert 0 <= pr_auc <= 1  # 验证曲线面积范围。"],
+            ["tied_scores = np.array([0.8, 0.8, 0.2, 0.1]); tied_labels = np.array([1, 0, 1, 0]); pair_scores = [(tied_scores[p] > tied_scores[n]) + 0.5 * (tied_scores[p] == tied_scores[n]) for p in np.flatnonzero(tied_labels) for n in np.flatnonzero(1 - tied_labels)]; rank_auc = np.mean(pair_scores)  # AUC等于随机正样本得分高于负样本的概率，平分计0.5。", "assert 0 <= rank_auc <= 1  # 验证排序解释。"],
+            ["class_aucs = np.array([0.95, 0.7, 0.6]); class_supports = np.array([80, 15, 5]); macro_auc = class_aucs.mean(); weighted_auc = np.average(class_aucs, weights=class_supports)  # 多分类One-vs-Rest可使用macro或weighted汇总。", "assert weighted_auc > macro_auc  # 综合显示多数类表现会主导weighted指标。"],
+        ],
+        [
+            ["majority = np.arange(20); minority = np.arange(20, 24); rng_balance = np.random.default_rng(42); oversampled_minority = rng_balance.choice(minority, size=len(majority), replace=True); balanced_indices = np.r_[majority, oversampled_minority]  # 只在训练集内随机过采样少数类。", "assert len(balanced_indices) == 40 and len(np.unique(oversampled_minority)) <= len(minority)  # 验证有放回过采样。"],
+            ["costs = {'fp': 1, 'fn': 10}; candidate_confusions = [np.array([[90, 5], [4, 1]]), np.array([[80, 15], [1, 4]])]; business_costs = [matrix[0, 1] * costs['fp'] + matrix[1, 0] * costs['fn'] for matrix in candidate_confusions]  # 阈值应依据业务成本而非固定0.5。", "assert np.argmin(business_costs) == 1  # 高漏报成本下选择召回更高的方案。"],
+            ["class_counts = np.array([90, 10]); balanced_weights = class_counts.sum() / (len(class_counts) * class_counts); sample_labels = np.array([0, 0, 1]); sample_weights = balanced_weights[sample_labels]  # balanced权重与类别频次成反比。", "assert sample_weights[-1] > sample_weights[0] and np.isclose((balanced_weights * class_counts).sum(), class_counts.sum())  # 综合验证加权守恒。"],
+        ],
+        [
+            ["knn_train = np.array([[0.0, 0.0], [1.0, 1000.0]]); knn_query = np.array([0.9, 0.0]); raw_distances = np.linalg.norm(knn_train - knn_query, axis=1); standardized_train = (knn_train - knn_train.mean(0)) / np.where(knn_train.std(0) == 0, 1, knn_train.std(0)); standardized_query = (knn_query - knn_train.mean(0)) / np.where(knn_train.std(0) == 0, 1, knn_train.std(0))  # KNN对尺度敏感，缩放会改变距离贡献。", "assert not np.allclose(raw_distances, np.linalg.norm(standardized_train - standardized_query, axis=1))  # 验证尺度影响。"],
+            ["neighbor_distances = np.array([0.1, 0.5, 1.0]); neighbor_labels = np.array([1, 0, 0]); inverse_weights = 1 / np.maximum(neighbor_distances, 1e-12); weighted_vote = np.bincount(neighbor_labels, weights=inverse_weights).argmax()  # 距离加权KNN让近邻贡献更大。", "assert weighted_vote == 1  # 一个很近的正类可超过两个远负类。"],
+            ["rng_dimension = np.random.default_rng(0); low_dim = rng_dimension.random((1000, 2)); high_dim = rng_dimension.random((1000, 50)); low_ratio = np.linalg.norm(low_dim, axis=1).min() / np.linalg.norm(low_dim, axis=1).max(); high_ratio = np.linalg.norm(high_dim, axis=1).min() / np.linalg.norm(high_dim, axis=1).max()  # 高维中最近和最远距离趋于相似。", "assert high_ratio > low_ratio  # 综合演示维度灾难。"],
+        ],
+        [
+            ["parent_counts = np.array([6, 4]); left_counts = np.array([4, 1]); right_counts = parent_counts - left_counts; entropy_fn = lambda counts: -(counts[counts > 0] / counts.sum() * np.log2(counts[counts > 0] / counts.sum())).sum(); information_gain = entropy_fn(parent_counts) - (left_counts.sum() * entropy_fn(left_counts) + right_counts.sum() * entropy_fn(right_counts)) / parent_counts.sum()  # 计算entropy信息增益。", "assert information_gain >= 0  # 验证有效切分不增加加权不纯度。"],
+            ["deep_train_scores = np.array([0.8, 0.95, 1.0]); deep_valid_scores = np.array([0.78, 0.82, 0.65]); best_depth_index = deep_valid_scores.argmax()  # 不能用训练准确率选择树深，否则总偏向复杂树。", "assert best_depth_index == 1 and deep_train_scores.argmax() != best_depth_index  # 验证预剪枝需看验证集。"],
+            ["leaf_probabilities = np.array([0.7, 0.3]); leaf_gini = 1 - np.sum(leaf_probabilities**2); leaf_entropy = -np.sum(leaf_probabilities * np.log2(leaf_probabilities)); leaf_prediction = leaf_probabilities.argmax()  # 综合叶节点概率、不纯度和预测。", "assert leaf_gini < leaf_entropy and leaf_prediction == 0  # 两种指标量纲不同但纯度趋势一致。"],
+        ],
+        [
+            ["rng_bootstrap = np.random.default_rng(1); bootstrap_indices = rng_bootstrap.choice(10, size=10, replace=True); oob_indices = np.setdiff1d(np.arange(10), np.unique(bootstrap_indices))  # Bagging有放回抽样，未抽中样本形成OOB集。", "assert len(np.unique(bootstrap_indices)) <= 10 and not set(bootstrap_indices) & set(oob_indices)  # 验证bootstrap与OOB。"],
+            ["boost_labels = np.array([1, 1, -1, -1]); weak_predictions = np.array([1, -1, -1, -1]); sample_weights_boost = np.full(4, 0.25); weighted_error = sample_weights_boost[weak_predictions != boost_labels].sum(); learner_weight = 0.5 * np.log((1 - weighted_error) / weighted_error); updated_weights = sample_weights_boost * np.exp(-learner_weight * boost_labels * weak_predictions); updated_weights /= updated_weights.sum()  # AdaBoost提高错分样本权重。", "assert updated_weights[1] == updated_weights.max()  # 验证错分样本被关注。"],
+            ["base_oof = np.array([[0.8, 0.6], [0.2, 0.3], [0.7, 0.9], [0.1, 0.4]]); meta_weights = np.linalg.lstsq(np.c_[np.ones(4), base_oof], np.array([1, 0, 1, 0]), rcond=None)[0]; stacked = np.c_[np.ones(4), base_oof] @ meta_weights  # Stacking元学习器必须训练在out-of-fold预测上。", "assert stacked.shape == (4,) and np.isfinite(stacked).all()  # 综合验证两层模型输入。"],
+        ],
+        [
+            ["svm_scores = np.array([2.0, 0.5, -1.5]); svm_labels = np.array([1.0, 1.0, -1.0]); margins = svm_labels * svm_scores; support_candidates = margins <= 1  # 间隔内或边界上的样本影响hinge loss。", "assert support_candidates.tolist() == [False, True, False]  # 验证支持向量候选。"],
+            ["kernel_points = np.array([[1.0, 2.0], [2.0, 1.0]]); linear_kernel = kernel_points @ kernel_points.T; gamma = 0.5; squared_distances = ((kernel_points[:, None] - kernel_points[None, :])**2).sum(-1); rbf_kernel = np.exp(-gamma * squared_distances)  # 核技巧只通过样本相似度隐式映射。", "assert np.allclose(np.diag(rbf_kernel), 1) and linear_kernel.shape == rbf_kernel.shape  # 验证两种Gram矩阵。"],
+            ["kernel_matrix = np.array([[1.0, 0.5], [0.5, 1.0]]); kernel_eigenvalues = np.linalg.eigvalsh(kernel_matrix); decision_scores = kernel_matrix @ np.array([1.0, -1.0]) + 0.1  # 合法Mercer核矩阵应半正定。", "assert kernel_eigenvalues.min() >= 0 and decision_scores.shape == (2,)  # 综合核SVM决策形式。"],
+        ],
+        [
+            ["rng_kpp = np.random.default_rng(2); points_kpp = np.array([[0.0], [1.0], [9.0], [10.0]]); first_center = points_kpp[0]; squared_nearest = ((points_kpp - first_center)**2).ravel(); second_center = points_kpp[rng_kpp.choice(len(points_kpp), p=squared_nearest / squared_nearest.sum())]  # KMeans++按到最近中心距离平方选新中心。", "assert second_center.shape == (1,)  # 验证概率初始化。"],
+            ["dbscan_points = np.array([[0.0], [0.1], [5.0], [5.1], [20.0]]); dbscan_distances = np.abs(dbscan_points - dbscan_points.T); neighbor_counts = (dbscan_distances <= 0.2).sum(1); core_mask = neighbor_counts >= 2; noise_candidate = ~core_mask  # DBSCAN用eps邻域和min_samples识别密度及噪声。", "assert noise_candidate.tolist() == [False, False, False, False, True]  # 验证离群点。"],
+            ["gmm_values = np.array([-2.0, -1.5, 1.5, 2.0]); gmm_means = np.array([-1.0, 1.0]); responsibilities = np.exp(-0.5 * (gmm_values[:, None] - gmm_means[None, :])**2); responsibilities /= responsibilities.sum(1, keepdims=True); updated_means = (responsibilities * gmm_values[:, None]).sum(0) / responsibilities.sum(0)  # 综合演示GMM的E步责任度与M步均值更新。", "assert updated_means[0] < 0 < updated_means[1] and np.allclose(responsibilities.sum(1), 1)  # 验证软聚类。"],
+        ],
+        [
+            ["pca_scaled_data = np.array([[1.0, 100.0], [2.0, 110.0], [3.0, 120.0]]); raw_variance = pca_scaled_data.var(0); scaled_pca_data = (pca_scaled_data - pca_scaled_data.mean(0)) / pca_scaled_data.std(0); scaled_variance = scaled_pca_data.var(0)  # PCA对特征尺度敏感。", "assert raw_variance[1] > raw_variance[0] and np.allclose(scaled_variance, 1)  # 验证标准化必要性。"],
+            ["pca_train = np.array([[0.0, 0.0], [1.0, 1.0]]); pca_test = np.array([[100.0, 100.0]]); correct_center = pca_train.mean(0); leaked_center = np.r_[pca_train, pca_test].mean(0)  # 在全数据上中心化会把测试分布泄漏给PCA。", "assert not np.allclose(correct_center, leaked_center)  # 验证无监督预处理同样会泄漏。"],
+            ["pca_matrix = np.array([[2.0, 0.0], [0.0, 1.0], [-2.0, 0.0], [0.0, -1.0]]); pca_centered = pca_matrix - pca_matrix.mean(0); _, pca_singular, pca_vt = np.linalg.svd(pca_centered, full_matrices=False); whitened = (pca_centered @ pca_vt.T) / (pca_singular / np.sqrt(len(pca_matrix) - 1))  # 综合SVD投影并whitening。", "assert np.allclose(np.cov(whitened, rowvar=False), np.eye(2))  # 验证白化后单位协方差。"],
+        ],
+        [
+            ["feature_matrix = np.array([[1, 1, 0], [2, 2, 1], [3, 3, 0], [4, 4, 1]], dtype=float); feature_correlation = np.corrcoef(feature_matrix, rowvar=False); redundant_pair = abs(feature_correlation[0, 1]) > 0.95  # 过滤法可先删除高度共线特征。", "assert redundant_pair  # 验证冗余特征识别。"],
+            ["selection_train_scores = np.array([0.8, 0.9, 1.0]); selection_validation_scores = np.array([0.78, 0.85, 0.7]); selected_feature_count = np.array([1, 2, 3])[selection_validation_scores.argmax()]  # wrapper方法必须在验证或CV内部选特征数。", "assert selected_feature_count == 2  # 防止按训练分数选择全部特征。"],
+            ["baseline_metric = 0.9; shuffled_metrics = np.array([0.89, 0.6, 0.88]); permutation_importance = baseline_metric - shuffled_metrics; ranked_features = np.argsort(permutation_importance)[::-1]  # 排列重要性衡量打乱单列后的性能下降。", "assert ranked_features[0] == 1 and permutation_importance[1] == permutation_importance.max()  # 综合得到模型无关重要性排序。"],
+        ],
+        [
+            ["calibration_probabilities = np.array([0.1, 0.2, 0.8, 0.9]); calibration_labels = np.array([0, 1, 1, 1]); calibration_bins = np.array([0, 0, 1, 1]); bin_gaps = [abs(calibration_probabilities[calibration_bins == index].mean() - calibration_labels[calibration_bins == index].mean()) for index in range(2)]; ece = sum((calibration_bins == index).mean() * bin_gaps[index] for index in range(2))  # ECE按bin加权置信度与准确率差。", "assert 0 <= ece <= 1  # 验证校准误差范围。"],
+            ["overconfident = np.array([0.99, 0.99]); uncertain = np.array([0.6, 0.6]); wrong_labels = np.array([1.0, 0.0]); overconfident_brier = np.mean((overconfident - wrong_labels)**2); uncertain_brier = np.mean((uncertain - wrong_labels)**2)  # Brier分数会严惩高置信度错误。", "assert overconfident_brier > uncertain_brier  # 验证概率质量不等于准确率。"],
+            ["raw_calibration_scores = np.array([-2.0, -1.0, 1.0, 2.0]); platt_a, platt_b = 1.2, -0.1; platt_probabilities = 1 / (1 + np.exp(-(platt_a * raw_calibration_scores + platt_b)))  # Platt scaling在独立校准集上拟合一维逻辑映射。", "assert np.all(np.diff(platt_probabilities) > 0) and np.all((platt_probabilities > 0) & (platt_probabilities < 1))  # 综合验证单调概率映射。"],
+        ],
+        [
+            ["validation_history = np.array([1.0, 0.8, 0.795, 0.792, 0.791]); min_delta = 0.01; patience_count = 0; best_value = np.inf; stop_epoch = None  # min_delta过滤微小噪声改进。\nfor epoch, value in enumerate(validation_history):  # 逐轮监控。\n    if value < best_value - min_delta: best_value, patience_count = value, 0  # 显著改进时保存。\n    else: patience_count += 1  # 否则累计无改进轮数。\n    if patience_count >= 2: stop_epoch = epoch; break  # 达到patience时停止。", "assert stop_epoch == 3  # 验证min_delta和patience共同作用。"],
+            ["training_loss_history = np.array([1.0, 0.7, 0.5, 0.3]); validation_loss_history = np.array([1.1, 0.8, 0.6, 0.9]); wrong_epoch = training_loss_history.argmin(); correct_epoch = validation_loss_history.argmin()  # 早停只能根据验证指标，不能看训练损失。", "assert wrong_epoch == 3 and correct_epoch == 2  # 验证监控对象陷阱。"],
+            ["model_states = [{'weight': value} for value in [0.1, 0.2, 0.3, 0.4]]; validation_losses = np.array([0.9, 0.6, 0.5, 0.8]); best_epoch = validation_losses.argmin(); restored_state = dict(model_states[best_epoch])  # 综合保存并恢复最佳epoch而非最后epoch。", "assert restored_state == {'weight': 0.3} and best_epoch != len(model_states) - 1  # 验证最佳模型恢复。"],
+        ],
+        [
+            ["sample_sizes = np.array([20, 50, 100, 200]); train_curve = np.array([0.99, 0.95, 0.9, 0.86]); valid_curve = np.array([0.55, 0.65, 0.75, 0.82]); shrinking_gap = train_curve - valid_curve  # 随数据增加间距缩小说明继续加数据可能有帮助。", "assert shrinking_gap[-1] < shrinking_gap[0]  # 验证高方差学习曲线。"],
+            ["underfit_train = np.array([0.55, 0.57, 0.58]); underfit_valid = np.array([0.53, 0.55, 0.56]); small_gap = np.abs(underfit_train[-1] - underfit_valid[-1]); low_both = max(underfit_train[-1], underfit_valid[-1]) < 0.7  # 两条曲线接近但都差表示高偏差。", "assert small_gap < 0.05 and low_both  # 验证不能只看gap。"],
+            ["compute_sizes = np.array([10, 20, 40, 80]); fit_times = compute_sizes**2; log_slope = np.polyfit(np.log(compute_sizes), np.log(fit_times), 1)[0]  # 综合用log-log斜率估计算法随样本量的经验复杂度。", "assert np.isclose(log_slope, 2)  # 验证二次扩展趋势。"],
+        ],
+        [
+            ["reference_categories = np.array([0.5, 0.3, 0.2]); current_categories = np.array([0.4, 0.4, 0.2]); total_variation = 0.5 * np.abs(reference_categories - current_categories).sum()  # Total Variation衡量离散分布整体差异。", "assert np.isclose(total_variation, 0.1)  # 验证漂移距离。"],
+            ["zero_reference = np.array([0.5, 0.5, 0.0]); nonzero_current = np.array([0.4, 0.4, 0.2]); unsafe_psi = np.isfinite((nonzero_current - zero_reference) * np.log(np.divide(nonzero_current, zero_reference, out=np.full(3, np.inf), where=zero_reference != 0))).all()  # PSI遇到零箱会产生无穷，需平滑。", "assert not unsafe_psi  # 验证零概率陷阱。"],
+            ["p_distribution = np.array([0.8, 0.2]); q_distribution = np.array([0.5, 0.5]); midpoint = (p_distribution + q_distribution) / 2; kl = lambda left, right: np.sum(left * np.log(left / right)); js_divergence = 0.5 * kl(p_distribution, midpoint) + 0.5 * kl(q_distribution, midpoint)  # Jensen-Shannon是对称且有界的分布漂移指标。", "assert js_divergence >= 0 and np.isclose(js_divergence, 0.5 * kl(q_distribution, midpoint) + 0.5 * kl(p_distribution, midpoint))  # 综合验证对称性。"],
+        ],
+        [
+            ["ordered_time = np.arange(20); gap = 2; train_time = ordered_time[:10]; validation_time = ordered_time[10 + gap:15]  # gap或embargo避免标签窗口与未来特征相邻泄漏。", "assert train_time.max() + gap < validation_time.min()  # 验证时间间隔。"],
+            ["random_split = np.random.default_rng(0).permutation(np.arange(20)); random_train, random_test = random_split[:15], random_split[15:]; chronological_violation = random_train.max() > random_test.min()  # 普通随机切分破坏时间因果顺序。", "assert chronological_violation  # 验证时间序列不能随意shuffle。"],
+            ["time_values = np.arange(12); expanding_splits = [(time_values[:end], time_values[end:end + 2]) for end in range(4, 11, 2)]; rolling_splits = [(time_values[max(0, end - 4):end], time_values[end:end + 2]) for end in range(4, 11, 2)]  # 综合比较扩展窗口与固定滚动窗口。", "assert len(expanding_splits[-1][0]) > len(rolling_splits[-1][0]) and all(train.max() < test.min() for train, test in rolling_splits)  # 验证两种回测。"],
+        ],
+        [
+            ["base_seed = 42; child_sequences = np.random.SeedSequence(base_seed).spawn(2); child_values = [np.random.default_rng(sequence).normal(size=3) for sequence in child_sequences]  # 并行任务应派生独立随机流而不是共用全局状态。", "assert not np.array_equal(child_values[0], child_values[1])  # 验证可复现但相互独立。"],
+            ["same_seed_predictions = [np.random.default_rng(42).integers(0, 2, size=10) for _ in range(2)]; different_seed_predictions = [np.random.default_rng(seed).integers(0, 2, size=10) for seed in [42, 43]]  # 相同seed复现实验，不同seed用于评估方差。", "assert np.array_equal(*same_seed_predictions) and not np.array_equal(*different_seed_predictions)  # 验证seed语义。"],
+            ["experiment_record = {'code_version': 'abc123', 'data_version': 'v2', 'seed': 42, 'features': ['x1', 'x2'], 'metric': 0.91}; required_fields = {'code_version', 'data_version', 'seed', 'features', 'metric'}  # 综合复现还需代码、数据、特征和指标版本，不能只有随机种子。", "assert required_fields <= experiment_record.keys()  # 验证实验追踪元数据。"],
+        ],
+    ]
+    code = list(cases[family])
+    if variant > 1:
+        code.extend(extras[family][variant - 2])
+    return title, task, code

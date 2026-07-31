@@ -10,10 +10,12 @@
 4. 采样Python随机数。
 5. 采样NumPy随机数。
 6. 重置Python种子验证复现。
+7. 相同seed复现实验，不同seed用于评估方差。
 
 完成标准：
 - 验证Python随机序列复现。
 - 验证NumPy随机序列复现。
+- 验证seed语义。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -30,3 +32,5 @@ random.seed(seed)  # 重置Python种子验证复现。
 assert python_values == [random.random() for _ in range(3)]  # 验证Python随机序列复现。
 assert np.allclose(numpy_values, np.random.default_rng(seed).normal(size=3))  # 验证NumPy随机序列复现。
 print(seed, python_values, numpy_values)  # 输出可复现样本。
+same_seed_predictions = [np.random.default_rng(42).integers(0, 2, size=10) for _ in range(2)]; different_seed_predictions = [np.random.default_rng(seed).integers(0, 2, size=10) for seed in [42, 43]]  # 相同seed复现实验，不同seed用于评估方差。
+assert np.array_equal(*same_seed_predictions) and not np.array_equal(*different_seed_predictions)  # 验证seed语义。

@@ -11,9 +11,11 @@
 5. 计算非零处L1次梯度。
 6. 计算L2梯度。
 7. 正则项应非负。
+8. 未标准化时同等预测作用的特征受到完全不同L1惩罚。
 
 完成标准：
 - 正则项应非负。
+- 验证正则化前必须关注尺度。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ l1_subgradient = strength * np.sign(weights)  # 计算非零处L1次梯度。
 l2_gradient = 2 * strength * weights  # 计算L2梯度。
 assert l1_penalty >= 0 and l2_penalty >= 0  # 正则项应非负。
 print(l1_penalty, l2_penalty, l1_subgradient, l2_gradient)  # 输出惩罚和梯度。
+scaled_equivalent = np.array([1.0, 1000.0]); same_effect_weights = np.array([1.0, 0.001]); unequal_penalty = np.abs(same_effect_weights)  # 未标准化时同等预测作用的特征受到完全不同L1惩罚。
+assert unequal_penalty[0] / unequal_penalty[1] == 1000  # 验证正则化前必须关注尺度。

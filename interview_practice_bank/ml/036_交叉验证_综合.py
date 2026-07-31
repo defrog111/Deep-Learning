@@ -12,10 +12,15 @@
 6. 选择当前验证折。
 7. 合并其余训练折。
 8. 收集验证覆盖。
+9. 外层评估泛化，内层选择超参数。
+for outer_validation in outer_folds:  # 遍历外层验证块。
+    outer_training = np.setdiff1d(np.arange(8), outer_validation); inner_validation = outer_training[::2]; inner_training = np.setdiff1d(outer_training, inner_validation); nested_counts.append((len(inner_training), len(inner_validation), len(outer_validation)))  # 只在外层训练集内部再切分。
+10. 综合验证nested CV层级。
 
 完成标准：
 - 验证单折无交集。
 - 验证每个样本恰做一次验证。
+- 综合验证nested CV层级。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -33,3 +38,7 @@ for fold in range(fold_count):  # 每一折轮流作为验证集。
     validation_seen.extend(validation.tolist())  # 收集验证覆盖。
 assert sorted(validation_seen) == indices.tolist()  # 验证每个样本恰做一次验证。
 print([len(fold) for fold in folds])  # 输出各折大小。
+outer_folds = [np.arange(0, 4), np.arange(4, 8)]; nested_counts = []  # 外层评估泛化，内层选择超参数。
+for outer_validation in outer_folds:  # 遍历外层验证块。
+    outer_training = np.setdiff1d(np.arange(8), outer_validation); inner_validation = outer_training[::2]; inner_training = np.setdiff1d(outer_training, inner_validation); nested_counts.append((len(inner_training), len(inner_validation), len(outer_validation)))  # 只在外层训练集内部再切分。
+assert nested_counts == [(2, 2, 4), (2, 2, 4)]  # 综合验证nested CV层级。

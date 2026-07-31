@@ -12,9 +12,11 @@
 6. 选取第一个主成分用于变式4。
 7. 投影到低维空间。
 8. 计算解释方差比。
+9. 综合SVD投影并whitening。
 
 完成标准：
 - 验证降维shape。
+- 验证白化后单位协方差。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +33,5 @@ projected = centered @ components  # 投影到低维空间。
 explained_ratio = eigenvalues[order] / eigenvalues.sum()  # 计算解释方差比。
 assert projected.shape == (4, 1)  # 验证降维shape。
 print(components, projected, explained_ratio)  # 输出PCA结果。
+pca_matrix = np.array([[2.0, 0.0], [0.0, 1.0], [-2.0, 0.0], [0.0, -1.0]]); pca_centered = pca_matrix - pca_matrix.mean(0); _, pca_singular, pca_vt = np.linalg.svd(pca_centered, full_matrices=False); whitened = (pca_centered @ pca_vt.T) / (pca_singular / np.sqrt(len(pca_matrix) - 1))  # 综合SVD投影并whitening。
+assert np.allclose(np.cov(whitened, rowvar=False), np.eye(2))  # 验证白化后单位协方差。

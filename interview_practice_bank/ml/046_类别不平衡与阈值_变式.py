@@ -10,9 +10,11 @@
 4. 把概率转类别。
 5. 计算少数类召回率。
 6. 计算常见balanced类别权重。
+7. 只在训练集内随机过采样少数类。
 
 完成标准：
 - 验证每类一个权重。
+- 验证有放回过采样。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ recall = np.sum(predictions & (targets == 1)) / np.sum(targets == 1)  # 计算�
 balanced_weight = len(targets) / (2 * np.bincount(targets))  # 计算常见balanced类别权重。
 assert len(balanced_weight) == 2  # 验证每类一个权重。
 print(threshold, predictions, recall, balanced_weight)  # 输出阈值和不平衡处理信息。
+majority = np.arange(20); minority = np.arange(20, 24); rng_balance = np.random.default_rng(42); oversampled_minority = rng_balance.choice(minority, size=len(majority), replace=True); balanced_indices = np.r_[majority, oversampled_minority]  # 只在训练集内随机过采样少数类。
+assert len(balanced_indices) == 40 and len(np.unique(oversampled_minority)) <= len(minority)  # 验证有放回过采样。

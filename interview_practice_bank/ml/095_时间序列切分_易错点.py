@@ -10,9 +10,11 @@
 4. 逐步扩展训练窗口。
 5. 训练只能使用过去。
 6. 保存本折。
+7. 普通随机切分破坏时间因果顺序。
 
 完成标准：
 - 验证没有未来信息泄漏。
+- 验证时间序列不能随意shuffle。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ for train_end in range(8, 20 - test_size + 1, test_size):  # 逐步扩展训练�
     splits.append((train, validation))  # 保存本折。
 assert all(train.max() < validation.min() for train, validation in splits)  # 验证没有未来信息泄漏。
 print([(len(train), validation.tolist()) for train, validation in splits])  # 输出时间切分。
+random_split = np.random.default_rng(0).permutation(np.arange(20)); random_train, random_test = random_split[:15], random_split[15:]; chronological_violation = random_train.max() > random_test.min()  # 普通随机切分破坏时间因果顺序。
+assert chronological_violation  # 验证时间序列不能随意shuffle。

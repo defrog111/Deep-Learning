@@ -10,9 +10,11 @@
 4. 逐步扩展训练窗口。
 5. 训练只能使用过去。
 6. 保存本折。
+7. gap或embargo避免标签窗口与未来特征相邻泄漏。
 
 完成标准：
 - 验证没有未来信息泄漏。
+- 验证时间间隔。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,5 @@ for train_end in range(8, 20 - test_size + 1, test_size):  # 逐步扩展训练�
     splits.append((train, validation))  # 保存本折。
 assert all(train.max() < validation.min() for train, validation in splits)  # 验证没有未来信息泄漏。
 print([(len(train), validation.tolist()) for train, validation in splits])  # 输出时间切分。
+ordered_time = np.arange(20); gap = 2; train_time = ordered_time[:10]; validation_time = ordered_time[10 + gap:15]  # gap或embargo避免标签窗口与未来特征相邻泄漏。
+assert train_time.max() + gap < validation_time.min()  # 验证时间间隔。

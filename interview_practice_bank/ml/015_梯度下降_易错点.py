@@ -12,9 +12,11 @@
 6. 计算预测残差。
 7. 更新权重。
 8. 更新偏置。
+9. 未缩放特征配大步长会产生巨大更新。
 
 完成标准：
 - 验证收敛到真实参数。
+- 验证尺度影响收敛稳定性。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -31,3 +33,5 @@ for _ in range(500):  # 迭代梯度下降。
     bias -= learning_rate * 2 * np.mean(errors)  # 更新偏置。
 assert abs(weight - 2) < 0.05 and abs(bias - 1) < 0.1  # 验证收敛到真实参数。
 print(weight, bias)  # 输出优化结果。
+large_scale_x = np.array([1000.0, 2000.0]); unstable_weight = 1.0; unstable_gradient = 2 * np.mean((unstable_weight * large_scale_x) * large_scale_x); unstable_weight -= 0.1 * unstable_gradient  # 未缩放特征配大步长会产生巨大更新。
+assert abs(unstable_weight) > 1000  # 验证尺度影响收敛稳定性。

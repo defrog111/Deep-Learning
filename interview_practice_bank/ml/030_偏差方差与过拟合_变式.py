@@ -8,9 +8,11 @@
 2. 用验证集选择复杂度。
 3. 计算泛化差距。
 4. 判断复杂模型是否高方差。
+5. Bootstrap重采样估计统计量方差。
 
 完成标准：
 - 验证选择验证误差最低模型。
+- 验证抽样分布。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ generalization_gap = validation_errors - train_errors  # 计算泛化差距。
 high_variance = generalization_gap[-1] > 0.08  # 判断复杂模型是否高方差。
 assert best_complexity == 3  # 验证选择验证误差最低模型。
 print(best_complexity, generalization_gap, high_variance)  # 输出偏差方差线索。
+rng_bias = np.random.default_rng(42); population = rng_bias.normal(size=200); bootstrap_means = np.array([rng_bias.choice(population, size=len(population), replace=True).mean() for _ in range(200)])  # Bootstrap重采样估计统计量方差。
+assert bootstrap_means.std() > 0 and abs(bootstrap_means.mean() - population.mean()) < 0.1  # 验证抽样分布。

@@ -11,9 +11,11 @@
 5. 计算准确率。
 6. 构造更极端的概率。
 7. 比较校准误差。
+8. Brier分数会严惩高置信度错误。
 
 完成标准：
 - 验证Brier范围。
+- 验证概率质量不等于准确率。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ overconfident = np.clip(probabilities * 1.1, 0, 1)  # 构造更极端的概率�
 overconfident_brier = np.mean((overconfident - targets) ** 2)  # 比较校准误差。
 assert 0 <= brier <= 1  # 验证Brier范围。
 print(brier, accuracy, overconfident_brier)  # 输出概率与硬指标。
+overconfident = np.array([0.99, 0.99]); uncertain = np.array([0.6, 0.6]); wrong_labels = np.array([1.0, 0.0]); overconfident_brier = np.mean((overconfident - wrong_labels)**2); uncertain_brier = np.mean((uncertain - wrong_labels)**2)  # Brier分数会严惩高置信度错误。
+assert overconfident_brier > uncertain_brier  # 验证概率质量不等于准确率。
