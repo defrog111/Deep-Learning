@@ -10,9 +10,14 @@
 4. 固定pow的第一个参数创建新函数。
 5. 归约计算连乘。
 6. 计算随变式变化的斐波那契数。
+7. 定义问候类。
+    def greet(self, prefix, name):  # 定义通用方法。
+        return f'{prefix} {name}'  # 拼接问候。
+    hello = partialmethod(greet, 'Hello')  # 派生固定前缀的方法。
 
 完成标准：
 - 验证partial和reduce。
+- 验证partialmethod绑定self。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +32,9 @@ product = reduce(lambda left, right: left * right, range(1, 6), 1)  # 归约计�
 value = fibonacci(11)  # 计算随变式变化的斐波那契数。
 assert power_of_two(5) == 32 and product == 120  # 验证partial和reduce。
 print(value, fibonacci.cache_info(), product)  # 输出缓存命中信息。
+from functools import partialmethod  # 导入类方法参数预绑定工具。
+class Greeter:  # 定义问候类。
+    def greet(self, prefix, name):  # 定义通用方法。
+        return f'{prefix} {name}'  # 拼接问候。
+    hello = partialmethod(greet, 'Hello')  # 派生固定前缀的方法。
+assert Greeter().hello('Ada') == 'Hello Ada'  # 验证partialmethod绑定self。

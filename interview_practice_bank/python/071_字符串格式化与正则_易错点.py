@@ -10,9 +10,11 @@
 4. 明确抛出解析错误。
 5. 把命名组转换为字典。
 6. 使用格式说明符对齐和补零。
+7. raw字符串避免正则反斜杠与Python转义叠加。
 
 完成标准：
 - 验证正则提取。
+- 验证两种字符串形式。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ fields = match.groupdict()  # 把命名组转换为字典。
 message = '{:<10} | {:05d}'.format(fields['name'], int(fields['score']))  # 使用格式说明符对齐和补零。
 assert fields['email'] == 'alice@example.com'  # 验证正则提取。
 print(fields, message)  # 输出解析和格式化结果。
+raw_pattern = r'\b\d+\b'; escaped_pattern = '\\b\\d+\\b'  # raw字符串避免正则反斜杠与Python转义叠加。
+assert raw_pattern == escaped_pattern and re.findall(raw_pattern, 'a 12 b') == ['12']  # 验证两种字符串形式。

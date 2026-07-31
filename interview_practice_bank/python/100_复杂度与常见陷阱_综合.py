@@ -13,6 +13,11 @@
 7. 每行创建独立列表。
 8. 修改一行会影响所有共享行。
 9. 正确矩阵只修改第一行。
+10. 定义协程函数。
+    await asyncio.sleep(0)  # 主动让出事件循环。
+    return value * value  # 返回计算结果。
+async def async_main():  # 定义异步入口。
+    return await asyncio.gather(*(async_square(value) for value in range(4)))  # 并发等待多个协程并保持顺序。
 
 完成标准：
 - 验证复杂度容器和别名陷阱。
@@ -32,3 +37,10 @@ matrix_bad[0][0] = 1  # 修改一行会影响所有共享行。
 matrix_good[0][0] = 1  # 正确矩阵只修改第一行。
 assert in_list == in_set and sum(row[0] for row in matrix_bad) == 3  # 验证复杂度容器和别名陷阱。
 print(matrix_bad, matrix_good)  # 输出错误与正确矩阵。
+import asyncio  # 导入异步I/O框架。
+async def async_square(value):  # 定义协程函数。
+    await asyncio.sleep(0)  # 主动让出事件循环。
+    return value * value  # 返回计算结果。
+async def async_main():  # 定义异步入口。
+    return await asyncio.gather(*(async_square(value) for value in range(4)))  # 并发等待多个协程并保持顺序。
+async_result = asyncio.run(async_main()); assert async_result == [0, 1, 4, 9]  # 创建事件循环运行异步入口。

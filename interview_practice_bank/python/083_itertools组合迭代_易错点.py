@@ -9,9 +9,11 @@
 3. 生成不重复二元组合。
 4. 惰性连接多个序列。
 5. 从惰性迭代器取前n项。
+6. groupby前必须按同一key排序。
 
 完成标准：
 - 验证组合数和展平。
+- 验证连续分组。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,6 @@ flattened = list(chain.from_iterable([[1, 2], [3], [4, 5]]))  # 惰性连接多�
 prefix = list(islice(range(100), 5))  # 从惰性迭代器取前n项。
 assert len(pairs) == 6 and flattened == [1, 2, 3, 4, 5]  # 验证组合数和展平。
 print(groups, pairs, prefix)  # 输出itertools结果。
+from itertools import groupby  # 导入相邻分组工具。
+records = [('b', 1), ('a', 2), ('b', 3)]; grouped_records = {key: list(group) for key, group in groupby(sorted(records), key=lambda row: row[0])}  # groupby前必须按同一key排序。
+assert [row[1] for row in grouped_records['b']] == [1, 3]  # 验证连续分组。

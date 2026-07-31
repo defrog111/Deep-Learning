@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证元数据和状态。
+- 验证装饰器应用顺序。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +38,14 @@ def add(a, b):  # 定义被装饰函数。
 result = add(5, 4)  # 调用包装后的函数。
 assert add.__name__ == 'add' and result[0] == 1  # 验证元数据和状态。
 print(result)  # 输出装饰器结果。
+calls = []  # 保存装饰发生和调用顺序。
+def order_decorator(label):  # 创建记录顺序的装饰器。
+    def decorate(function):  # 接收函数。
+        calls.append('decorate-' + label)  # 装饰在定义阶段从下向上发生。
+        return function  # 保持函数行为。
+    return decorate  # 返回装饰器。
+@order_decorator('top')  # 外层后执行。
+@order_decorator('bottom')  # 内层先执行。
+def ordered():  # 定义被装饰函数。
+    return None  # 返回空值。
+assert calls == ['decorate-bottom', 'decorate-top']  # 验证装饰器应用顺序。

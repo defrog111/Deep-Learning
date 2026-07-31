@@ -9,9 +9,11 @@
 3. 使用负步长反转列表。
 4. 使用切片循环左移。
 5. 全切片创建浅拷贝。
+6. 列表切片产生浅拷贝，不影响原列表的顶层元素。
 
 完成标准：
 - 验证值相等但对象不同。
+- 验证对象身份与内容。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ rotated = values[3:] + values[:3]  # 使用切片循环左移。
 copy = values[:]  # 全切片创建浅拷贝。
 assert copy == values and copy is not values  # 验证值相等但对象不同。
 print(middle, reversed_values, rotated)  # 输出切片结果。
+copied_list = values[:]; copied_list[0] = -1  # 列表切片产生浅拷贝，不影响原列表的顶层元素。
+assert copied_list is not values and copied_list[1:] == values[1:]  # 验证对象身份与内容。

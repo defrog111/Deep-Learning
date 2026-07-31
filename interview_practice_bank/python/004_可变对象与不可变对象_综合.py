@@ -9,9 +9,12 @@
 3. 赋值只复制引用而不复制对象。
 4. 原地修改列表。
 5. 拼接tuple会创建新对象。
+6. 使用frozenset作为可哈希字典键。
+7. 相同不可变集合具有相同哈希语义。
 
 完成标准：
 - 验证身份语义。
+- 相同不可变集合具有相同哈希语义。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +27,5 @@ mutable.append(6)  # 原地修改列表。
 new_tuple = immutable + (4,)  # 拼接tuple会创建新对象。
 assert same_list is mutable and new_tuple is not immutable  # 验证身份语义。
 print(mutable, immutable, new_tuple, id(mutable))  # 输出对象和值。
+hashable = frozenset({1, 2}); mapping = {hashable: 'ok'}  # 使用frozenset作为可哈希字典键。
+assert mapping[frozenset([2, 1])] == 'ok'  # 相同不可变集合具有相同哈希语义。

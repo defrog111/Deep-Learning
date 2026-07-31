@@ -11,9 +11,11 @@
 5. 直接追加无需先判断键。
 6. 创建固定长度双端队列。
 7. 超过maxlen自动从左侧淘汰。
+8. 有界deque会自动丢弃最旧元素。
 
 完成标准：
 - 验证最高频词。
+- 验证滑动窗口语义。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ queue = deque(maxlen=5)  # 创建固定长度双端队列。
 queue.extend(words)  # 超过maxlen自动从左侧淘汰。
 assert counts.most_common(1)[0] == ('to', 2)  # 验证最高频词。
 print(counts, dict(groups), list(queue))  # 输出容器结果。
+bounded = deque(maxlen=3); bounded.extend(range(5))  # 有界deque会自动丢弃最旧元素。
+assert list(bounded) == [2, 3, 4]  # 验证滑动窗口语义。

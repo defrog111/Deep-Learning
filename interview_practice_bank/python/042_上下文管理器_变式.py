@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证进入使用退出顺序。
+- 验证上下文顺序。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -35,3 +36,15 @@ with managed_resource(events) as resource:  # 使用上下文管理器。
     events.append(resource)  # 在with内部使用资源。
 assert events == ['open', 'resource', 'close']  # 验证进入使用退出顺序。
 print(events)  # 输出生命周期。
+from contextlib import contextmanager  # 导入生成器上下文装饰器。
+events = []  # 保存进入退出顺序。
+@contextmanager  # 把生成器转换为上下文管理器。
+def managed():  # 定义资源生命周期。
+    events.append('enter')  # 进入时执行。
+    try:  # 保证清理。
+        yield 'resource'  # 把资源交给with块。
+    finally:  # 无论是否异常都执行。
+        events.append('exit')  # 记录退出。
+with managed() as resource:  # 使用资源。
+    events.append(resource)  # 记录块内行为。
+assert events == ['enter', 'resource', 'exit']  # 验证上下文顺序。

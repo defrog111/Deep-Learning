@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证进入使用退出顺序。
+- 验证动态上下文组合。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -35,3 +36,8 @@ with managed_resource(events) as resource:  # 使用上下文管理器。
     events.append(resource)  # 在with内部使用资源。
 assert events == ['open', 'resource', 'close']  # 验证进入使用退出顺序。
 print(events)  # 输出生命周期。
+from contextlib import ExitStack, nullcontext  # 导入动态上下文组合工具。
+with ExitStack() as stack:  # 按运行时条件管理多个资源。
+    first = stack.enter_context(nullcontext('A'))  # 加入第一个无需清理的上下文。
+    second = stack.enter_context(nullcontext('B'))  # 加入第二个上下文。
+assert first + second == 'AB'  # 验证动态上下文组合。

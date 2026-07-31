@@ -11,6 +11,9 @@
 5. 创建数据类实例。
 6. 使用自动生成的顺序方法。
 7. frozen数据类可哈希可作字典键。
+8. 定义含列表的数据类。
+class Basket:  # 定义购物篮。
+    items: list = field(default_factory=list)  # 每个实例创建独立列表，避免共享默认值。
 
 完成标准：
 - 验证排序和哈希。
@@ -29,3 +32,8 @@ best = max(students)  # 使用自动生成的顺序方法。
 mapping = {student: student.name for student in students}  # frozen数据类可哈希可作字典键。
 assert best.name == 'B' and len(mapping) == 2  # 验证排序和哈希。
 print(students, best)  # 输出数据类。
+from dataclasses import dataclass, field  # 导入安全默认工厂。
+@dataclass  # 定义含列表的数据类。
+class Basket:  # 定义购物篮。
+    items: list = field(default_factory=list)  # 每个实例创建独立列表，避免共享默认值。
+left_basket, right_basket = Basket(), Basket(); left_basket.items.append('x'); assert right_basket.items == []  # 验证默认工厂。

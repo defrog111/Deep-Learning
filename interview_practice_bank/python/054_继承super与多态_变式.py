@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证多态。
+- 验证MRO顺序。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -37,3 +38,12 @@ animals = [Animal('A'), Dog('B', 'Lab')]  # 用统一父类接口保存不同对
 sounds = [animal.speak() for animal in animals]  # 动态分派调用实际类型方法。
 assert sounds == ['unknown', 'B: woof']  # 验证多态。
 print(sounds)  # 输出方法结果。
+class Left:  # 定义左侧父类。
+    def label(self):  # 提供同名方法。
+        return 'left'  # 返回标识。
+class Right:  # 定义右侧父类。
+    def label(self):  # 提供同名方法。
+        return 'right'  # 返回标识。
+class Child(Left, Right):  # 多继承按MRO解析方法。
+    pass  # 无需覆盖。
+assert Child().label() == 'left' and Child.__mro__[:3] == (Child, Left, Right)  # 验证MRO顺序。

@@ -11,6 +11,11 @@
 5. 创建数据类实例。
 6. 使用自动生成的顺序方法。
 7. frozen数据类可哈希可作字典键。
+8. 创建不可变值对象。
+class Point:  # 定义坐标。
+    x: int  # 声明横坐标。
+    y: int = 0  # 声明带默认值纵坐标。
+9. 使用replace创建修改后的新对象。
 
 完成标准：
 - 验证排序和哈希。
@@ -29,3 +34,9 @@ best = max(students)  # 使用自动生成的顺序方法。
 mapping = {student: student.name for student in students}  # frozen数据类可哈希可作字典键。
 assert best.name == 'B' and len(mapping) == 2  # 验证排序和哈希。
 print(students, best)  # 输出数据类。
+from dataclasses import dataclass, replace  # 导入数据类和不可变更新工具。
+@dataclass(frozen=True)  # 创建不可变值对象。
+class Point:  # 定义坐标。
+    x: int  # 声明横坐标。
+    y: int = 0  # 声明带默认值纵坐标。
+point = Point(1); moved = replace(point, x=2); assert point.x == 1 and moved.x == 2  # 使用replace创建修改后的新对象。

@@ -38,3 +38,6 @@ with tempfile.TemporaryDirectory() as folder:  # 创建自动清理目录。
     restored = json.loads(json_path.read_text(encoding='utf-8'))  # 读取并反序列化JSON。
 assert restored == records  # 验证JSON往返不丢数据。
 print(restored)  # 输出恢复记录。
+import io, csv  # 导入内存文本流和CSV模块。
+buffer = io.StringIO(); writer = csv.DictWriter(buffer, fieldnames=['name', 'score']); writer.writeheader(); writer.writerow({'name': 'A', 'score': 90})  # 按列名安全写CSV。
+buffer.seek(0); csv_rows = list(csv.DictReader(buffer)); assert csv_rows[0]['score'] == '90'  # 读取CSV时默认字段为字符串。

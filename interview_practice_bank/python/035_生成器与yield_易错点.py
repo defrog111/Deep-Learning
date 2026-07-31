@@ -12,6 +12,9 @@
 6. 创建生成器但尚未执行函数体。
 7. 手动消费第一个值。
 8. 消费剩余值用于变式3。
+9. 定义可接收send值的生成器。
+    received = yield 'ready'  # 第一次next停在yield，send把值送回表达式。
+    yield received * 2  # 产生处理结果。
 
 完成标准：
 - 验证边界。
@@ -30,3 +33,7 @@ first_value = next(generator)  # 手动消费第一个值。
 remaining = list(generator)  # 消费剩余值用于变式3。
 assert first_value == 0 and all(value < 25 for value in remaining)  # 验证边界。
 print(first_value, remaining)  # 输出生成序列。
+def receiver():  # 定义可接收send值的生成器。
+    received = yield 'ready'  # 第一次next停在yield，send把值送回表达式。
+    yield received * 2  # 产生处理结果。
+channel = receiver(); assert next(channel) == 'ready' and channel.send(5) == 10  # 验证send协议。

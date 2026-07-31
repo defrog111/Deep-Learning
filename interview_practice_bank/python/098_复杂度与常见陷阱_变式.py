@@ -13,9 +13,12 @@
 7. 每行创建独立列表。
 8. 修改一行会影响所有共享行。
 9. 正确矩阵只修改第一行。
+10. 线程适合I/O等待型任务。
+    threaded = list(executor.map(lambda value: value * value, range(5)))  # 保持输入顺序收集结果。
 
 完成标准：
 - 验证复杂度容器和别名陷阱。
+- 验证线程池接口。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -32,3 +35,7 @@ matrix_bad[0][0] = 1  # 修改一行会影响所有共享行。
 matrix_good[0][0] = 1  # 正确矩阵只修改第一行。
 assert in_list == in_set and sum(row[0] for row in matrix_bad) == 3  # 验证复杂度容器和别名陷阱。
 print(matrix_bad, matrix_good)  # 输出错误与正确矩阵。
+from concurrent.futures import ThreadPoolExecutor  # 导入线程池。
+with ThreadPoolExecutor(max_workers=2) as executor:  # 线程适合I/O等待型任务。
+    threaded = list(executor.map(lambda value: value * value, range(5)))  # 保持输入顺序收集结果。
+assert threaded == [0, 1, 4, 9, 16]  # 验证线程池接口。

@@ -13,9 +13,13 @@
 7. 每行创建独立列表。
 8. 修改一行会影响所有共享行。
 9. 正确矩阵只修改第一行。
+10. 创建锁和共享资源。
+with lock:  # 对复合共享操作加锁；GIL不等于业务操作原子性。
+    shared.append('safe')  # 在临界区修改数据。
 
 完成标准：
 - 验证复杂度容器和别名陷阱。
+- 退出with后锁已释放。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -32,3 +36,9 @@ matrix_bad[0][0] = 1  # 修改一行会影响所有共享行。
 matrix_good[0][0] = 1  # 正确矩阵只修改第一行。
 assert in_list == in_set and sum(row[0] for row in matrix_bad) == 3  # 验证复杂度容器和别名陷阱。
 print(matrix_bad, matrix_good)  # 输出错误与正确矩阵。
+import threading  # 导入线程同步原语。
+lock = threading.Lock(); shared = []  # 创建锁和共享资源。
+with lock:  # 对复合共享操作加锁；GIL不等于业务操作原子性。
+    shared.append('safe')  # 在临界区修改数据。
+assert shared == ['safe'] and lock.acquire(blocking=False)  # 退出with后锁已释放。
+lock.release()  # 释放验证时重新取得的锁。

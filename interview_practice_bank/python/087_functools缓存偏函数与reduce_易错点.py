@@ -10,6 +10,9 @@
 4. 固定pow的第一个参数创建新函数。
 5. 归约计算连乘。
 6. 计算随变式变化的斐波那契数。
+7. 限制缓存容量防止无界增长。
+def square(value):  # 定义纯函数。
+    return value * value  # 计算平方。
 
 完成标准：
 - 验证partial和reduce。
@@ -27,3 +30,8 @@ product = reduce(lambda left, right: left * right, range(1, 6), 1)  # 归约计�
 value = fibonacci(10)  # 计算随变式变化的斐波那契数。
 assert power_of_two(5) == 32 and product == 120  # 验证partial和reduce。
 print(value, fibonacci.cache_info(), product)  # 输出缓存命中信息。
+from functools import lru_cache  # 导入LRU缓存。
+@lru_cache(maxsize=2)  # 限制缓存容量防止无界增长。
+def square(value):  # 定义纯函数。
+    return value * value  # 计算平方。
+square(1); square(1); assert square.cache_info().hits == 1  # 验证命中统计。

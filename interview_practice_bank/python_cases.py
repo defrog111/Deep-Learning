@@ -360,4 +360,135 @@ def python_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "print(matrix_bad, matrix_good)  # 输出错误与正确矩阵。",
         ],
     ]
-    return title, task, cases[family]
+    # 变式、易错点、综合均增加独立可执行考点；基础概念会反复出现，但不再只改数字。
+    extras: list[list[list[str]]] = [
+        [
+            ["immutable = (1, 2, 3); mutable = [1, 2, 3]; before_id = id(mutable); mutable += [4]  # 比较tuple不可变与list原地扩展。", "assert id(mutable) == before_id and immutable + (4,) == (1, 2, 3, 4)  # list的+=保持身份，tuple拼接创建新对象。"],
+            ["nested_tuple = ([1, 2], 3); nested_tuple[0].append(4)  # tuple不可修改槽位，但其中的可变对象仍可变化。", "assert nested_tuple == ([1, 2, 4], 3)  # 验证浅层不可变陷阱。"],
+            ["hashable = frozenset({1, 2}); mapping = {hashable: 'ok'}  # 使用frozenset作为可哈希字典键。", "assert mapping[frozenset([2, 1])] == 'ok'  # 相同不可变集合具有相同哈希语义。"],
+        ],
+        [
+            ["window = slice(1, None, 2); sliced_twice = values[window]  # slice对象可复用并提高复杂切片可读性。", "assert sliced_twice == values[1::2]  # 验证slice对象与冒号语法等价。"],
+            ["copied_list = values[:]; copied_list[0] = -1  # 列表切片产生浅拷贝，不影响原列表的顶层元素。", "assert copied_list is not values and copied_list[1:] == values[1:]  # 验证对象身份与内容。"],
+            ["from itertools import islice  # 导入惰性切片工具。", "lazy_slice = list(islice(iter(values), 1, None, 2))  # 对迭代器使用islice而不是下标切片。", "assert lazy_slice == values[1::2]  # 验证惰性与列表切片结果一致。"],
+        ],
+        [
+            ["from collections import defaultdict  # 导入带默认工厂的字典。", "grouped = defaultdict(list); [grouped[value % 2].append(value) for value in range(6)]  # 按奇偶分组且无需手动判断键。", "assert grouped[0] == [0, 2, 4]  # 验证defaultdict分组。"],
+            ["try:  # 演示不可哈希对象不能作为set元素。\n    {['bad']}  # list可变因此不可哈希。\nexcept TypeError as error:  # 捕获预期错误。\n    unhashable_message = str(error)  # 保存错误信息。", "assert 'unhashable' in unhashable_message  # 验证哈希约束。"],
+            ["from collections import ChainMap  # 导入多层配置查找结构。", "settings = ChainMap({'timeout': 10}, {'timeout': 30, 'retries': 3})  # 前层配置覆盖后层默认值。", "assert settings['timeout'] == 10 and settings['retries'] == 3  # 验证ChainMap查找顺序。"],
+        ],
+        [
+            ["generator_expression = (value * value for value in range(5))  # 生成器表达式惰性产生结果。", "assert next(generator_expression) == 0 and list(generator_expression) == [1, 4, 9, 16]  # 验证一次性消费。"],
+            ["matrix_wrong = [[0] * 2] * 2; matrix_wrong[0][0] = 1  # 重复内部列表引用是推导式高频陷阱。", "assert matrix_wrong == [[1, 0], [1, 0]]  # 验证别名传播。"],
+            ["flattened = [item for row in [[1, 2], [3, 4]] for item in row]; indexed = {value: index for index, value in enumerate(flattened)}  # 综合嵌套列表和字典推导式。", "assert flattened == [1, 2, 3, 4] and indexed[4] == 3  # 验证推导结果。"],
+        ],
+        [
+            ["case_insensitive = sorted(['Bob', 'alice', 'ALAN'], key=str.casefold)  # casefold比lower更适合大小写无关排序。", "assert case_insensitive == ['ALAN', 'alice', 'Bob']  # 验证key只参与比较不改变原值。"],
+            ["stable_items = [('a', 2), ('b', 1), ('c', 2)]; stable_answer = sorted(stable_items, key=lambda item: item[1])  # Python排序稳定，等键保持原顺序。", "assert stable_answer == [('b', 1), ('a', 2), ('c', 2)]  # 验证稳定性。"],
+            ["from functools import cmp_to_key  # 导入旧式比较函数适配器。", "by_last_digit = sorted([21, 13, 32], key=cmp_to_key(lambda left, right: left % 10 - right % 10))  # 把cmp转换为key。", "assert by_last_digit == [21, 32, 13]  # 验证自定义比较。"],
+        ],
+        [
+            ["def positional_and_keyword(value, /, *, scale=1):  # 斜杠前参数只能按位置，星号后参数只能按关键字。\n    return value * scale  # 返回缩放结果。", "assert positional_and_keyword(3, scale=2) == 6  # 验证位置限定和关键字限定。"],
+            ["def mutable_default(value, bucket=[]):  # 默认列表只创建一次，是常见面试陷阱。\n    bucket.append(value)  # 多次调用共享同一个列表。\n    return list(bucket)  # 返回副本便于观察。", "assert mutable_default(1) == [1] and mutable_default(2) == [1, 2]  # 验证默认参数共享状态。"],
+            ["import inspect  # 导入函数签名检查工具。", "def inspected_function(value, /, *, scale=1):  # 定义同时含位置限定和关键字限定的独立示例。\n    return value * scale  # 返回缩放结果。", "signature = inspect.signature(inspected_function); bound = signature.bind(5, scale=4)  # 在调用前按签名绑定参数。", "assert bound.arguments == {'value': 5, 'scale': 4}  # 验证参数协议。"],
+        ],
+        [
+            ["def make_counter():  # 创建保存状态的闭包。\n    count = 0  # 定义封闭变量。\n    def increment():  # 定义内部函数。\n        nonlocal count  # 声明修改最近一层封闭作用域。\n        count += 1  # 更新闭包状态。\n        return count  # 返回新计数。\n    return increment  # 返回闭包。", "counter = make_counter(); assert [counter(), counter()] == [1, 2]  # 验证nonlocal状态。"],
+            ["wrong_functions = [lambda: index for index in range(3)]  # 闭包延迟查找循环变量，三个函数都看到最终值。", "assert [function() for function in wrong_functions] == [2, 2, 2]  # 验证late binding陷阱。"],
+            ["from functools import partial  # 导入偏函数。", "powers_of_two = list(map(partial(pow, 2), range(5)))  # 固定pow的底数形成新函数。", "assert powers_of_two == [1, 2, 4, 8, 16]  # 验证partial参数绑定。"],
+        ],
+        [
+            ["def repeat(times):  # 定义带参数的装饰器工厂。\n    def decorate(function):  # 接收被装饰函数。\n        @wraps(function)  # 保留元数据。\n        def wrapper(*args, **kwargs):  # 接受任意调用参数。\n            return [function(*args, **kwargs) for _ in range(times)]  # 重复调用并收集结果。\n        return wrapper  # 返回包装函数。\n    return decorate  # 返回真正装饰器。", "@repeat(2)  # 应用参数化装饰器。\ndef doubled_name(name):  # 定义示例函数。\n    return name.upper()  # 返回大写名字。", "assert doubled_name('a') == ['A', 'A'] and doubled_name.__name__ == 'doubled_name'  # 验证行为和元数据。"],
+            ["calls = []  # 保存装饰发生和调用顺序。\ndef order_decorator(label):  # 创建记录顺序的装饰器。\n    def decorate(function):  # 接收函数。\n        calls.append('decorate-' + label)  # 装饰在定义阶段从下向上发生。\n        return function  # 保持函数行为。\n    return decorate  # 返回装饰器。\n@order_decorator('top')  # 外层后执行。\n@order_decorator('bottom')  # 内层先执行。\ndef ordered():  # 定义被装饰函数。\n    return None  # 返回空值。", "assert calls == ['decorate-bottom', 'decorate-top']  # 验证装饰器应用顺序。"],
+            ["class CountCalls:  # 用类实现有状态装饰器。\n    def __init__(self, function):  # 保存被装饰函数。\n        self.function, self.count = function, 0  # 初始化函数和计数。\n    def __call__(self, *args, **kwargs):  # 让实例可调用。\n        self.count += 1  # 累计调用次数。\n        return self.function(*args, **kwargs)  # 转发调用。\n@CountCalls  # 使用类装饰器。\ndef identity(value):  # 定义示例函数。\n    return value  # 原样返回。", "assert identity(3) == 3 and identity.count == 1  # 验证类装饰器状态。"],
+        ],
+        [
+            ["def delegated():  # 定义委托生成器。\n    yield from range(3)  # yield from转发子迭代器。", "assert list(delegated()) == [0, 1, 2]  # 验证yield from。"],
+            ["def receiver():  # 定义可接收send值的生成器。\n    received = yield 'ready'  # 第一次next停在yield，send把值送回表达式。\n    yield received * 2  # 产生处理结果。", "channel = receiver(); assert next(channel) == 'ready' and channel.send(5) == 10  # 验证send协议。"],
+            ["generator_close = fibonacci(5); next(generator_close); generator_close.close()  # close向当前题已定义的生成器发送GeneratorExit并终止。", "try:  # 检查关闭后的行为。\n    next(generator_close)  # 已关闭生成器应停止。\nexcept StopIteration:  # 捕获正常结束信号。\n    closed = True  # 记录关闭成功。", "assert closed  # 验证生成器生命周期。"],
+        ],
+        [
+            ["sentinel_values = iter([1, 2, 0, 3]); until_zero = list(iter(lambda: next(sentinel_values), 0))  # iter(callable, sentinel)循环调用直到哨兵值。", "assert until_zero == [1, 2]  # 验证哨兵迭代形式。"],
+            ["one_shot = iter([1, 2]); assert iter(one_shot) is one_shot  # 迭代器的iter返回自身，因此只能继续消费。", "assert next(one_shot) == 1 and list(one_shot) == [2]  # 验证迭代器状态。"],
+            ["class ReverseIterator:  # 实现自定义反向迭代器。\n    def __init__(self, values):  # 保存数据和当前位置。\n        self.values, self.index = values, len(values)  # 从末尾开始。\n    def __iter__(self):  # 返回迭代器自身。\n        return self  # 满足迭代器协议。\n    def __next__(self):  # 返回下一个元素。\n        if self.index == 0:  # 检查终止条件。\n            raise StopIteration  # 发出结束信号。\n        self.index -= 1  # 向前移动。\n        return self.values[self.index]  # 返回当前位置值。", "assert list(ReverseIterator([1, 2, 3])) == [3, 2, 1]  # 验证完整协议。"],
+        ],
+        [
+            ["from contextlib import contextmanager  # 导入生成器上下文装饰器。", "events = []  # 保存进入退出顺序。\n@contextmanager  # 把生成器转换为上下文管理器。\ndef managed():  # 定义资源生命周期。\n    events.append('enter')  # 进入时执行。\n    try:  # 保证清理。\n        yield 'resource'  # 把资源交给with块。\n    finally:  # 无论是否异常都执行。\n        events.append('exit')  # 记录退出。\nwith managed() as resource:  # 使用资源。\n    events.append(resource)  # 记录块内行为。", "assert events == ['enter', 'resource', 'exit']  # 验证上下文顺序。"],
+            ["class SuppressValueError:  # 实现可选择抑制异常的上下文管理器。\n    def __enter__(self):  # 进入上下文。\n        return self  # 返回管理器。\n    def __exit__(self, error_type, error, traceback):  # 接收异常信息。\n        return error_type is ValueError  # 返回True只抑制ValueError。\nwith SuppressValueError():  # 使用异常抑制器。\n    raise ValueError('handled')  # 该异常不会传播。", "assert True  # 能执行到这里说明异常已按协议抑制。"],
+            ["from contextlib import ExitStack, nullcontext  # 导入动态上下文组合工具。", "with ExitStack() as stack:  # 按运行时条件管理多个资源。\n    first = stack.enter_context(nullcontext('A'))  # 加入第一个无需清理的上下文。\n    second = stack.enter_context(nullcontext('B'))  # 加入第二个上下文。", "assert first + second == 'AB'  # 验证动态上下文组合。"],
+        ],
+        [
+            ["try:  # 演示try/except/else。\n    parsed = int('12')  # 执行可能失败的转换。\nexcept ValueError:  # 只捕获预期异常。\n    parsed = 0  # 提供失败兜底。\nelse:  # 无异常时执行。\n    parsed += 1  # 处理成功结果。", "assert parsed == 13  # 验证else只在成功时运行。"],
+            ["try:  # 演示finally总会执行。\n    raise RuntimeError('boom')  # 主动产生异常。\nexcept RuntimeError as error:  # 捕获具体异常。\n    message = str(error)  # 保存错误。\nfinally:  # 无论是否捕获都会运行。\n    cleaned_up = True  # 模拟资源清理。", "assert message == 'boom' and cleaned_up  # 验证异常与清理。"],
+            ["class ValidationError(ValueError):  # 自定义更具体的业务异常。\n    pass  # 继承标准异常语义。\ndef require_positive(value):  # 定义带异常链的校验函数。\n    if value <= 0:  # 检查业务约束。\n        raise ValidationError('must be positive')  # 抛出明确错误。\n    return value  # 返回合法值。", "try:  # 验证自定义异常。\n    require_positive(0)  # 传入非法值。\nexcept ValidationError as error:  # 精确捕获业务异常。\n    validation_message = str(error)  # 保存信息。", "assert validation_message == 'must be positive'  # 验证异常类型和消息。"],
+        ],
+        [
+            ["from dataclasses import dataclass, replace  # 导入数据类和不可变更新工具。", "@dataclass(frozen=True)  # 创建不可变值对象。\nclass Point:  # 定义坐标。\n    x: int  # 声明横坐标。\n    y: int = 0  # 声明带默认值纵坐标。", "point = Point(1); moved = replace(point, x=2); assert point.x == 1 and moved.x == 2  # 使用replace创建修改后的新对象。"],
+            ["from dataclasses import dataclass, field  # 导入安全默认工厂。", "@dataclass  # 定义含列表的数据类。\nclass Basket:  # 定义购物篮。\n    items: list = field(default_factory=list)  # 每个实例创建独立列表，避免共享默认值。", "left_basket, right_basket = Basket(), Basket(); left_basket.items.append('x'); assert right_basket.items == []  # 验证默认工厂。"],
+            ["from typing import NamedTuple  # 导入具名元组。", "class Coordinate(NamedTuple):  # 定义轻量不可变记录。\n    x: int  # 声明横坐标。\n    y: int  # 声明纵坐标。", "coordinate = Coordinate(1, 2); assert coordinate[0] == coordinate.x and coordinate._asdict()['y'] == 2  # 对比tuple与字段访问。"],
+        ],
+        [
+            ["class Left:  # 定义左侧父类。\n    def label(self):  # 提供同名方法。\n        return 'left'  # 返回标识。\nclass Right:  # 定义右侧父类。\n    def label(self):  # 提供同名方法。\n        return 'right'  # 返回标识。\nclass Child(Left, Right):  # 多继承按MRO解析方法。\n    pass  # 无需覆盖。", "assert Child().label() == 'left' and Child.__mro__[:3] == (Child, Left, Right)  # 验证MRO顺序。"],
+            ["class BaseA:  # 定义协作式初始化基类。\n    def __init__(self, **kwargs):  # 接收并转发剩余参数。\n        self.a = kwargs.pop('a')  # 消费自己的参数。\n        super().__init__(**kwargs)  # 按MRO继续初始化。", "assert 'super' in BaseA.__init__.__code__.co_names  # 验证多继承应使用协作式super。"],
+            ["from abc import ABC, abstractmethod  # 导入抽象基类协议。", "class Shape(ABC):  # 定义抽象形状。\n    @abstractmethod  # 强制子类实现面积。\n    def area(self):  # 声明接口。\n        raise NotImplementedError  # 提供明确占位。\nclass Square(Shape):  # 实现具体形状。\n    def __init__(self, side):  # 保存边长。\n        self.side = side  # 设置实例状态。\n    def area(self):  # 实现抽象方法。\n        return self.side**2  # 计算面积。", "assert Square(3).area() == 9  # 验证抽象接口与多态。"],
+        ],
+        [
+            ["from functools import cached_property  # 导入只计算一次的属性。", "class Expensive:  # 定义带缓存属性的类。\n    calls = 0  # 记录计算次数。\n    @cached_property  # 首次访问后把结果写入实例字典。\n    def value(self):  # 定义昂贵计算。\n        self.calls += 1  # 累加调用。\n        return 42  # 返回结果。", "expensive = Expensive(); assert expensive.value == expensive.value == 42 and expensive.calls == 1  # 验证cached_property。"],
+            ["class Positive:  # 定义数据描述符。\n    def __set_name__(self, owner, name):  # 获得绑定属性名。\n        self.storage = '_' + name  # 创建内部存储名。\n    def __get__(self, instance, owner):  # 控制读取。\n        return self if instance is None else getattr(instance, self.storage)  # 类访问返回描述符，实例访问返回值。\n    def __set__(self, instance, value):  # 控制赋值。\n        if value <= 0:  # 检查正数约束。\n            raise ValueError('positive only')  # 拒绝非法值。\n        setattr(instance, self.storage, value)  # 保存合法值。\nclass Product:  # 使用描述符。\n    price = Positive()  # 多实例复用校验逻辑。\n    def __init__(self, price):  # 初始化价格。\n        self.price = price  # 触发描述符。", "assert Product(3).price == 3  # 验证descriptor协议。"],
+            ["class Celsius:  # 定义带双向转换属性的类。\n    def __init__(self, value):  # 保存摄氏温度。\n        self.celsius = value  # 使用setter校验。\n    @property  # 暴露华氏只读计算属性。\n    def fahrenheit(self):  # 定义转换读取。\n        return self.celsius * 9 / 5 + 32  # 计算华氏度。\n    @fahrenheit.setter  # 允许按华氏度反向设置。\n    def fahrenheit(self, value):  # 定义反向转换。\n        self.celsius = (value - 32) * 5 / 9  # 更新底层摄氏值。", "temperature = Celsius(0); temperature.fahrenheit = 212; assert temperature.celsius == 100  # 验证property双向封装。"],
+        ],
+        [
+            ["from functools import total_ordering  # 导入排序方法补全装饰器。", "@total_ordering  # 只实现eq和lt即可补全其他比较。\nclass Version:  # 定义可排序版本号。\n    def __init__(self, number):  # 保存数值。\n        self.number = number  # 设置状态。\n    def __eq__(self, other):  # 定义相等。\n        return self.number == other.number  # 比较数值。\n    def __lt__(self, other):  # 定义小于。\n        return self.number < other.number  # 比较数值。", "assert Version(1) < Version(2) and Version(2) >= Version(2)  # 验证补全的比较协议。"],
+            ["class HashKey:  # 定义可哈希值对象。\n    def __init__(self, value):  # 保存不可变逻辑值。\n        self.value = value  # 设置状态。\n    def __eq__(self, other):  # 定义逻辑相等。\n        return isinstance(other, HashKey) and self.value == other.value  # 检查类型和值。\n    def __hash__(self):  # 相等对象必须返回相同哈希。\n        return hash(self.value)  # 复用底层值哈希。", "assert {HashKey(1): 'ok'}[HashKey(1)] == 'ok'  # 验证eq与hash契约。"],
+            ["class SizedContainer:  # 实现常用容器魔术方法。\n    def __init__(self, values):  # 保存数据。\n        self.values = list(values)  # 建立内部列表。\n    def __len__(self):  # 支持len和真值判断。\n        return len(self.values)  # 返回元素数。\n    def __getitem__(self, index):  # 支持索引并间接支持迭代。\n        return self.values[index]  # 返回指定元素。\n    def __contains__(self, value):  # 自定义in测试。\n        return value in self.values  # 委托内部列表。", "container = SizedContainer([1, 2]); assert len(container) == 2 and 2 in container and list(container) == [1, 2]  # 验证容器协议。"],
+        ],
+        [
+            ["import copy  # 导入复制工具。", "recursive = []; recursive.append(recursive); recursive_copy = copy.deepcopy(recursive)  # deepcopy能借助memo处理循环引用。", "assert recursive_copy is recursive_copy[0] and recursive_copy is not recursive  # 验证循环结构被正确复制。"],
+            ["import weakref  # 导入弱引用。\nclass Payload:  # 定义可弱引用对象。\n    pass  # 无需额外行为。", "payload = Payload(); reference = weakref.ref(payload); assert reference() is payload  # 弱引用不增加强引用所有权。"],
+            ["import gc  # 导入垃圾回收接口。", "tracked_before = gc.is_tracked([]); collected = gc.collect()  # 检查容器跟踪并主动执行循环垃圾回收。", "assert tracked_before and isinstance(collected, int)  # 验证GC接口返回值。"],
+        ],
+        [
+            ["compiled = re.compile(r'(?P<name>[A-Za-z]+)-(?P<number>\d+)$', flags=re.ASCII)  # 预编译带命名组和边界的正则。", "match = compiled.fullmatch('item-42'); assert match and match.groupdict() == {'name': 'item', 'number': '42'}  # 验证fullmatch与命名组。"],
+            ["raw_pattern = r'\\b\\d+\\b'; escaped_pattern = '\\\\b\\\\d+\\\\b'  # raw字符串避免正则反斜杠与Python转义叠加。", "assert raw_pattern == escaped_pattern and re.findall(raw_pattern, 'a 12 b') == ['12']  # 验证两种字符串形式。"],
+            ["redacted = re.sub(r'(?<=\d{3})\d(?=\d{4})', '*', '13812345678')  # 使用前后查看遮挡手机号中间数字。", "formatted = f'{1234.5:,.2f}'; assert redacted == '138****5678' and formatted == '1,234.50'  # 综合正则替换和格式说明符。"],
+        ],
+        [
+            ["import io, csv  # 导入内存文本流和CSV模块。", "buffer = io.StringIO(); writer = csv.DictWriter(buffer, fieldnames=['name', 'score']); writer.writeheader(); writer.writerow({'name': 'A', 'score': 90})  # 按列名安全写CSV。", "buffer.seek(0); csv_rows = list(csv.DictReader(buffer)); assert csv_rows[0]['score'] == '90'  # 读取CSV时默认字段为字符串。"],
+            ["import pickle  # 导入Python对象序列化模块。", "pickle_warning = 'pickle.loads可执行恶意构造，绝不能加载不可信数据'  # 明确记录pickle安全边界。", "assert '不可信' in pickle_warning  # 把序列化安全作为完成标准。"],
+            ["import logging, tempfile  # 导入日志和临时文件工具。", "with tempfile.TemporaryDirectory() as temporary:  # 创建自动清理的临时目录。\n    log_path = Path(temporary) / 'app.log'  # 构造日志路径。\n    logging.basicConfig(filename=log_path, level=logging.INFO, force=True)  # 配置文件日志。\n    logging.info('processed=%d', 1)  # 使用延迟格式化记录结构化信息。\n    logging.shutdown()  # 刷新并关闭handler。\n    log_text = log_path.read_text()  # 在临时目录清理前读取日志。", "assert log_text.strip().endswith('processed=1')  # 验证日志落盘。"],
+        ],
+        [
+            ["from collections import ChainMap, defaultdict  # 导入分层映射和默认字典。", "layers = ChainMap({'debug': True}, {'debug': False, 'port': 8000}); counts = defaultdict(int); counts['x'] += 1  # 组合常用collections工具。", "assert layers['debug'] is True and layers['port'] == 8000 and counts['x'] == 1  # 验证覆盖和默认值。"],
+            ["bounded = deque(maxlen=3); bounded.extend(range(5))  # 有界deque会自动丢弃最旧元素。", "assert list(bounded) == [2, 3, 4]  # 验证滑动窗口语义。"],
+            ["counter_left = Counter('aab'); counter_right = Counter('bcc'); combined_counter = counter_left + counter_right  # Counter支持多重集合加减交并。", "assert combined_counter == Counter({'a': 2, 'b': 2, 'c': 2})  # 验证计数合并。"],
+        ],
+        [
+            ["from itertools import chain, islice  # 导入惰性连接和切片。", "first_five = list(islice(chain(range(3), range(3, 10)), 5))  # 不构建完整中间列表取得前五项。", "assert first_five == [0, 1, 2, 3, 4]  # 验证惰性流水线。"],
+            ["from itertools import groupby  # 导入相邻分组工具。", "records = [('b', 1), ('a', 2), ('b', 3)]; grouped_records = {key: list(group) for key, group in groupby(sorted(records), key=lambda row: row[0])}  # groupby前必须按同一key排序。", "assert [row[1] for row in grouped_records['b']] == [1, 3]  # 验证连续分组。"],
+            ["from itertools import product, combinations, permutations  # 导入笛卡尔积、组合和排列。", "assert len(list(product(range(2), repeat=3))) == 8 and len(list(combinations(range(4), 2))) == 6 and len(list(permutations(range(3)))) == 6  # 综合验证三个计数公式。"],
+        ],
+        [
+            ["from functools import singledispatch  # 导入单分派泛型函数。", "@singledispatch  # 按第一个参数运行时类型分派。\ndef describe(value):  # 定义默认实现。\n    return 'other'  # 返回默认类别。\n@describe.register(int)  # 注册整数实现。\ndef _(value):  # 使用匿名式注册函数名。\n    return 'int'  # 返回整数类别。", "assert describe(1) == 'int' and describe('x') == 'other'  # 验证单分派。"],
+            ["from functools import lru_cache  # 导入LRU缓存。", "@lru_cache(maxsize=2)  # 限制缓存容量防止无界增长。\ndef square(value):  # 定义纯函数。\n    return value * value  # 计算平方。", "square(1); square(1); assert square.cache_info().hits == 1  # 验证命中统计。"],
+            ["from functools import partialmethod  # 导入类方法参数预绑定工具。", "class Greeter:  # 定义问候类。\n    def greet(self, prefix, name):  # 定义通用方法。\n        return f'{prefix} {name}'  # 拼接问候。\n    hello = partialmethod(greet, 'Hello')  # 派生固定前缀的方法。", "assert Greeter().hello('Ada') == 'Hello Ada'  # 验证partialmethod绑定self。"],
+        ],
+        [
+            ["import heapq  # 导入堆工具。", "priority_queue = []; heapq.heappush(priority_queue, (2, 'low')); heapq.heappush(priority_queue, (1, 'high')); first_priority = heapq.heappop(priority_queue)  # 用元组建立最小优先队列。", "assert first_priority == (1, 'high')  # 验证按优先级弹出。"],
+            ["import bisect  # 导入二分工具。", "ordered = [1, 2, 2, 4]; left_position = bisect.bisect_left(ordered, 2); right_position = bisect.bisect_right(ordered, 2)  # 区分重复值左右插入点。", "assert (left_position, right_position) == (1, 3)  # 验证闭开区间边界。"],
+            ["tasks = []; sequence = 0  # 序号用于优先级相同时保持稳定并避免比较任务对象。\nfor priority, task in [(1, 'a'), (1, 'b'), (0, 'c')]:  # 加入多个任务。\n    heapq.heappush(tasks, (priority, sequence, task)); sequence += 1  # 使用三元组实现稳定优先队列。", "assert [heapq.heappop(tasks)[2] for _ in range(3)] == ['c', 'a', 'b']  # 验证优先级和稳定顺序。"],
+        ],
+        [
+            ["from typing import TypedDict, Literal  # 导入字典结构和字面量类型。", "class Config(TypedDict):  # 定义固定键配置结构。\n    mode: Literal['train', 'eval']  # 限制模式候选值。\n    epochs: int  # 声明整数轮数。", "config: Config = {'mode': 'train', 'epochs': 3}; assert config['epochs'] == 3  # 运行时仍是普通dict，约束由类型检查器检查。"],
+            ["from typing import runtime_checkable  # 导入运行时协议检查装饰器。", "@runtime_checkable  # 允许isinstance进行结构化检查。\nclass RuntimeLen(Protocol):  # 定义运行时可检查协议。\n    def __len__(self) -> int:  # 声明长度接口。\n        ...  # 协议无实现。", "assert isinstance([1, 2], RuntimeLen)  # 验证结构化子类型。"],
+            ["from typing import Generic  # 导入泛型基类。", "class Box(Generic[T]):  # 定义保存任意T的容器。\n    def __init__(self, value: T):  # 接收泛型值。\n        self.value = value  # 保存同类型值。\n    def get(self) -> T:  # 返回原类型。\n        return self.value  # 取出值。", "typed_box = Box[int](3); assert typed_box.get() == 3  # 验证泛型容器运行行为。"],
+        ],
+        [
+            ["from concurrent.futures import ThreadPoolExecutor  # 导入线程池。", "with ThreadPoolExecutor(max_workers=2) as executor:  # 线程适合I/O等待型任务。\n    threaded = list(executor.map(lambda value: value * value, range(5)))  # 保持输入顺序收集结果。", "assert threaded == [0, 1, 4, 9, 16]  # 验证线程池接口。"],
+            ["import threading  # 导入线程同步原语。", "lock = threading.Lock(); shared = []  # 创建锁和共享资源。\nwith lock:  # 对复合共享操作加锁；GIL不等于业务操作原子性。\n    shared.append('safe')  # 在临界区修改数据。", "assert shared == ['safe'] and lock.acquire(blocking=False)  # 退出with后锁已释放。", "lock.release()  # 释放验证时重新取得的锁。"],
+            ["import asyncio  # 导入异步I/O框架。", "async def async_square(value):  # 定义协程函数。\n    await asyncio.sleep(0)  # 主动让出事件循环。\n    return value * value  # 返回计算结果。\nasync def async_main():  # 定义异步入口。\n    return await asyncio.gather(*(async_square(value) for value in range(4)))  # 并发等待多个协程并保持顺序。", "async_result = asyncio.run(async_main()); assert async_result == [0, 1, 4, 9]  # 创建事件循环运行异步入口。"],
+        ],
+    ]
+    code = list(cases[family])
+    if variant > 1:
+        code.extend(extras[family][variant - 2])
+    return title, task, code

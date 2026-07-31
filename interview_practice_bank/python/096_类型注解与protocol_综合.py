@@ -36,3 +36,10 @@ def length(value: SupportsLen) -> int:  # 接受任何结构上支持len的对�
 answer = first([6, 4, 5])  # 类型检查器可推导answer为int。
 assert answer == 6 and length('abc') == 3  # 验证泛型与鸭子类型。
 print(answer, length([1, 2]))  # 输出类型协议结果。
+from typing import Generic  # 导入泛型基类。
+class Box(Generic[T]):  # 定义保存任意T的容器。
+    def __init__(self, value: T):  # 接收泛型值。
+        self.value = value  # 保存同类型值。
+    def get(self) -> T:  # 返回原类型。
+        return self.value  # 取出值。
+typed_box = Box[int](3); assert typed_box.get() == 3  # 验证泛型容器运行行为。

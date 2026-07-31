@@ -9,6 +9,7 @@
 3. 字典推导创建映射。
 4. 集合推导自动去重。
 5. 嵌套推导创建二维列表。
+6. 综合嵌套列表和字典推导式。
 
 完成标准：
 - 验证推导结果。
@@ -24,3 +25,5 @@ remainders = {value % 3 for value in values}  # 集合推导自动去重。
 matrix = [[row + column for column in range(3)] for row in range(2)]  # 嵌套推导创建二维列表。
 assert squares == [4, 16, 36] and remainders == {0, 1, 2}  # 验证推导结果。
 print(squares, mapping, remainders, matrix)  # 输出各种推导式。
+flattened = [item for row in [[1, 2], [3, 4]] for item in row]; indexed = {value: index for index, value in enumerate(flattened)}  # 综合嵌套列表和字典推导式。
+assert flattened == [1, 2, 3, 4] and indexed[4] == 3  # 验证推导结果。

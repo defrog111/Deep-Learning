@@ -9,9 +9,11 @@
 3. 字典推导创建映射。
 4. 集合推导自动去重。
 5. 嵌套推导创建二维列表。
+6. 重复内部列表引用是推导式高频陷阱。
 
 完成标准：
 - 验证推导结果。
+- 验证别名传播。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ remainders = {value % 3 for value in values}  # 集合推导自动去重。
 matrix = [[row + column for column in range(3)] for row in range(2)]  # 嵌套推导创建二维列表。
 assert squares == [4, 16, 36] and remainders == {0, 1, 2}  # 验证推导结果。
 print(squares, mapping, remainders, matrix)  # 输出各种推导式。
+matrix_wrong = [[0] * 2] * 2; matrix_wrong[0][0] = 1  # 重复内部列表引用是推导式高频陷阱。
+assert matrix_wrong == [[1, 0], [1, 0]]  # 验证别名传播。

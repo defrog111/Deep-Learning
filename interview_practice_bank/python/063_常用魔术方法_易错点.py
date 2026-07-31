@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证协议实现。
+- 验证eq与hash契约。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -36,3 +37,11 @@ class Vector:  # 定义支持运算符的二维向量。
 answer = Vector(1, 2) + Vector(5, 4)  # 使用重载运算符。
 assert len(answer) == 2 and answer == Vector(6, 6)  # 验证协议实现。
 print(answer)  # 调用__repr__输出。
+class HashKey:  # 定义可哈希值对象。
+    def __init__(self, value):  # 保存不可变逻辑值。
+        self.value = value  # 设置状态。
+    def __eq__(self, other):  # 定义逻辑相等。
+        return isinstance(other, HashKey) and self.value == other.value  # 检查类型和值。
+    def __hash__(self):  # 相等对象必须返回相同哈希。
+        return hash(self.value)  # 复用底层值哈希。
+assert {HashKey(1): 'ok'}[HashKey(1)] == 'ok'  # 验证eq与hash契约。

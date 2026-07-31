@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证JSON往返不丢数据。
+- 把序列化安全作为完成标准。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -38,3 +39,6 @@ with tempfile.TemporaryDirectory() as folder:  # 创建自动清理目录。
     restored = json.loads(json_path.read_text(encoding='utf-8'))  # 读取并反序列化JSON。
 assert restored == records  # 验证JSON往返不丢数据。
 print(restored)  # 输出恢复记录。
+import pickle  # 导入Python对象序列化模块。
+pickle_warning = 'pickle.loads可执行恶意构造，绝不能加载不可信数据'  # 明确记录pickle安全边界。
+assert '不可信' in pickle_warning  # 把序列化安全作为完成标准。

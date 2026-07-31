@@ -11,6 +11,10 @@
 5. 创建数据类实例。
 6. 使用自动生成的顺序方法。
 7. frozen数据类可哈希可作字典键。
+8. 定义轻量不可变记录。
+    x: int  # 声明横坐标。
+    y: int  # 声明纵坐标。
+9. 对比tuple与字段访问。
 
 完成标准：
 - 验证排序和哈希。
@@ -29,3 +33,8 @@ best = max(students)  # 使用自动生成的顺序方法。
 mapping = {student: student.name for student in students}  # frozen数据类可哈希可作字典键。
 assert best.name == 'B' and len(mapping) == 2  # 验证排序和哈希。
 print(students, best)  # 输出数据类。
+from typing import NamedTuple  # 导入具名元组。
+class Coordinate(NamedTuple):  # 定义轻量不可变记录。
+    x: int  # 声明横坐标。
+    y: int  # 声明纵坐标。
+coordinate = Coordinate(1, 2); assert coordinate[0] == coordinate.x and coordinate._asdict()['y'] == 2  # 对比tuple与字段访问。

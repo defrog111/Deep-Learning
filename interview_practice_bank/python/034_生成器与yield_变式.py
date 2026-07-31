@@ -12,9 +12,12 @@
 6. 创建生成器但尚未执行函数体。
 7. 手动消费第一个值。
 8. 消费剩余值用于变式2。
+9. 定义委托生成器。
+    yield from range(3)  # yield from转发子迭代器。
 
 完成标准：
 - 验证边界。
+- 验证yield from。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -30,3 +33,6 @@ first_value = next(generator)  # 手动消费第一个值。
 remaining = list(generator)  # 消费剩余值用于变式2。
 assert first_value == 0 and all(value < 20 for value in remaining)  # 验证边界。
 print(first_value, remaining)  # 输出生成序列。
+def delegated():  # 定义委托生成器。
+    yield from range(3)  # yield from转发子迭代器。
+assert list(delegated()) == [0, 1, 2]  # 验证yield from。

@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证倒计时。
+- 验证迭代器状态。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -36,3 +37,5 @@ class Countdown:  # 定义可迭代且自身为迭代器的类。
 values = list(Countdown(5))  # 消费自定义迭代器。
 assert values[0] == 5 and values[-1] == 1  # 验证倒计时。
 print(values)  # 输出迭代结果。
+one_shot = iter([1, 2]); assert iter(one_shot) is one_shot  # 迭代器的iter返回自身，因此只能继续消费。
+assert next(one_shot) == 1 and list(one_shot) == [2]  # 验证迭代器状态。

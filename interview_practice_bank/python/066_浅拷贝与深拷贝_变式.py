@@ -9,9 +9,11 @@
 3. 深拷贝递归复制内部对象。
 4. 修改共享的内部列表会影响original。
 5. 修改深拷贝内部列表不会影响original。
+6. deepcopy能借助memo处理循环引用。
 
 完成标准：
 - 验证复制深度。
+- 验证循环结构被正确复制。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,6 @@ shallow['items'][0].append(99)  # 修改共享的内部列表会影响original�
 deep['items'][1].append(88)  # 修改深拷贝内部列表不会影响original。
 assert 99 in original['items'][0] and 88 not in original['items'][1]  # 验证复制深度。
 print(original, shallow, deep)  # 输出三份对象。
+import copy  # 导入复制工具。
+recursive = []; recursive.append(recursive); recursive_copy = copy.deepcopy(recursive)  # deepcopy能借助memo处理循环引用。
+assert recursive_copy is recursive_copy[0] and recursive_copy is not recursive  # 验证循环结构被正确复制。

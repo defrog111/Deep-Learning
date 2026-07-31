@@ -9,9 +9,11 @@
 3. 字典推导创建映射。
 4. 集合推导自动去重。
 5. 嵌套推导创建二维列表。
+6. 生成器表达式惰性产生结果。
 
 完成标准：
 - 验证推导结果。
+- 验证一次性消费。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ remainders = {value % 3 for value in values}  # 集合推导自动去重。
 matrix = [[row + column for column in range(3)] for row in range(2)]  # 嵌套推导创建二维列表。
 assert squares == [4, 16, 36] and remainders == {0, 1, 2}  # 验证推导结果。
 print(squares, mapping, remainders, matrix)  # 输出各种推导式。
+generator_expression = (value * value for value in range(5))  # 生成器表达式惰性产生结果。
+assert next(generator_expression) == 0 and list(generator_expression) == [1, 4, 9, 16]  # 验证一次性消费。

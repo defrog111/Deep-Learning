@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证协议实现。
+- 验证补全的比较协议。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -36,3 +37,13 @@ class Vector:  # 定义支持运算符的二维向量。
 answer = Vector(1, 2) + Vector(4, 4)  # 使用重载运算符。
 assert len(answer) == 2 and answer == Vector(5, 6)  # 验证协议实现。
 print(answer)  # 调用__repr__输出。
+from functools import total_ordering  # 导入排序方法补全装饰器。
+@total_ordering  # 只实现eq和lt即可补全其他比较。
+class Version:  # 定义可排序版本号。
+    def __init__(self, number):  # 保存数值。
+        self.number = number  # 设置状态。
+    def __eq__(self, other):  # 定义相等。
+        return self.number == other.number  # 比较数值。
+    def __lt__(self, other):  # 定义小于。
+        return self.number < other.number  # 比较数值。
+assert Version(1) < Version(2) and Version(2) >= Version(2)  # 验证补全的比较协议。

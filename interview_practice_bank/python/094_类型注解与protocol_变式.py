@@ -36,3 +36,8 @@ def length(value: SupportsLen) -> int:  # 接受任何结构上支持len的对�
 answer = first([4, 4, 5])  # 类型检查器可推导answer为int。
 assert answer == 4 and length('abc') == 3  # 验证泛型与鸭子类型。
 print(answer, length([1, 2]))  # 输出类型协议结果。
+from typing import TypedDict, Literal  # 导入字典结构和字面量类型。
+class Config(TypedDict):  # 定义固定键配置结构。
+    mode: Literal['train', 'eval']  # 限制模式候选值。
+    epochs: int  # 声明整数轮数。
+config: Config = {'mode': 'train', 'epochs': 3}; assert config['epochs'] == 3  # 运行时仍是普通dict，约束由类型检查器检查。

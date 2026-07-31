@@ -39,3 +39,11 @@ class Temperature:  # 定义封装温度的类。
 temperature = Temperature(40)  # 创建合法实例。
 assert temperature.fahrenheit > temperature.celsius  # 验证派生属性。
 print(temperature.celsius, temperature.fahrenheit)  # 输出两种温标。
+from functools import cached_property  # 导入只计算一次的属性。
+class Expensive:  # 定义带缓存属性的类。
+    calls = 0  # 记录计算次数。
+    @cached_property  # 首次访问后把结果写入实例字典。
+    def value(self):  # 定义昂贵计算。
+        self.calls += 1  # 累加调用。
+        return 42  # 返回结果。
+expensive = Expensive(); assert expensive.value == expensive.value == 42 and expensive.calls == 1  # 验证cached_property。

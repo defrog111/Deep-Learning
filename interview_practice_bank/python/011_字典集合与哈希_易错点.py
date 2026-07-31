@@ -10,9 +10,14 @@
 4. 初始化频次字典。
 5. 遍历每条记录。
 6. 使用get安全累加。
+7. 演示不可哈希对象不能作为set元素。
+    {['bad']}  # list可变因此不可哈希。
+except TypeError as error:  # 捕获预期错误。
+    unhashable_message = str(error)  # 保存错误信息。
 
 完成标准：
 - 验证覆盖和频次差异。
+- 验证哈希约束。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +31,8 @@ for key, _ in records:  # 遍历每条记录。
     counts[key] = counts.get(key, 0) + 1  # 使用get安全累加。
 assert latest['a'] == 3 and counts['a'] == 2  # 验证覆盖和频次差异。
 print(latest, unique_keys, counts)  # 输出哈希容器结果。
+try:  # 演示不可哈希对象不能作为set元素。
+    {['bad']}  # list可变因此不可哈希。
+except TypeError as error:  # 捕获预期错误。
+    unhashable_message = str(error)  # 保存错误信息。
+assert 'unhashable' in unhashable_message  # 验证哈希约束。

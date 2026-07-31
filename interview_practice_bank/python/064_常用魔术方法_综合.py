@@ -36,3 +36,13 @@ class Vector:  # 定义支持运算符的二维向量。
 answer = Vector(1, 2) + Vector(6, 4)  # 使用重载运算符。
 assert len(answer) == 2 and answer == Vector(7, 6)  # 验证协议实现。
 print(answer)  # 调用__repr__输出。
+class SizedContainer:  # 实现常用容器魔术方法。
+    def __init__(self, values):  # 保存数据。
+        self.values = list(values)  # 建立内部列表。
+    def __len__(self):  # 支持len和真值判断。
+        return len(self.values)  # 返回元素数。
+    def __getitem__(self, index):  # 支持索引并间接支持迭代。
+        return self.values[index]  # 返回指定元素。
+    def __contains__(self, value):  # 自定义in测试。
+        return value in self.values  # 委托内部列表。
+container = SizedContainer([1, 2]); assert len(container) == 2 and 2 in container and list(container) == [1, 2]  # 验证容器协议。

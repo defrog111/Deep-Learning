@@ -10,9 +10,11 @@
 4. 原地线性时间构建最小堆。
 5. 弹出最小元素。
 6. 高效取得少量最大元素。
+7. 用元组建立最小优先队列。
 
 完成标准：
 - 验证两个数据结构。
+- 验证按优先级弹出。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,6 @@ smallest = heapq.heappop(heap)  # 弹出最小元素。
 largest_two = heapq.nlargest(2, heap)  # 高效取得少量最大元素。
 assert values == sorted(values) and smallest == 1  # 验证两个数据结构。
 print(values, heap, largest_two)  # 输出有序列表和堆。
+import heapq  # 导入堆工具。
+priority_queue = []; heapq.heappush(priority_queue, (2, 'low')); heapq.heappush(priority_queue, (1, 'high')); first_priority = heapq.heappop(priority_queue)  # 用元组建立最小优先队列。
+assert first_priority == (1, 'high')  # 验证按优先级弹出。

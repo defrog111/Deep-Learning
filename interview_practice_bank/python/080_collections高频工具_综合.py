@@ -11,9 +11,11 @@
 5. 直接追加无需先判断键。
 6. 创建固定长度双端队列。
 7. 超过maxlen自动从左侧淘汰。
+8. Counter支持多重集合加减交并。
 
 完成标准：
 - 验证最高频词。
+- 验证计数合并。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ queue = deque(maxlen=6)  # 创建固定长度双端队列。
 queue.extend(words)  # 超过maxlen自动从左侧淘汰。
 assert counts.most_common(1)[0] == ('to', 2)  # 验证最高频词。
 print(counts, dict(groups), list(queue))  # 输出容器结果。
+counter_left = Counter('aab'); counter_right = Counter('bcc'); combined_counter = counter_left + counter_right  # Counter支持多重集合加减交并。
+assert combined_counter == Counter({'a': 2, 'b': 2, 'c': 2})  # 验证计数合并。

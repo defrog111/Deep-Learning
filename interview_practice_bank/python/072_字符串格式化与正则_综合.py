@@ -10,6 +10,8 @@
 4. 明确抛出解析错误。
 5. 把命名组转换为字典。
 6. 使用格式说明符对齐和补零。
+7. 使用前后查看遮挡手机号中间数字。
+8. 综合正则替换和格式说明符。
 
 完成标准：
 - 验证正则提取。
@@ -27,3 +29,5 @@ fields = match.groupdict()  # 把命名组转换为字典。
 message = '{:<10} | {:06d}'.format(fields['name'], int(fields['score']))  # 使用格式说明符对齐和补零。
 assert fields['email'] == 'alice@example.com'  # 验证正则提取。
 print(fields, message)  # 输出解析和格式化结果。
+redacted = re.sub(r'(?<=\d{3})\d(?=\d{4})', '*', '13812345678')  # 使用前后查看遮挡手机号中间数字。
+formatted = f'{1234.5:,.2f}'; assert redacted == '138****5678' and formatted == '1,234.50'  # 综合正则替换和格式说明符。

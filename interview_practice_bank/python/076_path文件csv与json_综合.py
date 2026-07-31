@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证JSON往返不丢数据。
+- 验证日志落盘。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -38,3 +39,11 @@ with tempfile.TemporaryDirectory() as folder:  # 创建自动清理目录。
     restored = json.loads(json_path.read_text(encoding='utf-8'))  # 读取并反序列化JSON。
 assert restored == records  # 验证JSON往返不丢数据。
 print(restored)  # 输出恢复记录。
+import logging, tempfile  # 导入日志和临时文件工具。
+with tempfile.TemporaryDirectory() as temporary:  # 创建自动清理的临时目录。
+    log_path = Path(temporary) / 'app.log'  # 构造日志路径。
+    logging.basicConfig(filename=log_path, level=logging.INFO, force=True)  # 配置文件日志。
+    logging.info('processed=%d', 1)  # 使用延迟格式化记录结构化信息。
+    logging.shutdown()  # 刷新并关闭handler。
+    log_text = log_path.read_text()  # 在临时目录清理前读取日志。
+assert log_text.strip().endswith('processed=1')  # 验证日志落盘。

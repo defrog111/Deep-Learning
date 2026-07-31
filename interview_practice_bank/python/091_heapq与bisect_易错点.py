@@ -10,9 +10,11 @@
 4. 原地线性时间构建最小堆。
 5. 弹出最小元素。
 6. 高效取得少量最大元素。
+7. 区分重复值左右插入点。
 
 完成标准：
 - 验证两个数据结构。
+- 验证闭开区间边界。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -28,3 +30,6 @@ smallest = heapq.heappop(heap)  # 弹出最小元素。
 largest_two = heapq.nlargest(2, heap)  # 高效取得少量最大元素。
 assert values == sorted(values) and smallest == 1  # 验证两个数据结构。
 print(values, heap, largest_two)  # 输出有序列表和堆。
+import bisect  # 导入二分工具。
+ordered = [1, 2, 2, 4]; left_position = bisect.bisect_left(ordered, 2); right_position = bisect.bisect_right(ordered, 2)  # 区分重复值左右插入点。
+assert (left_position, right_position) == (1, 3)  # 验证闭开区间边界。

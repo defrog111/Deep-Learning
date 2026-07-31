@@ -39,3 +39,13 @@ class Temperature:  # 定义封装温度的类。
 temperature = Temperature(60)  # 创建合法实例。
 assert temperature.fahrenheit > temperature.celsius  # 验证派生属性。
 print(temperature.celsius, temperature.fahrenheit)  # 输出两种温标。
+class Celsius:  # 定义带双向转换属性的类。
+    def __init__(self, value):  # 保存摄氏温度。
+        self.celsius = value  # 使用setter校验。
+    @property  # 暴露华氏只读计算属性。
+    def fahrenheit(self):  # 定义转换读取。
+        return self.celsius * 9 / 5 + 32  # 计算华氏度。
+    @fahrenheit.setter  # 允许按华氏度反向设置。
+    def fahrenheit(self, value):  # 定义反向转换。
+        self.celsius = (value - 32) * 5 / 9  # 更新底层摄氏值。
+temperature = Celsius(0); temperature.fahrenheit = 212; assert temperature.celsius == 100  # 验证property双向封装。

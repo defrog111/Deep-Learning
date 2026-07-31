@@ -10,6 +10,7 @@
 4. 明确抛出解析错误。
 5. 把命名组转换为字典。
 6. 使用格式说明符对齐和补零。
+7. 预编译带命名组和边界的正则。
 
 完成标准：
 - 验证正则提取。
@@ -27,3 +28,5 @@ fields = match.groupdict()  # 把命名组转换为字典。
 message = '{:<10} | {:04d}'.format(fields['name'], int(fields['score']))  # 使用格式说明符对齐和补零。
 assert fields['email'] == 'alice@example.com'  # 验证正则提取。
 print(fields, message)  # 输出解析和格式化结果。
+compiled = re.compile(r'(?P<name>[A-Za-z]+)-(?P<number>\d+)$', flags=re.ASCII)  # 预编译带命名组和边界的正则。
+match = compiled.fullmatch('item-42'); assert match and match.groupdict() == {'name': 'item', 'number': '42'}  # 验证fullmatch与命名组。

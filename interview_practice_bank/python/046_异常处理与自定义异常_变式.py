@@ -17,6 +17,7 @@
 
 完成标准：
 - 验证异常路径和finally。
+- 验证else只在成功时运行。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -38,3 +39,10 @@ finally:  # 无论如何都执行清理逻辑。
     cleaned = True  # 模拟资源清理。
 assert message and cleaned  # 验证异常路径和finally。
 print(type(message).__name__, message)  # 输出异常处理结果。
+try:  # 演示try/except/else。
+    parsed = int('12')  # 执行可能失败的转换。
+except ValueError:  # 只捕获预期异常。
+    parsed = 0  # 提供失败兜底。
+else:  # 无异常时执行。
+    parsed += 1  # 处理成功结果。
+assert parsed == 13  # 验证else只在成功时运行。

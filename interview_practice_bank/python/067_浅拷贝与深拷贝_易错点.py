@@ -9,6 +9,7 @@
 3. 深拷贝递归复制内部对象。
 4. 修改共享的内部列表会影响original。
 5. 修改深拷贝内部列表不会影响original。
+6. 弱引用不增加强引用所有权。
 
 完成标准：
 - 验证复制深度。
@@ -25,3 +26,7 @@ shallow['items'][0].append(99)  # 修改共享的内部列表会影响original�
 deep['items'][1].append(88)  # 修改深拷贝内部列表不会影响original。
 assert 99 in original['items'][0] and 88 not in original['items'][1]  # 验证复制深度。
 print(original, shallow, deep)  # 输出三份对象。
+import weakref  # 导入弱引用。
+class Payload:  # 定义可弱引用对象。
+    pass  # 无需额外行为。
+payload = Payload(); reference = weakref.ref(payload); assert reference() is payload  # 弱引用不增加强引用所有权。
