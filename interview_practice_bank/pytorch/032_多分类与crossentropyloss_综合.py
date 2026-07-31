@@ -2,7 +2,19 @@
 题目 032：多分类与CrossEntropyLoss_综合
 
 要求：完成“多分类与CrossEntropyLoss”的综合题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. CrossEntropy接收未归一化logits。
+2. 多分类标签使用Long类别索引。
+3. 内部组合log_softmax和NLLLoss。
+4. 计算logits梯度。
+5. 仅展示时转换概率。
+
+完成标准：
+- 验证每行概率和为1。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。

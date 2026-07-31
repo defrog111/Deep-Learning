@@ -25,6 +25,10 @@ def validate_file(path: Path) -> list[str]:
     except SyntaxError as error:
         errors.append(f"{path}: syntax error: {error}")
         return errors
+    if "操作步骤：" not in source:
+        errors.append(f"{path}: 缺少中文操作步骤")
+    if "完成标准：" not in source:
+        errors.append(f"{path}: 缺少完成标准")
 
     in_docstring = False
     docstring_finished = False

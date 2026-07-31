@@ -2,7 +2,19 @@
 题目 008：reshapeviewpermute与contiguous_综合
 
 要求：完成“reshapeviewpermute与contiguous”的综合题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 创建三维Tensor。
+2. 重排维度得到shape(4,2,3)。
+3. permute通常产生非连续视图。
+4. 先连续化再使用view展平。
+5. reshape必要时自动复制以满足布局。
+
+完成标准：
+- 验证元素数不变。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。

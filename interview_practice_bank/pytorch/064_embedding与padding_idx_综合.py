@@ -2,7 +2,20 @@
 题目 064：Embedding与padding_idx_综合
 
 要求：完成“Embedding与padding_idx”的综合题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 0作为PAD token。
+2. 创建词嵌入并固定PAD向量。
+3. 把(B,T)映射为(B,T,D)。
+4. 构造用于反向传播的损失。
+5. 计算Embedding权重梯度。
+6. padding_idx对应行不更新。
+
+完成标准：
+- padding_idx对应行不更新。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。

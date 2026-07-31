@@ -2,7 +2,17 @@
 题目 016：cross_validate多指标_变式
 
 要求：完成“cross_validate多指标”的综合题，说明fit、transform和predict各自只能使用哪些数据。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 加载数据。
+2. 建立可复现的分类模型。
+3. 同时评估多个指标。
+
+完成标准：
+- 验证AUC合理。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 from sklearn.datasets import load_breast_cancer  # 导入二分类数据。

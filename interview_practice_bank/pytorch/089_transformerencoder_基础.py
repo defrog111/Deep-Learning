@@ -2,7 +2,21 @@
 题目 089：TransformerEncoder_基础
 
 要求：完成“TransformerEncoder”的基础题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 固定随机种子。
+2. 配置单层Encoder。
+3. 堆叠随变式变化的层数。
+4. 创建(B,T,D)输入。
+5. 定义PAD mask。
+6. 编码时屏蔽PAD key。
+7. masked mean pooling。
+
+完成标准：
+- 验证序列与池化shape。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。

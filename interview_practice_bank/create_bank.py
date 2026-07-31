@@ -30,16 +30,64 @@ def render_file(
     folder = ROOT / category
     folder.mkdir(parents=True, exist_ok=True)
     filename = folder / f"{number:03d}_{title.lower().replace(' ', '_')}.py"
+    steps = derive_process_steps(code_lines)
+    checks = derive_completion_checks(code_lines)
     header = [
         '"""',
         f"题目 {number:03d}：{title}",
         "",
         f"要求：{task}",
-        "先自己实现，再运行本文件查看参考代码结果。",
+        "",
+        "操作步骤：",
+        *[f"{index}. {step}。" for index, step in enumerate(steps, start=1)],
+        "",
+        "完成标准：",
+        *[f"- {check}。" for check in checks],
+        "- 脚本能够独立运行，并输出便于人工检查的结果。",
+        "",
+        "练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。",
         '"""',
         "",
     ]
     filename.write_text("\n".join(header + code_lines) + "\n", encoding="utf-8")
+
+
+def comment_text(line: str) -> str | None:
+    """取得参考代码一行中的中文注释。"""
+    if "#" not in line:
+        return None
+    comment = line.split("#", 1)[1].strip().rstrip("。")
+    return comment or None
+
+
+def derive_process_steps(code_lines: list[str]) -> list[str]:
+    """从实际参考代码注释提炼每道题专属的操作过程。"""
+    preferred: list[str] = []
+    fallback: list[str] = []
+    skipped_prefixes = ("导入", "验证", "输出", "查看", "打印")
+    for line in code_lines:
+        comment = comment_text(line)
+        if comment is None or comment in fallback:
+            continue
+        fallback.append(comment)
+        if not comment.startswith(skipped_prefixes):
+            preferred.append(comment)
+    selected = preferred if len(preferred) >= 3 else fallback
+    return selected[:10]
+
+
+def derive_completion_checks(code_lines: list[str]) -> list[str]:
+    """从assert行提取可核对的完成标准。"""
+    checks = []
+    for line in code_lines:
+        if not line.lstrip().startswith("assert "):
+            continue
+        comment = comment_text(line)
+        if comment is not None and comment not in checks:
+            checks.append(comment)
+    if not checks:
+        checks.append("关键结果的shape、类型或数值符合题目要求")
+    return checks[:3]
 
 
 def clean_generated_folders() -> None:

@@ -2,7 +2,19 @@
 题目 001：Tensor创建dtype与device_基础
 
 要求：完成“Tensor创建dtype与device”的基础题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 显式指定浮点dtype创建Tensor。
+2. 创建同shape、dtype和device的零Tensor。
+3. 使用to转换dtype并返回新Tensor。
+4. 自动选择可用计算设备。
+5. 把数据移动到目标设备。
+
+完成标准：
+- 验证shape和类型。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。

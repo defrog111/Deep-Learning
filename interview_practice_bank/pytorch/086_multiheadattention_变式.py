@@ -2,7 +2,19 @@
 题目 086：MultiheadAttention_变式
 
 要求：完成“MultiheadAttention”的变式题，说明训练态、梯度和张量shape。
-先自己实现，再运行本文件查看参考代码结果。
+
+操作步骤：
+1. 固定随机种子。
+2. 创建batch-first多头注意力。
+3. 创建token表示。
+4. True表示屏蔽key。
+5. 执行Self-Attention。
+
+完成标准：
+- 验证输出和逐头权重shape。
+- 脚本能够独立运行，并输出便于人工检查的结果。
+
+练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import torch  # 导入 PyTorch。
