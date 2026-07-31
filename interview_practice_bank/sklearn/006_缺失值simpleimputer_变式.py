@@ -9,9 +9,12 @@
 3. 只用训练数据拟合填充值。
 4. 填充训练集。
 5. 用训练填充值处理测试集。
+6. 综合题统一导入NumPy用于shape、数值和标签检查。
+7. 同时保留缺失模式作为特征。
 
 完成标准：
 - 验证无剩余NaN。
+- 验证填充及指示列。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +29,7 @@ filled_train = imputer.transform(train)  # 填充训练集。
 filled_test = imputer.transform(test)  # 用训练填充值处理测试集。
 assert not np.isnan(filled_train).any() and not np.isnan(filled_test).any()  # 验证无剩余NaN。
 print(imputer.statistics_, filled_test)  # 输出填充值和结果。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.impute import KNNImputer, MissingIndicator  # 导入邻居填充和缺失指示器。
+complex_train = np.array([[1.0, 10.0], [2.0, np.nan], [3.0, 30.0]]); knn_filled = KNNImputer(n_neighbors=2).fit_transform(complex_train); indicators = MissingIndicator(features='all').fit_transform(complex_train)  # 同时保留缺失模式作为特征。
+assert np.isfinite(knn_filled).all() and indicators.shape == complex_train.shape and indicators.sum() == 1  # 验证填充及指示列。

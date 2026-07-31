@@ -9,9 +9,12 @@
 3. 一次拟合并转换训练数据。
 4. 获取转换后的特征名。
 5. 两个数值列加两个类别列。
+6. 综合题统一导入NumPy用于shape、数值和标签检查。
+7. 每类列使用独立流水线。
 
 完成标准：
 - 两个数值列加两个类别列。
+- 验证混合预处理无缺失。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +29,8 @@ transformed = preprocessor.fit_transform(frame)  # 一次拟合并转换训练�
 names = preprocessor.get_feature_names_out()  # 获取转换后的特征名。
 assert transformed.shape == (3, 4)  # 两个数值列加两个类别列。
 print(names, transformed)  # 输出特征名和矩阵。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.impute import SimpleImputer  # 导入数值缺失填充器。
+from sklearn.pipeline import make_pipeline  # 导入子流水线构造函数。
+mixed = pd.DataFrame({'age': [20.0, None, 40.0], 'income': [30.0, 60.0, 90.0], 'city': ['A', 'B', 'A']}); robust_preprocessor = ColumnTransformer([('numeric', make_pipeline(SimpleImputer(strategy='median'), StandardScaler()), ['age', 'income']), ('category', OneHotEncoder(handle_unknown='ignore', sparse_output=False), ['city'])], verbose_feature_names_out=False); mixed_result = robust_preprocessor.fit_transform(mixed)  # 每类列使用独立流水线。
+assert mixed_result.shape == (3, 4) and np.isfinite(mixed_result).all()  # 验证混合预处理无缺失。

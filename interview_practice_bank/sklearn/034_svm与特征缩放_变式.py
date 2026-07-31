@@ -8,9 +8,13 @@
 2. 加载数据。
 3. 标准化后训练RBF SVM。
 4. 使用AUC交叉验证。
+5. 综合题统一导入NumPy用于shape、数值和标签检查。
+6. LinearSVC适合高维线性问题但不提供predict_proba。
+7. 对比LinearSVC决策分数与启用probability的SVC接口。
 
 完成标准：
 - 验证性能合理。
+- 对比LinearSVC决策分数与启用probability的SVC接口。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +30,7 @@ model = make_pipeline(StandardScaler(), SVC(C=2, kernel='rbf', probability=True,
 scores = cross_val_score(model, features, labels, cv=3, scoring='roc_auc')  # 使用AUC交叉验证。
 assert scores.mean() > 0.9  # 验证性能合理。
 print(scores, scores.mean())  # 输出AUC。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.svm import LinearSVC  # 导入高维线性SVM。
+stable_svm_features = features.astype(np.float32); linear_svm = make_pipeline(StandardScaler(), LinearSVC(C=1.0, dual='auto', random_state=42)).fit(stable_svm_features, labels); linear_coefficients = linear_svm.named_steps['linearsvc'].coef_  # LinearSVC适合高维线性问题但不提供predict_proba。
+assert linear_coefficients.shape[1] == features.shape[1] and not hasattr(linear_svm, 'predict_proba') and hasattr(model, 'predict_proba')  # 对比LinearSVC决策分数与启用probability的SVC接口。

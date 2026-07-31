@@ -8,9 +8,12 @@
 2. 每个预测都来自未见该样本的折。
 3. 构建混淆矩阵。
 4. 获取precision recall F1字典。
+5. 综合题统一导入NumPy用于shape、数值和标签检查。
+6. 多标签不能直接套普通单标签混淆矩阵。
 
 完成标准：
 - 验证每个样本被统计一次。
+- 验证多标签指标shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +29,7 @@ matrix = confusion_matrix(labels, predictions)  # 构建混淆矩阵。
 report = classification_report(labels, predictions, output_dict=True)  # 获取precision recall F1字典。
 assert matrix.sum() == len(labels)  # 验证每个样本被统计一次。
 print(matrix, report['macro avg'])  # 输出矩阵和宏平均。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.metrics import multilabel_confusion_matrix, precision_recall_fscore_support  # 导入多标签和分项指标。
+multi_true = np.array([[1, 0, 1], [0, 1, 0]]); multi_pred = np.array([[1, 1, 0], [0, 1, 0]]); per_label_confusion = multilabel_confusion_matrix(multi_true, multi_pred); macro_parts = precision_recall_fscore_support(multi_true, multi_pred, average='macro', zero_division=0)  # 多标签不能直接套普通单标签混淆矩阵。
+assert per_label_confusion.shape == (3, 2, 2) and len(macro_parts) == 4  # 验证多标签指标shape。

@@ -8,9 +8,12 @@
 2. 分层切分。
 3. 小学习率逐步拟合残差。
 4. 观察每一阶段测试准确率。
+5. 综合题统一导入NumPy用于shape、数值和标签检查。
+6. 原生处理NaN并可早停。
 
 完成标准：
 - 验证每棵树对应一个阶段。
+- 验证缺失值推理和迭代上限。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,7 @@ model = GradientBoostingClassifier(n_estimators=50, learning_rate=0.05, max_dept
 staged_scores = [(stage_predictions == test_y).mean() for stage_predictions in model.staged_predict(test_x)]  # 观察每一阶段测试准确率。
 assert len(staged_scores) == model.n_estimators  # 验证每棵树对应一个阶段。
 print(model.score(test_x, test_y), max(staged_scores))  # 输出最终和最佳阶段分数。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.ensemble import HistGradientBoostingClassifier  # 导入支持缺失值和直方图加速的梯度提升。
+missing_features = features.astype(float).copy(); missing_features[::10, 0] = np.nan; histogram_boost = HistGradientBoostingClassifier(max_iter=50, learning_rate=0.1, early_stopping=True, random_state=42).fit(missing_features, labels)  # 原生处理NaN并可早停。
+assert histogram_boost.predict(missing_features[:5]).shape == (5,) and histogram_boost.n_iter_ <= 50  # 验证缺失值推理和迭代上限。

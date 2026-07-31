@@ -7,9 +7,12 @@
 1. 加载数据。
 2. 建立可复现的分类模型。
 3. 同时评估多个指标。
+4. 综合题统一导入NumPy用于shape、数值和标签检查。
+5. F2更重视召回并返回每折模型。
 
 完成标准：
 - 验证AUC合理。
+- 验证自定义指标和估计器集合。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +26,8 @@ model = RandomForestClassifier(n_estimators=40, max_depth=5, random_state=42)  #
 result = cross_validate(model, features, labels, cv=3, scoring=['accuracy', 'roc_auc'], return_train_score=True)  # 同时评估多个指标。
 assert result['test_roc_auc'].mean() > 0.9  # 验证AUC合理。
 print({key: value.mean() for key, value in result.items() if key.startswith('test_')})  # 输出测试指标均值。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.metrics import make_scorer, fbeta_score  # 导入自定义评分器。
+from sklearn.model_selection import cross_validate  # 导入多指标验证。
+custom_scorer = make_scorer(fbeta_score, beta=2, average='macro'); custom_result = cross_validate(model, features, labels, cv=3, scoring={'f2_macro': custom_scorer, 'accuracy': 'accuracy'}, return_estimator=True)  # F2更重视召回并返回每折模型。
+assert len(custom_result['estimator']) == 3 and 'test_f2_macro' in custom_result  # 验证自定义指标和估计器集合。

@@ -341,4 +341,149 @@ def sklearn_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "print(actual)  # 输出恢复模型预测。",
         ],
     ]
-    return title, task, cases[family]
+    # sklearn每个主题两题：基础代码加一个真正不同的综合场景，而不是只换随机种子。
+    comprehensive_extras: list[list[str]] = [
+        [
+            "from sklearn.model_selection import GroupShuffleSplit  # 导入按组随机切分工具。",
+            "groups = np.repeat(np.arange(50), 3); group_splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42); grouped_train, grouped_test = next(group_splitter.split(features, labels, groups))  # 同一病人或用户的多条记录不能跨集合。",
+            "assert not set(groups[grouped_train]) & set(groups[grouped_test])  # 验证组级隔离。",
+        ],
+        [
+            "from sklearn.preprocessing import RobustScaler  # 导入基于中位数和IQR的稳健缩放器。",
+            "outlier_train = np.array([[1.0], [2.0], [3.0], [1000.0]]); robust = RobustScaler().fit(outlier_train); robust_values = robust.transform(outlier_train); restored_values = robust.inverse_transform(robust_values)  # 只在训练集拟合并验证可逆转换。",
+            "assert np.allclose(restored_values, outlier_train) and np.median(robust_values) == 0  # 验证稳健中心与inverse_transform。",
+        ],
+        [
+            "from sklearn.impute import KNNImputer, MissingIndicator  # 导入邻居填充和缺失指示器。",
+            "complex_train = np.array([[1.0, 10.0], [2.0, np.nan], [3.0, 30.0]]); knn_filled = KNNImputer(n_neighbors=2).fit_transform(complex_train); indicators = MissingIndicator(features='all').fit_transform(complex_train)  # 同时保留缺失模式作为特征。",
+            "assert np.isfinite(knn_filled).all() and indicators.shape == complex_train.shape and indicators.sum() == 1  # 验证填充及指示列。",
+        ],
+        [
+            "from sklearn.preprocessing import OrdinalEncoder  # 导入有序类别编码器。",
+            "ordered_train = np.array([['low'], ['medium'], ['high']]); ordinal = OrdinalEncoder(categories=[['low', 'medium', 'high']], handle_unknown='use_encoded_value', unknown_value=-1).fit(ordered_train); ordinal_test = ordinal.transform([['medium'], ['unknown']])  # 显式给定真实顺序并处理未知类别。",
+            "assert ordinal_test.ravel().tolist() == [1.0, -1.0]  # 验证有序编码和未知值。",
+        ],
+        [
+            "from sklearn.impute import SimpleImputer  # 导入数值缺失填充器。",
+            "from sklearn.pipeline import make_pipeline  # 导入子流水线构造函数。",
+            "mixed = pd.DataFrame({'age': [20.0, None, 40.0], 'income': [30.0, 60.0, 90.0], 'city': ['A', 'B', 'A']}); robust_preprocessor = ColumnTransformer([('numeric', make_pipeline(SimpleImputer(strategy='median'), StandardScaler()), ['age', 'income']), ('category', OneHotEncoder(handle_unknown='ignore', sparse_output=False), ['city'])], verbose_feature_names_out=False); mixed_result = robust_preprocessor.fit_transform(mixed)  # 每类列使用独立流水线。",
+            "assert mixed_result.shape == (3, 4) and np.isfinite(mixed_result).all()  # 验证混合预处理无缺失。",
+        ],
+        [
+            "from sklearn.preprocessing import FunctionTransformer, PolynomialFeatures  # 导入自定义函数转换和多项式特征。",
+            "from sklearn.pipeline import FeatureUnion  # 导入并行特征组合器。",
+            "positive_features = np.abs(features[:, :2]) + 1; union = FeatureUnion([('identity', FunctionTransformer(validate=True)), ('polynomial', PolynomialFeatures(degree=2, include_bias=False))]); union_result = union.fit_transform(positive_features)  # 并行生成原始与交互特征。",
+            "assert union_result.shape[0] == len(features) and union_result.shape[1] > positive_features.shape[1]  # 验证FeatureUnion横向拼接。",
+        ],
+        [
+            "from sklearn.model_selection import GroupKFold, TimeSeriesSplit  # 导入组K折和时间序列切分。",
+            "group_features = np.zeros((12, 1)); group_labels = np.array([0, 1] * 6); group_ids = np.repeat(np.arange(6), 2); grouped_folds = list(GroupKFold(n_splits=3).split(group_features, group_labels, group_ids)); temporal_folds = list(TimeSeriesSplit(n_splits=3, gap=1).split(group_features))  # 根据数据依赖结构选择CV。",
+            "assert all(not set(group_ids[train]) & set(group_ids[test]) for train, test in grouped_folds) and all(train.max() + 1 < test.min() for train, test in temporal_folds)  # 验证组隔离与时间gap。",
+        ],
+        [
+            "from sklearn.metrics import make_scorer, fbeta_score  # 导入自定义评分器。",
+            "from sklearn.model_selection import cross_validate  # 导入多指标验证。",
+            "custom_scorer = make_scorer(fbeta_score, beta=2, average='macro'); custom_result = cross_validate(model, features, labels, cv=3, scoring={'f2_macro': custom_scorer, 'accuracy': 'accuracy'}, return_estimator=True)  # F2更重视召回并返回每折模型。",
+            "assert len(custom_result['estimator']) == 3 and 'test_f2_macro' in custom_result  # 验证自定义指标和估计器集合。",
+        ],
+        [
+            "from sklearn.model_selection import GridSearchCV, StratifiedKFold  # 导入网格搜索和显式分层内层CV。",
+            "inner_cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42); multi_search = GridSearchCV(pipeline, {'svc__C': [0.1, 1, 10]}, scoring={'accuracy': 'accuracy', 'f1_macro': 'f1_macro'}, refit='f1_macro', cv=inner_cv, return_train_score=True).fit(features, labels)  # 多指标搜索必须指定refit依据。",
+            "assert multi_search.best_estimator_ is not None and 'mean_train_accuracy' in multi_search.cv_results_  # 验证搜索结果结构。",
+        ],
+        [
+            "from scipy.stats import randint  # 导入离散超参数分布。",
+            "from sklearn.ensemble import RandomForestClassifier  # 导入随机森林。",
+            "forest_search = RandomizedSearchCV(RandomForestClassifier(random_state=42), {'n_estimators': randint(10, 40), 'max_depth': [None, 2, 4]}, n_iter=4, cv=3, random_state=42, n_jobs=1).fit(features, labels)  # 随机搜索可混合连续分布与离散候选。",
+            "assert len(forest_search.cv_results_['params']) == 4 and forest_search.best_params_['n_estimators'] >= 10  # 验证抽样次数和参数范围。",
+        ],
+        [
+            "from sklearn.compose import TransformedTargetRegressor  # 导入目标变量转换包装器。",
+            "from sklearn.linear_model import Ridge, Lasso, ElasticNet  # 导入三种正则线性模型。",
+            "from sklearn.preprocessing import FunctionTransformer  # 导入显式目标函数转换器。",
+            "stable_features = features.astype(np.float32); stable_targets = targets.astype(np.float32); positive_targets = np.exp(np.linspace(0, 3, len(stable_features), dtype=np.float32)); log_transformer = FunctionTransformer(np.log1p, inverse_func=np.expm1, check_inverse=False); target_model = TransformedTargetRegressor(regressor=Ridge(alpha=1.0, solver='lsqr'), transformer=log_transformer).fit(stable_features, positive_targets); regularized_models = [estimator.fit(stable_features, stable_targets) for estimator in [Ridge(solver='lsqr'), Lasso(alpha=0.1, max_iter=5000), ElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=5000)]]  # 比较目标变换及L2、L1、ElasticNet，并选用稳定求解器。",
+            "assert np.isfinite(target_model.regressor_.coef_).all() and all(np.isfinite(estimator.coef_).all() for estimator in regularized_models)  # 验证四个模型均学习到有限系数。",
+        ],
+        [
+            "from sklearn.calibration import CalibratedClassifierCV  # 导入概率校准器。",
+            "from sklearn.linear_model import SGDClassifier  # 导入支持在线学习的线性分类器。",
+            "from sklearn.frozen import FrozenEstimator  # 导入新版预训练估计器冻结包装器。",
+            "online_train_x, calibration_x, online_train_y, calibration_y = train_test_split(train_x, train_y, test_size=0.25, stratify=train_y, random_state=7); online = SGDClassifier(loss='log_loss', random_state=42); classes = np.unique(labels); midpoint = len(online_train_x) // 2; online.partial_fit(online_train_x[:midpoint].astype(np.float32), online_train_y[:midpoint], classes=classes); online.partial_fit(online_train_x[midpoint:].astype(np.float32), online_train_y[midpoint:]); calibrated = CalibratedClassifierCV(FrozenEstimator(online), method='sigmoid').fit(calibration_x.astype(np.float32), calibration_y)  # partial_fit分批训练，再用训练集内部独立校准集拟合概率映射。",
+            "assert calibrated.predict_proba(test_x[:2].astype(np.float32)).shape == (2, len(classes))  # 验证在线模型与校准接口。",
+        ],
+        [
+            "from sklearn.neighbors import RadiusNeighborsClassifier  # 导入固定半径近邻分类器。",
+            "radius_model = make_pipeline(StandardScaler(), RadiusNeighborsClassifier(radius=2.0, weights='distance', outlier_label='most_frequent')).fit(features, labels); radius_predictions = radius_model.predict(features[:5])  # 距离加权且为无邻居样本提供兜底标签。",
+            "assert radius_predictions.shape == (5,)  # 验证半径近邻推理。",
+        ],
+        [
+            "from sklearn.tree import DecisionTreeClassifier  # 导入决策树。",
+            "unpruned = DecisionTreeClassifier(random_state=42).fit(train_x, train_y); pruning_path = unpruned.cost_complexity_pruning_path(train_x, train_y); pruned = DecisionTreeClassifier(ccp_alpha=float(pruning_path.ccp_alphas[-2]), random_state=42).fit(train_x, train_y)  # cost-complexity pruning用alpha折叠弱分支。",
+            "assert pruned.get_n_leaves() <= unpruned.get_n_leaves()  # 验证后剪枝降低复杂度。",
+        ],
+        [
+            "from sklearn.ensemble import ExtraTreesClassifier  # 导入更随机的极端随机树。",
+            "extra_trees = ExtraTreesClassifier(n_estimators=40, max_features='sqrt', random_state=42).fit(features, labels); impurity_importance = extra_trees.feature_importances_  # ExtraTrees随机阈值降低相关性但增大单树偏差。",
+            "assert np.isclose(impurity_importance.sum(), 1) and extra_trees.predict(features[:3]).shape == (3,)  # 验证集成预测和重要性。",
+        ],
+        [
+            "from sklearn.ensemble import HistGradientBoostingClassifier  # 导入支持缺失值和直方图加速的梯度提升。",
+            "missing_features = features.astype(float).copy(); missing_features[::10, 0] = np.nan; histogram_boost = HistGradientBoostingClassifier(max_iter=50, learning_rate=0.1, early_stopping=True, random_state=42).fit(missing_features, labels)  # 原生处理NaN并可早停。",
+            "assert histogram_boost.predict(missing_features[:5]).shape == (5,) and histogram_boost.n_iter_ <= 50  # 验证缺失值推理和迭代上限。",
+        ],
+        [
+            "from sklearn.svm import LinearSVC  # 导入高维线性SVM。",
+            "stable_svm_features = features.astype(np.float32); linear_svm = make_pipeline(StandardScaler(), LinearSVC(C=1.0, dual='auto', random_state=42)).fit(stable_svm_features, labels); linear_coefficients = linear_svm.named_steps['linearsvc'].coef_  # LinearSVC适合高维线性问题但不提供predict_proba。",
+            "assert linear_coefficients.shape[1] == features.shape[1] and not hasattr(linear_svm, 'predict_proba') and hasattr(model, 'predict_proba')  # 对比LinearSVC决策分数与启用probability的SVC接口。",
+        ],
+        [
+            "from sklearn.cluster import DBSCAN  # 导入密度聚类。",
+            "from sklearn.mixture import GaussianMixture  # 导入概率软聚类。",
+            "from sklearn.ensemble import IsolationForest  # 导入异常检测。",
+            "from sklearn.preprocessing import StandardScaler  # 导入聚类前的尺度标准化。",
+            "cluster_data = features[:, :2]; dbscan_labels = DBSCAN(eps=0.5, min_samples=4).fit_predict(StandardScaler().fit_transform(cluster_data)); responsibilities = GaussianMixture(n_components=3, random_state=42).fit(cluster_data).predict_proba(cluster_data[:5]); anomaly_labels = IsolationForest(contamination=0.05, random_state=42).fit_predict(cluster_data)  # 对比密度、概率聚类和孤立异常检测。",
+            "assert responsibilities.shape == (5, 3) and np.allclose(responsibilities.sum(1), 1) and set(anomaly_labels) <= {-1, 1} and dbscan_labels.shape == (len(features),)  # 验证三类无监督接口。",
+        ],
+        [
+            "from sklearn.decomposition import IncrementalPCA  # 导入可分批学习的PCA。",
+            "stable_pca_features = features.astype(np.float32); incremental = IncrementalPCA(n_components=2, batch_size=50); incremental.fit(stable_pca_features); incremental_projection = incremental.transform(stable_pca_features[:5]); whitening_configuration = PCA(n_components=2, whiten=True, svd_solver='randomized', random_state=42)  # 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。",
+            "assert incremental_projection.shape == (5, 2) and whitening_configuration.whiten and whitening_configuration.svd_solver == 'randomized'  # 验证增量投影和白化配置。",
+        ],
+        [
+            "from sklearn.metrics import multilabel_confusion_matrix, precision_recall_fscore_support  # 导入多标签和分项指标。",
+            "multi_true = np.array([[1, 0, 1], [0, 1, 0]]); multi_pred = np.array([[1, 1, 0], [0, 1, 0]]); per_label_confusion = multilabel_confusion_matrix(multi_true, multi_pred); macro_parts = precision_recall_fscore_support(multi_true, multi_pred, average='macro', zero_division=0)  # 多标签不能直接套普通单标签混淆矩阵。",
+            "assert per_label_confusion.shape == (3, 2, 2) and len(macro_parts) == 4  # 验证多标签指标shape。",
+        ],
+        [
+            "from sklearn.metrics import precision_recall_curve, roc_curve  # 导入阈值曲线。",
+            "binary_labels = (labels == labels.max()).astype(int); binary_scores = np.linspace(0, 1, len(labels)); precision_curve, recall_curve, pr_thresholds = precision_recall_curve(binary_labels, binary_scores); false_positive, true_positive, roc_thresholds = roc_curve(binary_labels, binary_scores)  # 曲线点数量通常比阈值多1。",
+            "assert len(precision_curve) == len(pr_thresholds) + 1 and len(false_positive) == len(roc_thresholds) and np.all(np.diff(false_positive) >= 0)  # 验证PR和ROC返回结构。",
+        ],
+        [
+            "from sklearn.utils.class_weight import compute_class_weight, compute_sample_weight  # 导入类别和样本权重工具。",
+            "classes = np.unique(labels); class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=labels); sample_weights = compute_sample_weight(class_weight='balanced', y=labels)  # 类别权重可映射成每条样本权重供fit使用。",
+            "assert len(class_weights) == len(classes) and len(sample_weights) == len(labels) and np.isclose(sample_weights.mean(), 1)  # 验证balanced权重规模。",
+        ],
+        [
+            "from sklearn.model_selection import validation_curve  # 导入单超参数诊断曲线。",
+            "from sklearn.tree import DecisionTreeClassifier  # 导入可调深度模型。",
+            "train_curve_scores, valid_curve_scores = validation_curve(DecisionTreeClassifier(random_state=42), features, labels, param_name='max_depth', param_range=[1, 2, 4, None], cv=3, scoring='accuracy')  # 与learning_curve不同，validation_curve横轴是超参数。",
+            "assert train_curve_scores.shape == valid_curve_scores.shape == (4, 3)  # 验证参数候选数乘折数。",
+        ],
+        [
+            "from sklearn.inspection import PartialDependenceDisplay, partial_dependence  # 导入部分依赖解释工具。",
+            "partial = partial_dependence(model, test_x, features=[0], kind='average')  # PDP平均边际化其他特征，相关特征下解释需谨慎。",
+            "assert partial['average'].ndim == 2 and partial['average'].shape[-1] == len(partial['grid_values'][0]) and PartialDependenceDisplay is not None  # 多分类会为每个类别返回一条曲线，验证网格维即可。",
+        ],
+        [
+            "from sklearn.naive_bayes import GaussianNB  # 导入支持partial_fit的朴素贝叶斯。",
+            "online_model = GaussianNB(); classes = np.unique(labels); online_model.partial_fit(features[:75], labels[:75], classes=classes); online_model.partial_fit(features[75:], labels[75:]); online_predictions = online_model.predict(features[:5])  # 分批训练时首次调用必须传完整classes。",
+            "with tempfile.TemporaryDirectory() as online_folder:  # 使用自动清理目录验证在线模型持久化。\n    online_path = Path(online_folder) / 'online.joblib'  # 定义模型路径。\n    joblib.dump(online_model, online_path)  # 保存已学习统计量。\n    online_restored = joblib.load(online_path)  # 仅加载可信文件。\n    restored_online_predictions = online_restored.predict(features[:5])  # 恢复后预测。",
+            "assert np.array_equal(online_predictions, restored_online_predictions)  # 验证partial_fit模型持久化一致。",
+        ],
+    ]
+    code = list(cases[family])
+    if variant == 2:
+        code.append("import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。")
+        code.extend(comprehensive_extras[family])
+    return title, task, code

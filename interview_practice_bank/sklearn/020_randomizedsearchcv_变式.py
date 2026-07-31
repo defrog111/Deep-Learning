@@ -7,9 +7,12 @@
 1. 加载数据。
 2. 建立Pipeline。
 3. 从连续分布随机抽取超参数。
+4. 综合题统一导入NumPy用于shape、数值和标签检查。
+5. 随机搜索可混合连续分布与离散候选。
 
 完成标准：
 - 验证搜索完成。
+- 验证抽样次数和参数范围。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -26,3 +29,8 @@ pipeline = make_pipeline(StandardScaler(), LogisticRegression(max_iter=500))  # 
 search = RandomizedSearchCV(pipeline, {'logisticregression__C': loguniform(1e-3, 1e2)}, n_iter=5, cv=3, random_state=42).fit(features, labels)  # 从连续分布随机抽取超参数。
 assert search.best_estimator_ is not None  # 验证搜索完成。
 print(search.best_params_, search.best_score_)  # 输出最优参数和分数。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from scipy.stats import randint  # 导入离散超参数分布。
+from sklearn.ensemble import RandomForestClassifier  # 导入随机森林。
+forest_search = RandomizedSearchCV(RandomForestClassifier(random_state=42), {'n_estimators': randint(10, 40), 'max_depth': [None, 2, 4]}, n_iter=4, cv=3, random_state=42, n_jobs=1).fit(features, labels)  # 随机搜索可混合连续分布与离散候选。
+assert len(forest_search.cv_results_['params']) == 4 and forest_search.best_params_['n_estimators'] >= 10  # 验证抽样次数和参数范围。

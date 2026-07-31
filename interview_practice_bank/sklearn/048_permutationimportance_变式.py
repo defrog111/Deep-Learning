@@ -9,9 +9,13 @@
 3. 训练模型。
 4. 在测试集打乱单列测性能下降。
 5. 按平均下降排序。
+6. 综合题统一导入NumPy用于shape、数值和标签检查。
+7. PDP平均边际化其他特征，相关特征下解释需谨慎。
+8. 多分类会为每个类别返回一条曲线，验证网格维即可。
 
 完成标准：
 - 验证每个特征都有结果。
+- 多分类会为每个类别返回一条曲线，验证网格维即可。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +33,7 @@ importance = permutation_importance(model, test_x, test_y, n_repeats=5, random_s
 order = np.argsort(importance.importances_mean)[::-1]  # 按平均下降排序。
 assert len(order) == features.shape[1]  # 验证每个特征都有结果。
 print(order, importance.importances_mean)  # 输出排列重要性。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.inspection import PartialDependenceDisplay, partial_dependence  # 导入部分依赖解释工具。
+partial = partial_dependence(model, test_x, features=[0], kind='average')  # PDP平均边际化其他特征，相关特征下解释需谨慎。
+assert partial['average'].ndim == 2 and partial['average'].shape[-1] == len(partial['grid_values'][0]) and PartialDependenceDisplay is not None  # 多分类会为每个类别返回一条曲线，验证网格维即可。

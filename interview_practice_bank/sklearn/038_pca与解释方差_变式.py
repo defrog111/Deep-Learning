@@ -9,9 +9,12 @@
 3. 标准化后使用完整SVD降维。
 4. 拟合主成分并投影。
 5. 取得已拟合PCA步骤。
+6. 综合题统一导入NumPy用于shape、数值和标签检查。
+7. 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。
 
 完成标准：
 - 验证降维shape和解释方差。
+- 验证增量投影和白化配置。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +30,7 @@ projected = pipeline.fit_transform(features)  # 拟合主成分并投影。
 pca = pipeline.named_steps['pca']  # 取得已拟合PCA步骤。
 assert projected.shape[1] == 4 and pca.explained_variance_ratio_.sum() <= 1  # 验证降维shape和解释方差。
 print(projected.shape, pca.explained_variance_ratio_)  # 输出PCA结果。
+import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
+from sklearn.decomposition import IncrementalPCA  # 导入可分批学习的PCA。
+stable_pca_features = features.astype(np.float32); incremental = IncrementalPCA(n_components=2, batch_size=50); incremental.fit(stable_pca_features); incremental_projection = incremental.transform(stable_pca_features[:5]); whitening_configuration = PCA(n_components=2, whiten=True, svd_solver='randomized', random_state=42)  # 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。
+assert incremental_projection.shape == (5, 2) and whitening_configuration.whiten and whitening_configuration.svd_solver == 'randomized'  # 验证增量投影和白化配置。
