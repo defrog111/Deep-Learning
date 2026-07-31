@@ -9,9 +9,11 @@
 3. 计算逆矩阵用于教学展示。
 4. 原矩阵乘逆矩阵应得到单位阵。
 5. 条件数衡量数值敏感性。
+6. slogdet在行列式极大或极小时更稳定。
 
 完成标准：
 - 验证可逆性。
+- 验证与det关系。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ identity = matrix @ inverse  # 原矩阵乘逆矩阵应得到单位阵。
 condition = np.linalg.cond(matrix)  # 条件数衡量数值敏感性。
 assert determinant != 0 and np.allclose(identity, np.eye(2))  # 验证可逆性。
 print(determinant, inverse, condition)  # 输出线性代数指标。
+sign, log_abs_det = np.linalg.slogdet(matrix)  # slogdet在行列式极大或极小时更稳定。
+assert np.isclose(sign * np.exp(log_abs_det), np.linalg.det(matrix))  # 验证与det关系。

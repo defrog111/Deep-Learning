@@ -9,9 +9,12 @@
 3. 花式索引返回独立副本。
 4. 修改视图会影响原数组。
 5. 修改副本不会影响原数组。
+6. may_share_memory更快但可能保守判断。
+7. 本例两个函数都识别出共享。
 
 完成标准：
 - 验证view与copy差异。
+- 本例两个函数都识别出共享。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,5 @@ view[0] = 99  # 修改视图会影响原数组。
 copy[1] = 88  # 修改副本不会影响原数组。
 assert original[1] == 99 and original[2] != 88  # 验证view与copy差异。
 print(original, view, copy, np.shares_memory(original, view))  # 输出内存共享信息。
+possible_share = np.may_share_memory(original, original[::2]); definite_share = np.shares_memory(original, original[::2])  # may_share_memory更快但可能保守判断。
+assert possible_share and definite_share  # 本例两个函数都识别出共享。

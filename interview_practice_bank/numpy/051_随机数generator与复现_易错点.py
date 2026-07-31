@@ -9,9 +9,12 @@
 3. 从离散均匀分布采样。
 4. 按概率采样类别。
 5. 用相同种子复现第一组采样。
+6. integers默认允许重复，不能直接替代permutation。
+7. 检查随机整数采样性质。
 
 完成标准：
 - 验证可复现性。
+- 检查随机整数采样性质。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,5 @@ choice = rng.choice(['A', 'B', 'C'], size=4, replace=True, p=[0.2, 0.3, 0.5])  #
 repeat = np.random.default_rng(43).normal(size=(2, 3))  # 用相同种子复现第一组采样。
 assert np.allclose(normal, repeat)  # 验证可复现性。
 print(normal, integers, choice)  # 输出随机样本。
+sampled_with_replacement = rng.integers(0, 100, size=100)  # integers默认允许重复，不能直接替代permutation。
+assert sampled_with_replacement.shape == (100,) and np.unique(sampled_with_replacement).size <= 100  # 检查随机整数采样性质。

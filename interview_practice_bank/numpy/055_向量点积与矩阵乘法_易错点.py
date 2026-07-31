@@ -10,9 +10,11 @@
 4. 创建2×3矩阵。
 5. 矩阵乘向量得到长度2结果。
 6. 批量矩阵乘法。
+7. matmul支持批量矩阵乘法。
 
 完成标准：
 - 验证点积值和批量shape。
+- 验证批量维广播。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ product = matrix @ vector_a  # 矩阵乘向量得到长度2结果。
 batch = np.matmul(np.ones((4, 2, 3)), np.ones((4, 3, 5)))  # 批量矩阵乘法。
 assert dot == 32 and batch.shape == (4, 2, 5)  # 验证点积值和批量shape。
 print(dot, product, batch.shape)  # 输出矩阵运算结果。
+batched_left = np.ones((2, 3, 4)); batched_right = np.ones((2, 4, 5)); batched_product = np.matmul(batched_left, batched_right)  # matmul支持批量矩阵乘法。
+assert batched_product.shape == (2, 3, 5)  # 验证批量维广播。

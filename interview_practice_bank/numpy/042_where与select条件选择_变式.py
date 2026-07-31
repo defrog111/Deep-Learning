@@ -8,9 +8,11 @@
 2. 二选一条件向量化。
 3. 多条件按顺序选择。
 4. 把数值限制到闭区间。
+5. putmask原地修改满足条件的位置。
 
 完成标准：
 - 验证条件优先级。
+- 验证掩码写入。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +25,5 @@ labels = np.select([values < 0, values < 10], ['negative', 'small'], default='la
 clipped = np.clip(values, 0, 10)  # 把数值限制到闭区间。
 assert labels.tolist() == ['negative', 'small', 'small', 'small', 'large']  # 验证条件优先级。
 print(sign, labels, clipped)  # 输出条件运算结果。
+masked_copy = values.copy(); np.putmask(masked_copy, masked_copy < 0, -1)  # putmask原地修改满足条件的位置。
+assert np.all(masked_copy[values >= 0] >= 0)  # 验证掩码写入。

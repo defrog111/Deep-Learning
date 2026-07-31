@@ -9,9 +9,11 @@
 3. 用Python循环表达相同逻辑用于对照。
 4. 创建随变式变化的方阵。
 5. 无显式循环计算每行L2范数。
+6. 使用ufunc的out参数复用输出内存。
 
 完成标准：
 - 验证向量化不改变结果。
+- 验证out写法结果一致。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ matrix = np.arange(16).reshape(4, 4)  # 创建随变式变化的方阵。
 row_norms = np.sqrt((matrix.astype(float) ** 2).sum(axis=1))  # 无显式循环计算每行L2范数。
 assert np.array_equal(vectorized, loop_result)  # 验证向量化不改变结果。
 print(vectorized[:3], row_norms)  # 输出部分结果。
+output = np.empty_like(values); np.add(values**2, 2 * values + 1, out=output)  # 使用ufunc的out参数复用输出内存。
+assert np.array_equal(output, vectorized)  # 验证out写法结果一致。

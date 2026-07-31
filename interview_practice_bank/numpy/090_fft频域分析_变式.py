@@ -11,9 +11,11 @@
 5. 对实信号计算单边FFT。
 6. 计算每个频点对应频率。
 7. 找到幅度最大的主频。
+8. 使用irfft从单边频谱恢复实信号。
 
 完成标准：
 - 验证FFT识别出真实频率。
+- 验证FFT往返变换。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -29,3 +31,5 @@ frequencies = np.fft.rfftfreq(sample_count, d=1 / sample_count)  # 计算每个�
 dominant = frequencies[np.abs(spectrum).argmax()]  # 找到幅度最大的主频。
 assert dominant == frequency  # 验证FFT识别出真实频率。
 print(dominant)  # 输出主频。
+restored = np.fft.irfft(spectrum, n=sample_count)  # 使用irfft从单边频谱恢复实信号。
+assert np.allclose(restored, signal)  # 验证FFT往返变换。

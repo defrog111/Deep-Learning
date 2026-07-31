@@ -9,9 +9,11 @@
 3. 计算曼哈顿距离。
 4. 计算欧氏距离。
 5. 计算余弦相似度。
+6. 沿行计算范数并防止除零。
 
 完成标准：
 - 验证余弦范围。
+- 验证行归一化。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ l2 = np.linalg.norm(a - b, ord=2)  # 计算欧氏距离。
 cosine = (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))  # 计算余弦相似度。
 assert -1 <= cosine <= 1  # 验证余弦范围。
 print(l1, l2, cosine)  # 输出三种相似性指标。
+norm_matrix = np.stack([a, b]); row_norms_extra = np.linalg.norm(norm_matrix, axis=1, keepdims=True); normalized_rows = norm_matrix / np.maximum(row_norms_extra, 1e-12)  # 沿行计算范数并防止除零。
+assert np.allclose(np.linalg.norm(normalized_rows, axis=1), 1)  # 验证行归一化。

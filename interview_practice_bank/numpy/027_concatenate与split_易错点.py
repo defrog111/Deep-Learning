@@ -9,9 +9,11 @@
 3. 沿行轴拼接。
 4. 沿列轴拼接。
 5. 允许不等分地拆成三块。
+6. array_split允许不能整除，split则会抛错。
 
 完成标准：
 - 验证不同轴的shape。
+- 验证不等长拆分规则。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ columns = np.concatenate([left, right], axis=1)  # 沿列轴拼接。
 parts = np.array_split(columns, 3, axis=1)  # 允许不等分地拆成三块。
 assert rows.shape == (4, 3) and columns.shape == (2, 6)  # 验证不同轴的shape。
 print(rows, '\n', [part.shape for part in parts])  # 输出拼接与拆分结果。
+uneven = np.array_split(np.arange(10), 3)  # array_split允许不能整除，split则会抛错。
+assert [len(part) for part in uneven] == [4, 3, 3]  # 验证不等长拆分规则。

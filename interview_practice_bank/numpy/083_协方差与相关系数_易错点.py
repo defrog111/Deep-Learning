@@ -9,9 +9,12 @@
 3. 计算标准化相关系数。
 4. 对特征中心化。
 5. 手算样本协方差。
+6. ddof=0计算总体协方差，默认ddof=1是样本协方差。
+7. 小样本下两种分母结果不同。
 
 完成标准：
 - 验证公式实现。
+- 小样本下两种分母结果不同。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,5 @@ centered = samples - samples.mean(axis=0, keepdims=True)  # 对特征中心化�
 manual_covariance = centered.T @ centered / (len(samples) - 1)  # 手算样本协方差。
 assert np.allclose(covariance, manual_covariance)  # 验证公式实现。
 print(covariance, '\n', correlation)  # 输出协方差和相关矩阵。
+population_covariance = np.cov(samples, rowvar=False, ddof=0)  # ddof=0计算总体协方差，默认ddof=1是样本协方差。
+assert not np.allclose(population_covariance, covariance)  # 小样本下两种分母结果不同。

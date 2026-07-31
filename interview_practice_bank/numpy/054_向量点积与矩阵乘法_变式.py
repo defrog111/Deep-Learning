@@ -10,9 +10,11 @@
 4. 创建2×3矩阵。
 5. 矩阵乘向量得到长度2结果。
 6. 批量矩阵乘法。
+7. 比较@、dot和matmul的二维行为。
 
 完成标准：
 - 验证点积值和批量shape。
+- 验证三种写法等价。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ product = matrix @ vector_a  # 矩阵乘向量得到长度2结果。
 batch = np.matmul(np.ones((4, 2, 3)), np.ones((4, 3, 5)))  # 批量矩阵乘法。
 assert dot == 32 and batch.shape == (4, 2, 5)  # 验证点积值和批量shape。
 print(dot, product, batch.shape)  # 输出矩阵运算结果。
+via_operator = matrix @ vector_a; via_dot = np.dot(matrix, vector_a); via_matmul = np.matmul(matrix, vector_a)  # 比较@、dot和matmul的二维行为。
+assert np.allclose(via_operator, via_dot) and np.allclose(via_dot, via_matmul)  # 验证三种写法等价。

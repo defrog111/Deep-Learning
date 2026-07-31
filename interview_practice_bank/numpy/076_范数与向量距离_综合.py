@@ -9,9 +9,12 @@
 3. 计算曼哈顿距离。
 4. 计算欧氏距离。
 5. 计算余弦相似度。
+6. 综合计算余弦相似度。
+7. 非零向量与自身余弦相似度为1。
 
 完成标准：
 - 验证余弦范围。
+- 非零向量与自身余弦相似度为1。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +28,5 @@ l2 = np.linalg.norm(a - b, ord=2)  # 计算欧氏距离。
 cosine = (a @ b) / (np.linalg.norm(a) * np.linalg.norm(b))  # 计算余弦相似度。
 assert -1 <= cosine <= 1  # 验证余弦范围。
 print(l1, l2, cosine)  # 输出三种相似性指标。
+norm_matrix = np.stack([a, b]); cosine_matrix = norm_matrix @ norm_matrix.T / np.maximum(np.linalg.norm(norm_matrix, axis=1)[:, None] * np.linalg.norm(norm_matrix, axis=1)[None, :], 1e-12)  # 综合计算余弦相似度。
+assert np.allclose(np.diag(cosine_matrix), 1)  # 非零向量与自身余弦相似度为1。

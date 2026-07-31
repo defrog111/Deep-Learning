@@ -9,9 +9,11 @@
 3. 显式变成shape为(3,1)的行方向缩放。
 4. 利用广播完成无循环计算。
 5. 广播结果保持矩阵shape。
+6. broadcast_to创建只读广播视图而不复制数据。
 
 完成标准：
 - 广播结果保持矩阵shape。
+- 验证shape与只读属性。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -24,3 +26,5 @@ row_scale = np.array([1, 2, 3]).reshape(3, 1)  # 显式变成shape为(3,1)的行
 answer = (matrix + column_bias) * row_scale  # 利用广播完成无循环计算。
 assert answer.shape == matrix.shape  # 广播结果保持矩阵shape。
 print(answer)  # 输出广播运算结果。
+broadcasted = np.broadcast_to(np.arange(4), (3, 4))  # broadcast_to创建只读广播视图而不复制数据。
+assert broadcasted.shape == (3, 4) and not broadcasted.flags.writeable  # 验证shape与只读属性。

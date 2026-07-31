@@ -10,9 +10,11 @@
 4. 用爱因斯坦求和表达外积。
 5. 创建矩阵。
 6. 用einsum沿行轴求和。
+7. einsum计算每个batch的外积。
 
 完成标准：
 - 验证两种外积写法一致。
+- 验证批量外积。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ matrix = np.arange(6).reshape(2, 3)  # 创建矩阵。
 column_sums = np.einsum('ij->j', matrix)  # 用einsum沿行轴求和。
 assert np.array_equal(outer, einsum_outer)  # 验证两种外积写法一致。
 print(outer, column_sums)  # 输出einsum结果。
+batch_outer = np.einsum('bi,bj->bij', np.ones((3, 2)), np.arange(12).reshape(3, 4))  # einsum计算每个batch的外积。
+assert batch_outer.shape == (3, 2, 4)  # 验证批量外积。

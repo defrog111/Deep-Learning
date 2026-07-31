@@ -8,9 +8,11 @@
 2. 定义右侧向量b。
 3. 直接求解Ax=b比显式求逆更稳定。
 4. 把解代回原方程。
+5. solve可一次处理多个右侧向量。
 
 完成标准：
 - 验证数值解。
+- 验证批量线性方程解。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +25,5 @@ solution = np.linalg.solve(coefficients, targets)  # 直接求解Ax=b比显式�
 reconstructed = coefficients @ solution  # 把解代回原方程。
 assert np.allclose(reconstructed, targets)  # 验证数值解。
 print(solution, reconstructed)  # 输出解和代回结果。
+multiple_rhs = np.column_stack([targets, targets * 2]); multiple_solutions = np.linalg.solve(coefficients, multiple_rhs)  # solve可一次处理多个右侧向量。
+assert np.allclose(coefficients @ multiple_solutions, multiple_rhs)  # 验证批量线性方程解。

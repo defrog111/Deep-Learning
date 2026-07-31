@@ -9,9 +9,11 @@
 3. 从离散均匀分布采样。
 4. 按概率采样类别。
 5. 用相同种子复现第一组采样。
+6. 用SeedSequence为并行任务创建独立随机流。
 
 完成标准：
 - 验证可复现性。
+- 验证子随机流不同。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -25,3 +27,5 @@ choice = rng.choice(['A', 'B', 'C'], size=4, replace=True, p=[0.2, 0.3, 0.5])  #
 repeat = np.random.default_rng(44).normal(size=(2, 3))  # 用相同种子复现第一组采样。
 assert np.allclose(normal, repeat)  # 验证可复现性。
 print(normal, integers, choice)  # 输出随机样本。
+seed_sequence = np.random.SeedSequence(42); child_a, child_b = [np.random.default_rng(seed) for seed in seed_sequence.spawn(2)]  # 用SeedSequence为并行任务创建独立随机流。
+assert not np.array_equal(child_a.normal(size=5), child_b.normal(size=5))  # 验证子随机流不同。

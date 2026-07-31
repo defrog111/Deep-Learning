@@ -10,9 +10,11 @@
 4. 创建2×3矩阵。
 5. 矩阵乘向量得到长度2结果。
 6. 批量矩阵乘法。
+7. tensordot显式指定收缩轴。
 
 完成标准：
 - 验证点积值和批量shape。
+- 验证张量收缩shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -27,3 +29,5 @@ product = matrix @ vector_a  # 矩阵乘向量得到长度2结果。
 batch = np.matmul(np.ones((4, 2, 3)), np.ones((4, 3, 5)))  # 批量矩阵乘法。
 assert dot == 32 and batch.shape == (4, 2, 5)  # 验证点积值和批量shape。
 print(dot, product, batch.shape)  # 输出矩阵运算结果。
+contracted = np.tensordot(np.arange(24).reshape(2, 3, 4), np.ones((4, 5)), axes=([2], [0]))  # tensordot显式指定收缩轴。
+assert contracted.shape == (2, 3, 5)  # 验证张量收缩shape。

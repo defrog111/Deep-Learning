@@ -8,9 +8,12 @@
 2. 消去batch轴得到shape(3,4)。
 3. 消去最后轴但保留长度1维。
 4. 返回每行最大值的位置。
+5. 指定过小累加dtype会发生整数溢出。
+6. 对比错误与安全累加dtype。
 
 完成标准：
 - 验证keepdims便于后续广播。
+- 对比错误与安全累加dtype。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +26,5 @@ mean_last = cube.mean(axis=-1, keepdims=True)  # 消去最后轴但保留长度1
 maximum_positions = cube.argmax(axis=2)  # 返回每行最大值的位置。
 assert mean_last.shape == (2, 3, 1)  # 验证keepdims便于后续广播。
 print(sum_axis0, '\n', mean_last, '\n', maximum_positions)  # 输出聚合结果。
+small = np.array([250, 10], dtype=np.uint8); overflowed = small.sum(dtype=np.uint8)  # 指定过小累加dtype会发生整数溢出。
+assert overflowed == 4 and small.sum(dtype=np.int64) == 260  # 对比错误与安全累加dtype。

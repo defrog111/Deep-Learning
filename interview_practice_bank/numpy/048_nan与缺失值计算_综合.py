@@ -8,9 +8,11 @@
 2. 识别NaN而不能用等号比较。
 3. 忽略NaN计算均值。
 4. 使用均值替换NaN。
+5. 显式指定NaN和正负无穷替换值。
 
 完成标准：
 - 验证填充完成。
+- 验证清洗后均为有限值。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
@@ -23,3 +25,5 @@ mean = np.nanmean(values)  # 忽略NaN计算均值。
 filled = np.nan_to_num(values, nan=mean)  # 使用均值替换NaN。
 assert not np.isnan(filled).any()  # 验证填充完成。
 print(mask, mean, filled)  # 输出缺失值处理结果。
+cleaned = np.nan_to_num(values, nan=0.0, posinf=1e6, neginf=-1e6)  # 显式指定NaN和正负无穷替换值。
+assert np.isfinite(cleaned).all()  # 验证清洗后均为有限值。

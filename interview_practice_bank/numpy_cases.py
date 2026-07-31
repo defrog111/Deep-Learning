@@ -277,4 +277,136 @@ def numpy_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "print(vectorized[:3], row_norms)  # 输出部分结果。",
         ],
     ]
-    return title, task, cases[family]
+    # 每个知识点的三种进阶代码：变式、易错点、综合。
+    # 基础代码会反复出现以帮助记忆，下面的可执行代码保证考法和API真正不同。
+    extras: list[list[list[str]]] = [
+        [
+            ["from_list = np.asarray([1, 2, 3])  # 使用asarray接收已有序列，输入已是数组时通常避免复制。", "assert from_list.dtype.kind in 'iu'  # 验证整数序列推导为整数dtype。"],
+            ["truncated = np.array([1.9, -2.9]).astype(np.int64)  # 浮点转整数会向零截断而不是四舍五入。", "assert truncated.tolist() == [1, -2]  # 验证常见dtype转换陷阱。"],
+            ["constructed = np.stack([np.zeros(3), np.ones(3), np.full(3, 2)])  # 综合使用zeros、ones、full和stack构造矩阵。", "assert constructed.shape == (3, 3) and np.eye(3).trace() == 3  # 同时复习eye单位矩阵。"],
+        ],
+        [
+            ["range_short = np.arange(100); range_full = np.arange(0, 100); range_keywords = np.arange(start=0, stop=100, step=1)  # arange三种等价常用写法。", "assert np.array_equal(range_short, range_full) and np.array_equal(range_full, range_keywords)  # 验证三种参数形式结果一致。"],
+            ["float_steps = np.arange(0.0, 1.0, 0.1); fixed_points = np.linspace(0.0, 1.0, 11)  # 浮点步长用arange可能累积误差，固定点数优先linspace。", "assert len(float_steps) == 10 and len(fixed_points) == 11 and fixed_points[-1] == 1  # 比较左闭右开与包含终点。"],
+            ["grid_x, grid_y = np.meshgrid(np.arange(3), np.linspace(0, 1, 2), indexing='xy')  # 综合使用arange、linspace和meshgrid生成二维坐标。", "assert grid_x.shape == grid_y.shape == (2, 3)  # 验证网格shape。"],
+        ],
+        [
+            ["expanded = matrix[..., np.newaxis]  # 使用省略号和newaxis在末尾增加维度。", "assert expanded.shape == matrix.shape + (1,)  # 验证新增长度为1的轴。"],
+            ["slice_view = matrix[:, :2]; slice_view[0, 0] = -1  # 基本切片是视图，修改它会影响原数组。", "assert matrix[0, 0] == -1 and np.shares_memory(matrix, slice_view)  # 验证共享内存陷阱。"],
+            ["picked = np.take(matrix, [0, -1], axis=0); clipped = matrix.clip(min=0)  # 综合使用take按轴选择并用clip限制范围。", "assert picked.shape[0] == 2 and clipped.min() >= 0  # 验证选择和裁剪结果。"],
+        ],
+        [
+            ["taken = np.take(array, order); nonzero_positions = np.flatnonzero(np.isin(array, selected))  # 使用take、isin和flatnonzero表达花式选择。", "assert np.array_equal(taken, reordered) and np.array_equal(array[nonzero_positions], selected)  # 验证两套写法等价。"],
+            ["repeated = np.zeros(3, dtype=int); repeated[[0, 0]] += 1  # 重复花式索引的原地累加只写回一次，是高频陷阱。", "assert repeated[0] == 1  # 如需累计重复位置应使用np.add.at。"],
+            ["rows_ix, cols_ix = np.ix_([0, 2], [1, 3]); cross = np.arange(12).reshape(3, 4)[rows_ix, cols_ix]  # 使用ix_取得行列笛卡尔积。", "assert cross.shape == (2, 2)  # 区分成对花式索引和网格索引。"],
+        ],
+        [
+            ["moved = np.moveaxis(cube, 0, -1); swapped = np.swapaxes(cube, 0, 1)  # 使用moveaxis和swapaxes改变轴顺序。", "assert moved.shape == (3, 4, 2) and swapped.shape == (3, 2, 4)  # 验证轴操作。"],
+            ["non_contiguous = cube.transpose(2, 1, 0); safe_shape = np.ascontiguousarray(non_contiguous).reshape(4, -1)  # 转置后先连续化可避免布局误解。", "assert safe_shape.flags.c_contiguous  # 验证结果采用C连续布局。"],
+            ["flat_view = cube.ravel(); flat_copy = cube.flatten(); flat_view[0] = -1  # ravel尽量返回视图，flatten总是复制。", "assert cube.ravel()[0] == -1 and flat_copy[0] != -1  # 综合比较reshape、ravel和flatten。"],
+        ],
+        [
+            ["broadcasted = np.broadcast_to(np.arange(4), (3, 4))  # broadcast_to创建只读广播视图而不复制数据。", "assert broadcasted.shape == (3, 4) and not broadcasted.flags.writeable  # 验证shape与只读属性。"],
+            ["try:  # 主动运行一个不兼容的广播操作。\n    np.ones((2, 3)) + np.ones((2, 2))  # 尝试广播不兼容的尾部维度。\nexcept ValueError as error:  # 捕获预期的广播异常。\n    broadcast_error = str(error)  # 保存shape不兼容错误。", "assert 'broadcast' in broadcast_error.lower()  # 验证错误来自广播规则。"],
+            ["batch = np.arange(24).reshape(2, 3, 4); weights = np.arange(4); weighted = np.einsum('bij,j->bi', batch, weights)  # 用einsum完成批量加权求和。", "assert weighted.shape == (2, 3)  # 验证综合广播运算shape。"],
+        ],
+        [
+            ["stacked = np.stack([left, right], axis=0); vertical = np.vstack([left, right]); horizontal = np.hstack([left, right])  # 比较新增轴stack与已有轴拼接。", "assert stacked.shape == (2, 2, 3) and vertical.shape == rows.shape and horizontal.shape == columns.shape  # 验证三种拼接。"],
+            ["uneven = np.array_split(np.arange(10), 3)  # array_split允许不能整除，split则会抛错。", "assert [len(part) for part in uneven] == [4, 3, 3]  # 验证不等长拆分规则。"],
+            ["blocked = np.block([[left, right], [right, left]])  # 使用block按二维布局组合小矩阵。", "assert blocked.shape == (4, 6)  # 验证分块矩阵shape。"],
+        ],
+        [
+            ["column_mean = cube.mean(axis=(0, 1), keepdims=True)  # 同时沿多个轴聚合并保留维度。", "assert column_mean.shape == (1, 1, 4)  # 验证多轴与keepdims。"],
+            ["small = np.array([250, 10], dtype=np.uint8); overflowed = small.sum(dtype=np.uint8)  # 指定过小累加dtype会发生整数溢出。", "assert overflowed == 4 and small.sum(dtype=np.int64) == 260  # 对比错误与安全累加dtype。"],
+            ["accumulated = np.add.accumulate(np.arange(1, 6)); reduced = np.multiply.reduce(np.arange(1, 6))  # 综合使用ufunc的accumulate和reduce。", "assert accumulated[-1] == 15 and reduced == 120  # 验证累计和连乘。"],
+        ],
+        [
+            ["records = np.array([(2, 'b'), (1, 'c'), (1, 'a')], dtype=[('score', int), ('name', 'U1')]); ordered_records = np.sort(records, order=['score', 'name'])  # 对结构化数组多键排序。", "assert ordered_records['name'].tolist() == ['a', 'c', 'b']  # 验证多字段排序。"],
+            ["stable_order = np.argsort(np.array([2, 1, 2, 1]), kind='stable')  # stable排序保持相等元素原始先后。", "assert stable_order.tolist() == [1, 3, 0, 2]  # 验证稳定性。"],
+            ["median_position = len(values) // 2; partitioned = np.partition(values, median_position)  # 只确定第k位置时无需完整排序。", "assert partitioned[median_position] == np.sort(values)[median_position]  # 验证partition关键位置。"],
+        ],
+        [
+            ["unique_values, first_indices, inverse, counts = np.unique(values, return_index=True, return_inverse=True, return_counts=True)  # 一次取得唯一值、首次位置、逆映射和计数。", "assert np.array_equal(unique_values[inverse], values) and counts.sum() == values.size  # 用逆映射重建原数组。"],
+            ["union = np.union1d([1, 2, 3], [3, 4]); difference = np.setdiff1d([1, 2, 3], [2])  # 使用集合运算并注意结果会排序。", "assert union.tolist() == [1, 2, 3, 4] and difference.tolist() == [1, 3]  # 验证集合结果。"],
+            ["nonnegative = np.array([0, 1, 1, 3]); frequencies = np.bincount(nonnegative, minlength=5)  # 非负小整数计数优先bincount。", "assert frequencies.tolist() == [1, 2, 0, 1, 0]  # 验证计数与补零。"],
+        ],
+        [
+            ["masked_copy = values.copy(); np.putmask(masked_copy, masked_copy < 0, -1)  # putmask原地修改满足条件的位置。", "assert np.all(masked_copy[values >= 0] >= 0)  # 验证掩码写入。"],
+            ["with np.errstate(divide='ignore', invalid='ignore'):  # 临时管理可预期的浮点告警。\n    eager = np.where(values != 0, 1 / values, 0)  # where会先计算两个分支，不能阻止除零计算。", "assert np.isfinite(eager).all()  # 使用errstate管理已知浮点告警。"],
+            ["choices = np.choose(np.array([0, 1, 2]), [np.full(3, 10), np.full(3, 20), np.full(3, 30)])  # choose按整数选择器从多组候选取值。", "assert choices.tolist() == [10, 20, 30]  # 验证多分支选择。"],
+        ],
+        [
+            ["median = np.nanmedian(values); percentile = np.nanpercentile(values, [25, 75])  # 忽略NaN计算中位数和分位数。", "assert np.isfinite(median) and percentile.shape == (2,)  # 验证NaN安全统计。"],
+            ["masked = np.ma.masked_invalid(values); masked_mean = masked.mean()  # MaskedArray可同时记录缺失mask和数据。", "assert np.isfinite(masked_mean)  # 验证屏蔽无效值后的均值。"],
+            ["cleaned = np.nan_to_num(values, nan=0.0, posinf=1e6, neginf=-1e6)  # 显式指定NaN和正负无穷替换值。", "assert np.isfinite(cleaned).all()  # 验证清洗后均为有限值。"],
+        ],
+        [
+            ["permuted = rng.permutation(100); shuffled = np.arange(100); rng.shuffle(shuffled); chosen = rng.choice(100, size=100, replace=False)  # permutation、arange加shuffle、choice无放回均得到不重复索引。", "assert len(np.unique(permuted)) == len(np.unique(shuffled)) == len(np.unique(chosen)) == 100  # 验证三种随机排列写法。"],
+            ["sampled_with_replacement = rng.integers(0, 100, size=100)  # integers默认允许重复，不能直接替代permutation。", "assert sampled_with_replacement.shape == (100,) and np.unique(sampled_with_replacement).size <= 100  # 检查随机整数采样性质。"],
+            ["seed_sequence = np.random.SeedSequence(42); child_a, child_b = [np.random.default_rng(seed) for seed in seed_sequence.spawn(2)]  # 用SeedSequence为并行任务创建独立随机流。", "assert not np.array_equal(child_a.normal(size=5), child_b.normal(size=5))  # 验证子随机流不同。"],
+        ],
+        [
+            ["via_operator = matrix @ vector_a; via_dot = np.dot(matrix, vector_a); via_matmul = np.matmul(matrix, vector_a)  # 比较@、dot和matmul的二维行为。", "assert np.allclose(via_operator, via_dot) and np.allclose(via_dot, via_matmul)  # 验证三种写法等价。"],
+            ["batched_left = np.ones((2, 3, 4)); batched_right = np.ones((2, 4, 5)); batched_product = np.matmul(batched_left, batched_right)  # matmul支持批量矩阵乘法。", "assert batched_product.shape == (2, 3, 5)  # 验证批量维广播。"],
+            ["contracted = np.tensordot(np.arange(24).reshape(2, 3, 4), np.ones((4, 5)), axes=([2], [0]))  # tensordot显式指定收缩轴。", "assert contracted.shape == (2, 3, 5)  # 验证张量收缩shape。"],
+        ],
+        [
+            ["least_squares, residuals, rank, singular = np.linalg.lstsq(coefficients, targets, rcond=None)  # 非方阵或含噪问题使用最小二乘。", "assert rank <= min(coefficients.shape) and singular.ndim == 1  # 检查秩和奇异值。"],
+            ["rank_value = np.linalg.matrix_rank(coefficients); pseudo_solution = np.linalg.pinv(coefficients) @ targets  # 奇异系统不能盲目使用solve，可考虑伪逆。", "assert rank_value >= 1 and pseudo_solution.shape[0] == coefficients.shape[1]  # 验证伪逆解shape。"],
+            ["multiple_rhs = np.column_stack([targets, targets * 2]); multiple_solutions = np.linalg.solve(coefficients, multiple_rhs)  # solve可一次处理多个右侧向量。", "assert np.allclose(coefficients @ multiple_solutions, multiple_rhs)  # 验证批量线性方程解。"],
+        ],
+        [
+            ["sign, log_abs_det = np.linalg.slogdet(matrix)  # slogdet在行列式极大或极小时更稳定。", "assert np.isclose(sign * np.exp(log_abs_det), np.linalg.det(matrix))  # 验证与det关系。"],
+            ["identity_via_solve = np.linalg.solve(matrix, np.eye(matrix.shape[0]))  # 求解Ax=I可得到逆，但实际预测应直接solve。", "assert np.allclose(identity_via_solve, np.linalg.inv(matrix))  # 验证两种结果。"],
+            ["regularized = matrix.T @ matrix + 1e-6 * np.eye(matrix.shape[1]); stable_inverse = np.linalg.pinv(regularized)  # 综合使用正则化和伪逆处理病态矩阵。", "assert np.isfinite(stable_inverse).all()  # 验证数值结果有限。"],
+        ],
+        [
+            ["general_values, general_vectors = np.linalg.eig(matrix)  # 一般方阵使用eig，实对称矩阵优先eigh。", "assert np.allclose(matrix @ general_vectors, general_vectors * general_values)  # 验证Av等于lambda乘v。"],
+            ["symmetric = (matrix + matrix.T) / 2; symmetric_values, symmetric_vectors = np.linalg.eigh(symmetric)  # eigh利用对称结构并返回有序实特征值。", "assert np.allclose(symmetric, symmetric_vectors @ np.diag(symmetric_values) @ symmetric_vectors.T)  # 重建对称矩阵。"],
+            ["power_vector = np.ones(matrix.shape[0]); power_vector = matrix @ power_vector; power_vector /= np.linalg.norm(power_vector)  # 用一次幂迭代逼近主特征向量方向。", "assert np.isclose(np.linalg.norm(power_vector), 1)  # 验证归一化。"],
+        ],
+        [
+            ["compact_u, compact_s, compact_vt = np.linalg.svd(matrix, full_matrices=False)  # 经济型SVD减少无用维度。", "assert compact_u.shape[1] == compact_s.size == compact_vt.shape[0]  # 验证紧凑SVD shape。"],
+            ["singular_only = np.linalg.svd(matrix, compute_uv=False)  # 只需要奇异值时不计算左右奇异向量。", "assert np.allclose(singular_only, singular_values)  # 验证两种调用得到相同奇异值。"],
+            ["energy_ratio = np.cumsum(singular_values**2) / np.sum(singular_values**2); rank_for_90 = np.searchsorted(energy_ratio, 0.9) + 1  # 按累计能量选择低秩维数。", "assert 1 <= rank_for_90 <= singular_values.size  # 验证自动选择的秩范围。"],
+        ],
+        [
+            ["norm_matrix = np.stack([a, b]); row_norms_extra = np.linalg.norm(norm_matrix, axis=1, keepdims=True); normalized_rows = norm_matrix / np.maximum(row_norms_extra, 1e-12)  # 沿行计算范数并防止除零。", "assert np.allclose(np.linalg.norm(normalized_rows, axis=1), 1)  # 验证行归一化。"],
+            ["norm_matrix = np.stack([a, b]); pairwise = np.linalg.norm(norm_matrix[:, None, :] - norm_matrix[None, :, :], axis=-1)  # 利用广播计算两两欧氏距离。", "assert pairwise.shape == (len(norm_matrix), len(norm_matrix)) and np.allclose(np.diag(pairwise), 0)  # 验证距离矩阵。"],
+            ["norm_matrix = np.stack([a, b]); cosine_matrix = norm_matrix @ norm_matrix.T / np.maximum(np.linalg.norm(norm_matrix, axis=1)[:, None] * np.linalg.norm(norm_matrix, axis=1)[None, :], 1e-12)  # 综合计算余弦相似度。", "assert np.allclose(np.diag(cosine_matrix), 1)  # 非零向量与自身余弦相似度为1。"],
+        ],
+        [
+            ["outer_ufunc = np.multiply.outer(a, b)  # ufunc.outer是np.outer的通用写法。", "assert np.array_equal(outer_ufunc, np.outer(a, b))  # 验证两种外积等价。"],
+            ["kronecker = np.kron(np.eye(2), np.ones((2, 2)))  # kron计算Kronecker积，不能和普通外积混淆。", "assert kronecker.shape == (4, 4)  # 验证Kronecker积shape。"],
+            ["batch_outer = np.einsum('bi,bj->bij', np.ones((3, 2)), np.arange(12).reshape(3, 4))  # einsum计算每个batch的外积。", "assert batch_outer.shape == (3, 2, 4)  # 验证批量外积。"],
+        ],
+        [
+            ["samples_by_row = np.cov(samples, rowvar=False, ddof=1)  # 样本在行、特征在列时必须设置rowvar=False。", "assert samples_by_row.shape == (samples.shape[1], samples.shape[1])  # 验证特征协方差矩阵shape。"],
+            ["population_covariance = np.cov(samples, rowvar=False, ddof=0)  # ddof=0计算总体协方差，默认ddof=1是样本协方差。", "assert not np.allclose(population_covariance, covariance)  # 小样本下两种分母结果不同。"],
+            ["standardized_matrix = (samples - samples.mean(0)) / samples.std(0, ddof=1); correlation_from_cov = np.cov(standardized_matrix, rowvar=False)  # 标准化后的协方差等于相关矩阵。", "assert np.allclose(correlation_from_cov, np.corrcoef(samples, rowvar=False))  # 验证协方差与相关系数关系。"],
+        ],
+        [
+            ["polynomial = np.polynomial.Polynomial.fit(x, y, deg=2).convert()  # 新式Polynomial API可管理定义域并转换为普通系数。", "assert np.allclose(polynomial(x), predictions)  # 验证与polyfit预测一致。"],
+            ["roots = np.roots(coefficients); evaluated = np.polyval(coefficients, roots)  # 多项式根代回后理论上接近零。", "assert np.allclose(evaluated, 0, atol=1e-6)  # 验证根的数值误差范围。"],
+            ["vandermonde = np.vander(x, N=3); manual_coefficients = np.linalg.lstsq(vandermonde, y, rcond=None)[0]  # 综合用Vandermonde设计矩阵理解多项式拟合。", "assert np.allclose(vandermonde @ manual_coefficients, predictions)  # 验证底层最小二乘形式。"],
+        ],
+        [
+            ["restored = np.fft.irfft(spectrum, n=sample_count)  # 使用irfft从单边频谱恢复实信号。", "assert np.allclose(restored, signal)  # 验证FFT往返变换。"],
+            ["shifted_frequency = np.fft.fftshift(np.fft.fftfreq(8)); shifted_spectrum = np.fft.fftshift(np.fft.fft(np.arange(8)))  # fftshift把零频移动到中心。", "assert shifted_frequency.shape == shifted_spectrum.shape == (8,)  # 验证双边频谱shape。"],
+            ["window = np.hanning(sample_count); windowed_spectrum = np.fft.rfft(signal * window)  # 综合使用窗函数减轻非整周期频谱泄漏。", "assert windowed_spectrum.shape == spectrum.shape  # 验证加窗不改变频点数量。"],
+        ],
+        [
+            ["c_copy = np.array(original, copy=True, order='C'); f_copy = np.array(original.reshape(2, 3), copy=True, order='F')  # 显式控制复制和C/F内存顺序。", "assert c_copy.flags.c_contiguous and f_copy.flags.f_contiguous  # 验证内存布局。"],
+            ["possible_share = np.may_share_memory(original, original[::2]); definite_share = np.shares_memory(original, original[::2])  # may_share_memory更快但可能保守判断。", "assert possible_share and definite_share  # 本例两个函数都识别出共享。"],
+            ["transposed = original.reshape(2, 3).T; contiguous = np.ascontiguousarray(transposed)  # 综合把非连续转置结果变为C连续副本。", "assert contiguous.flags.c_contiguous and not np.shares_memory(contiguous, original)  # 验证连续化产生独立存储。"],
+        ],
+        [
+            ["output = np.empty_like(values); np.add(values**2, 2 * values + 1, out=output)  # 使用ufunc的out参数复用输出内存。", "assert np.array_equal(output, vectorized)  # 验证out写法结果一致。"],
+            ["python_wrapper = np.vectorize(lambda value: value**2 + 2 * value + 1); wrapped = python_wrapper(values)  # vectorize只是便利循环，并不会自动获得真正ufunc性能。", "assert np.array_equal(wrapped, vectorized)  # 验证语义相同但性能含义不同。"],
+            ["positive_only = np.zeros_like(values); np.square(values, out=positive_only, where=values > 0)  # 综合使用ufunc的out和where条件写入。", "assert np.array_equal(positive_only, values**2)  # 本例所有值为正，因此等于完整平方。"],
+        ],
+    ]
+    code = list(cases[family])
+    if variant > 1:
+        code.extend(extras[family][variant - 2])
+    return title, task, code
