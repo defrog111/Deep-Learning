@@ -37,6 +37,104 @@ def ml_case(family: int, variant: int) -> tuple[str, str, list[str]]:
     title = titles[family]
     task = f"完成“{title}”的{LEVELS[variant - 1]}题，计算结果并回答为什么不能使用错误做法。"
     n = variant + 2
+    permutation_alternatives = [
+        "# -------------------- 其他写法（以下代码作为知识补充，不会执行） --------------------",
+        "# 写法A：先创建连续索引，再原地shuffle；结果和permutation一样是不重复的全排列。",
+        "# alternative_indices = np.arange(100)  # 创建0到99且不重复的索引。",
+        "# rng.shuffle(alternative_indices)  # 原地打乱；注意该方法会修改原数组。",
+        "# 写法B：使用choice且设置replace=False，也能进行无放回抽样。",
+        "# alternative_indices = rng.choice(100, size=100, replace=False)  # 无放回抽取全部索引。",
+        "# 写法C：如果只需要随机抽取20个测试索引，可以不生成完整排列。",
+        "# test_indices = rng.choice(100, size=20, replace=False)  # 直接无放回抽取测试集索引。",
+        "# 易错写法：rng.integers(0, 100, size=100)默认有放回，因此会重复并遗漏部分索引。",
+        "# wrong_indices = rng.integers(0, 100, size=100)  # 这是随机整数采样，不是随机排列。",
+        "# assert np.unique(wrong_indices).size <= 100  # unique数量通常小于100，不能直接拿来切分数据集。",
+    ]
+    if family == 0:
+        if variant == 1:
+            code = [
+                "import numpy as np  # 导入 NumPy。",
+                "rng = np.random.default_rng(42)  # 固定切分随机性。",
+                "indices = rng.permutation(100)  # 一步生成0到99的不重复随机排列。",
+                "train, valid, test = indices[:60], indices[60:80], indices[80:]  # 按60/20/20切分。",
+                "features = np.arange(100, dtype=float)  # 构造单特征数据。",
+                "train_mean = features[train].mean()  # 只在训练集拟合预处理统计量。",
+                "standardized_test = features[test] - train_mean  # 用训练统计量转换测试集。",
+                "assert not set(train) & set(test) and len(standardized_test) == 20  # 验证集合互斥和测试样本数。",
+                "print(train_mean, standardized_test[:3])  # 输出无泄漏处理结果。",
+                *permutation_alternatives,
+            ]
+        elif variant == 2:
+            code = [
+                "import numpy as np  # 导入 NumPy。",
+                "rng = np.random.default_rng(42)  # 固定切分随机性。",
+                "labels = np.array([0] * 80 + [1] * 20)  # 构造类别比例为80比20的不平衡标签。",
+                "class_zero = rng.permutation(np.flatnonzero(labels == 0))  # 单独打乱类别0的样本索引。",
+                "class_one = rng.permutation(np.flatnonzero(labels == 1))  # 单独打乱类别1的样本索引。",
+                "train = np.r_[class_zero[:48], class_one[:12]]  # 每类取60%组成训练集。",
+                "valid = np.r_[class_zero[48:64], class_one[12:16]]  # 每类取20%组成验证集。",
+                "test = np.r_[class_zero[64:], class_one[16:]]  # 每类剩余20%组成测试集。",
+                "ratios = [labels[part].mean() for part in (train, valid, test)]  # 计算三个集合的正类比例。",
+                "assert np.allclose(ratios, 0.2)  # 验证分层切分保持原始类别比例。",
+                "print([len(train), len(valid), len(test)], ratios)  # 输出集合大小和类别比例。",
+                "# -------------------- 其他写法（以下代码作为知识补充，不会执行） --------------------",
+                "# 写法A：scikit-learn可以连续两次分层切分，生产代码更常用。",
+                "# from sklearn.model_selection import train_test_split  # 导入官方切分工具。",
+                "# train_idx, temp_idx = train_test_split(np.arange(100), test_size=0.4, stratify=labels, random_state=42)  # 先切训练集。",
+                "# valid_idx, test_idx = train_test_split(temp_idx, test_size=0.5, stratify=labels[temp_idx], random_state=42)  # 再平分临时集。",
+                *permutation_alternatives,
+            ]
+        elif variant == 3:
+            code = [
+                "import numpy as np  # 导入 NumPy。",
+                "train_features = np.arange(80, dtype=float)  # 构造训练期特征。",
+                "test_features = np.arange(1000, 1020, dtype=float)  # 构造发生分布变化的测试期特征。",
+                "train_mean = train_features.mean()  # 正确做法只用训练集计算均值。",
+                "leaked_mean = np.r_[train_features, test_features].mean()  # 错误做法偷看测试集后计算均值。",
+                "correct_test = test_features - train_mean  # 使用训练统计量转换测试集。",
+                "leaked_test = test_features - leaked_mean  # 使用泄漏统计量会人为改变测试分布。",
+                "difference = np.abs(correct_test - leaked_test).mean()  # 衡量两种转换结果的平均差异。",
+                "assert difference > 0 and train_mean != leaked_mean  # 验证测试信息确实污染了预处理参数。",
+                "print(train_mean, leaked_mean, difference)  # 输出正确与泄漏结果。",
+                "# -------------------- 其他写法（以下代码作为知识补充，不会执行） --------------------",
+                "# 写法A：StandardScaler同样必须先fit训练集，再分别transform训练集和测试集。",
+                "# from sklearn.preprocessing import StandardScaler  # 导入标准化器。",
+                "# scaler = StandardScaler().fit(train_features.reshape(-1, 1))  # 只在训练集拟合。",
+                "# scaled_test = scaler.transform(test_features.reshape(-1, 1))  # 使用训练统计量转换测试集。",
+                "# 错误写法：scaler.fit_transform(np.r_[train_features, test_features].reshape(-1, 1))会发生数据泄漏。",
+                *permutation_alternatives,
+            ]
+        else:
+            code = [
+                "import numpy as np  # 导入 NumPy。",
+                "rng = np.random.default_rng(42)  # 固定随机性。",
+                "features = np.linspace(-3, 3, 120)  # 构造一维回归特征。",
+                "targets = 1.5 * features**2 + 2 * features + rng.normal(0, 0.8, 120)  # 构造带噪声二次目标。",
+                "indices = rng.permutation(len(features))  # 生成无重复随机索引。",
+                "train, valid, test = indices[:72], indices[72:96], indices[96:]  # 按60/20/20切分。",
+                "candidate_degrees = [1, 2, 5]  # 设置欠拟合、合适和偏复杂的候选模型。",
+                "validation_mse = []  # 保存每个候选模型的验证误差。",
+                "for degree in candidate_degrees:  # 只使用训练集拟合并用验证集选择模型。",
+                "    coefficients = np.polyfit(features[train], targets[train], degree)  # 在训练集拟合多项式。",
+                "    predictions = np.polyval(coefficients, features[valid])  # 在验证集计算预测。",
+                "    validation_mse.append(np.mean((predictions - targets[valid]) ** 2))  # 保存验证MSE。",
+                "best_degree = candidate_degrees[int(np.argmin(validation_mse))]  # 根据验证误差选择复杂度。",
+                "final_coefficients = np.polyfit(features[np.r_[train, valid]], targets[np.r_[train, valid]], best_degree)  # 用训练加验证数据重训最终模型。",
+                "test_predictions = np.polyval(final_coefficients, features[test])  # 最终只评估一次测试集。",
+                "test_mse = np.mean((test_predictions - targets[test]) ** 2)  # 计算最终泛化误差。",
+                "assert best_degree in candidate_degrees and np.isfinite(test_mse)  # 验证模型选择和测试结果有效。",
+                "print(validation_mse, best_degree, test_mse)  # 输出完整模型选择结果。",
+                "# -------------------- 其他写法（以下代码作为知识补充，不会执行） --------------------",
+                "# 写法A：小数据集可用K折交叉验证代替单一验证集，让模型选择更稳定。",
+                "# from sklearn.model_selection import KFold, cross_val_score  # 导入交叉验证工具。",
+                "# 写法B：使用Pipeline把PolynomialFeatures和LinearRegression封装，避免预处理泄漏。",
+                "# from sklearn.pipeline import make_pipeline  # 导入流水线。",
+                "# from sklearn.preprocessing import PolynomialFeatures  # 导入多项式特征。",
+                "# from sklearn.linear_model import LinearRegression  # 导入线性回归。",
+                "# model = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())  # 创建可交叉验证的完整流水线。",
+                *permutation_alternatives,
+            ]
+        return title, task, code
     cases: list[list[str]] = [
         [
             "import numpy as np  # 导入 NumPy。",

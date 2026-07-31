@@ -66,6 +66,8 @@ def derive_process_steps(code_lines: list[str]) -> list[str]:
     fallback: list[str] = []
     skipped_prefixes = ("导入", "验证", "输出", "查看", "打印")
     for line in code_lines:
+        if line.lstrip().startswith("#"):
+            continue
         comment = comment_text(line)
         if comment is None or comment in fallback:
             continue
