@@ -4,15 +4,12 @@
 要求：完成“itertools组合迭代”的易错点题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 创建已按分组键排序的序列。
-2. groupby只合并相邻相同键。
-3. 生成不重复二元组合。
-4. 惰性连接多个序列。
-5. 从惰性迭代器取前n项。
-6. groupby前必须按同一key排序。
+1. 导入组合迭代工具。
+2. 导入相邻分组工具。
+3. groupby前必须按同一key排序。
+4. 验证连续分组。
 
 完成标准：
-- 验证组合数和展平。
 - 验证连续分组。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -20,13 +17,6 @@
 """
 
 from itertools import chain, combinations, groupby, islice  # 导入组合迭代工具。
-values = [1, 1, 2, 2, 3]  # 创建已按分组键排序的序列。
-groups = {key: list(group) for key, group in groupby(values)}  # groupby只合并相邻相同键。
-pairs = list(combinations([1, 2, 3, 4], 2))  # 生成不重复二元组合。
-flattened = list(chain.from_iterable([[1, 2], [3], [4, 5]]))  # 惰性连接多个序列。
-prefix = list(islice(range(100), 5))  # 从惰性迭代器取前n项。
-assert len(pairs) == 6 and flattened == [1, 2, 3, 4, 5]  # 验证组合数和展平。
-print(groups, pairs, prefix)  # 输出itertools结果。
 from itertools import groupby  # 导入相邻分组工具。
 records = [('b', 1), ('a', 2), ('b', 3)]; grouped_records = {key: list(group) for key, group in groupby(sorted(records), key=lambda row: row[0])}  # groupby前必须按同一key排序。
 assert [row[1] for row in grouped_records['b']] == [1, 3]  # 验证连续分组。

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from case_utils import independent_variant
+
 
 LEVELS = ["基础", "变式", "易错点", "综合"]
 
@@ -37,6 +39,60 @@ def python_case(family: int, variant: int) -> tuple[str, str, list[str]]:
     title = titles[family]
     task = f"完成“{title}”的{LEVELS[variant - 1]}题，并说明时间复杂度、对象身份或协议行为。"
     n = variant + 2
+    if family == 0:
+        distinct_variants = [
+            [
+                "number = 10  # 创建不可变整数对象。",
+                "numbers = [10, 20]  # 创建可变列表对象。",
+                "number_alias = number  # 让第二个变量引用同一个整数对象。",
+                "list_alias = numbers  # 让第二个变量引用同一个列表对象。",
+                "number += 1  # 整数不能原地改变，因此变量会重新绑定到新对象。",
+                "numbers.append(30)  # 列表可以原地修改，因此两个引用都能看到变化。",
+                "assert number_alias == 10 and list_alias == [10, 20, 30]  # 验证不可变重绑定与可变原地修改。",
+                "print(number, number_alias, numbers, list_alias)  # 输出两类对象行为。",
+            ],
+            [
+                "import copy  # 导入浅拷贝和深拷贝工具。",
+                "original = [[1, 2], [3, 4]]  # 创建含嵌套可变列表的对象。",
+                "shallow = original.copy()  # 浅拷贝只复制最外层列表。",
+                "deep = copy.deepcopy(original)  # 深拷贝递归复制内部列表。",
+                "original[0].append(99)  # 修改共享的第一层内部列表。",
+                "original.append([5, 6])  # 修改原对象最外层结构。",
+                "assert shallow == [[1, 2, 99], [3, 4]]  # 浅拷贝看到内部修改但看不到外层新增。",
+                "assert deep == [[1, 2], [3, 4]]  # 深拷贝与两类后续修改完全隔离。",
+                "print(original, shallow, deep)  # 对比浅拷贝和深拷贝。",
+            ],
+            [
+                "def append_wrong(value, bucket=[]):  # 使用可变默认参数会让多次调用共享同一个列表。",
+                "    bucket.append(value)  # 原地修改跨调用保留的默认列表。",
+                "    return bucket  # 返回发生累积的列表。",
+                "def append_safe(value, bucket=None):  # 使用None作为不会被修改的哨兵。",
+                "    bucket = [] if bucket is None else bucket  # 每次未传列表时创建新对象。",
+                "    bucket.append(value)  # 只修改本次调用专属列表。",
+                "    return bucket  # 返回安全结果。",
+                "wrong_first = append_wrong(1)  # 第一次调用修改默认列表。",
+                "wrong_second = append_wrong(2)  # 第二次调用继续使用同一个默认列表。",
+                "safe_first = append_safe(1)  # 第一次安全调用创建新列表。",
+                "safe_second = append_safe(2)  # 第二次安全调用再次创建新列表。",
+                "assert wrong_first is wrong_second and wrong_second == [1, 2]  # 验证可变默认参数陷阱。",
+                "assert safe_first == [1] and safe_second == [2]  # 验证None哨兵修复方式。",
+                "print(wrong_second, safe_first, safe_second)  # 输出错误与正确结果。",
+            ],
+            [
+                "def add_tag(record, tag):  # 定义不应意外修改调用者数据的函数。",
+                "    copied = {**record, 'tags': [*record.get('tags', []), tag]}  # 同时复制字典和嵌套标签列表。",
+                "    return copied  # 返回新的业务记录。",
+                "source = {'name': 'Ada', 'tags': ['python']}  # 创建含嵌套列表的原记录。",
+                "updated = add_tag(source, 'ml')  # 使用复制后更新模式生成新记录。",
+                "immutable_tags = frozenset(source['tags'])  # 用frozenset表达无顺序且不可变的标签集合。",
+                "immutable_key = (source['name'], immutable_tags)  # 把不可变内容组合成可哈希字典键。",
+                "cache = {immutable_key: updated}  # 使用不可变组合键建立缓存。",
+                "assert source == {'name': 'Ada', 'tags': ['python']}  # 验证函数没有副作用。",
+                "assert updated['tags'] == ['python', 'ml'] and cache[immutable_key] is updated  # 验证复制更新和可哈希键。",
+                "print(source, updated, cache)  # 输出综合不可变设计结果。",
+            ],
+        ]
+        return title, task, distinct_variants[variant - 1]
     cases: list[list[str]] = [
         [
             "immutable = (1, 2, 3)  # tuple是不可变对象。",
@@ -448,9 +504,9 @@ def python_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["import gc  # 导入垃圾回收接口。", "tracked_before = gc.is_tracked([]); collected = gc.collect()  # 检查容器跟踪并主动执行循环垃圾回收。", "assert tracked_before and isinstance(collected, int)  # 验证GC接口返回值。"],
         ],
         [
-            ["compiled = re.compile(r'(?P<name>[A-Za-z]+)-(?P<number>\d+)$', flags=re.ASCII)  # 预编译带命名组和边界的正则。", "match = compiled.fullmatch('item-42'); assert match and match.groupdict() == {'name': 'item', 'number': '42'}  # 验证fullmatch与命名组。"],
+            ["compiled = re.compile(r'(?P<name>[A-Za-z]+)-(?P<number>\\d+)$', flags=re.ASCII)  # 预编译带命名组和边界的正则。", "match = compiled.fullmatch('item-42'); assert match and match.groupdict() == {'name': 'item', 'number': '42'}  # 验证fullmatch与命名组。"],
             ["raw_pattern = r'\\b\\d+\\b'; escaped_pattern = '\\\\b\\\\d+\\\\b'  # raw字符串避免正则反斜杠与Python转义叠加。", "assert raw_pattern == escaped_pattern and re.findall(raw_pattern, 'a 12 b') == ['12']  # 验证两种字符串形式。"],
-            ["redacted = re.sub(r'(?<=\d{3})\d(?=\d{4})', '*', '13812345678')  # 使用前后查看遮挡手机号中间数字。", "formatted = f'{1234.5:,.2f}'; assert redacted == '138****5678' and formatted == '1,234.50'  # 综合正则替换和格式说明符。"],
+            ["redacted = re.sub(r'(?<=\\d{3})\\d(?=\\d{4})', '*', '13812345678')  # 使用前后查看遮挡手机号中间数字。", "formatted = f'{1234.5:,.2f}'; assert redacted == '138****5678' and formatted == '1,234.50'  # 综合正则替换和格式说明符。"],
         ],
         [
             ["import io, csv  # 导入内存文本流和CSV模块。", "buffer = io.StringIO(); writer = csv.DictWriter(buffer, fieldnames=['name', 'score']); writer.writeheader(); writer.writerow({'name': 'A', 'score': 90})  # 按列名安全写CSV。", "buffer.seek(0); csv_rows = list(csv.DictReader(buffer)); assert csv_rows[0]['score'] == '90'  # 读取CSV时默认字段为字符串。"],
@@ -488,7 +544,9 @@ def python_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["import asyncio  # 导入异步I/O框架。", "async def async_square(value):  # 定义协程函数。\n    await asyncio.sleep(0)  # 主动让出事件循环。\n    return value * value  # 返回计算结果。\nasync def async_main():  # 定义异步入口。\n    return await asyncio.gather(*(async_square(value) for value in range(4)))  # 并发等待多个协程并保持顺序。", "async_result = asyncio.run(async_main()); assert async_result == [0, 1, 4, 9]  # 创建事件循环运行异步入口。"],
         ],
     ]
-    code = list(cases[family])
-    if variant > 1:
-        code.extend(extras[family][variant - 2])
+    base_code = cases[family]
+    if variant == 1:
+        code = list(base_code)
+    else:
+        code = independent_variant(base_code, extras[family][variant - 2])
     return title, task, code

@@ -5,14 +5,10 @@
 
 操作步骤：
 1. 创建实对称矩阵。
-2. 对称矩阵优先使用eigh。
-3. 计算Av。
-4. 计算λv。
-5. eigh利用对称结构并返回有序实特征值。
-6. 重建对称矩阵。
+2. eigh利用对称结构并返回有序实特征值。
+3. 重建对称矩阵。
 
 完成标准：
-- 验证特征方程Av=λv。
 - 重建对称矩阵。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,10 +17,5 @@
 
 import numpy as np  # 导入 NumPy。
 matrix = np.array([[2.0, 1.0], [1.0, 2.0]])  # 创建实对称矩阵。
-eigenvalues, eigenvectors = np.linalg.eigh(matrix)  # 对称矩阵优先使用eigh。
-left = matrix @ eigenvectors[:, 0]  # 计算Av。
-right = eigenvalues[0] * eigenvectors[:, 0]  # 计算λv。
-assert np.allclose(left, right)  # 验证特征方程Av=λv。
-print(eigenvalues, '\n', eigenvectors)  # 输出特征值和正交特征向量。
 symmetric = (matrix + matrix.T) / 2; symmetric_values, symmetric_vectors = np.linalg.eigh(symmetric)  # eigh利用对称结构并返回有序实特征值。
 assert np.allclose(symmetric, symmetric_vectors @ np.diag(symmetric_values) @ symmetric_vectors.T)  # 重建对称矩阵。

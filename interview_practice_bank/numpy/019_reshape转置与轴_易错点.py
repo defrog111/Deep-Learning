@@ -6,12 +6,9 @@
 操作步骤：
 1. 创建24个元素。
 2. 重塑为三维数组。
-3. 把轴顺序由(0,1,2)改为(2,0,1)。
-4. 使用-1自动推导展平长度。
-5. 转置后先连续化可避免布局误解。
+3. 转置后先连续化可避免布局误解。
 
 完成标准：
-- 验证轴变换只改布局不改元素数。
 - 验证结果采用C连续布局。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,9 +18,5 @@
 import numpy as np  # 导入 NumPy。
 array = np.arange(24)  # 创建24个元素。
 cube = array.reshape(2, 3, 4)  # 重塑为三维数组。
-permuted = cube.transpose(2, 0, 1)  # 把轴顺序由(0,1,2)改为(2,0,1)。
-flattened = permuted.reshape(-1)  # 使用-1自动推导展平长度。
-assert permuted.shape == (4, 2, 3) and flattened.size == 24  # 验证轴变换只改布局不改元素数。
-print(cube.strides, permuted.strides)  # 查看转置前后的内存步幅。
 non_contiguous = cube.transpose(2, 1, 0); safe_shape = np.ascontiguousarray(non_contiguous).reshape(4, -1)  # 转置后先连续化可避免布局误解。
 assert safe_shape.flags.c_contiguous  # 验证结果采用C连续布局。

@@ -4,16 +4,11 @@
 要求：完成“outer与einsum”的易错点题，写出关键数组的shape并解释结果。
 
 操作步骤：
-1. 创建列因子向量。
-2. 创建行因子向量。
-3. 计算所有两两乘积。
-4. 用爱因斯坦求和表达外积。
-5. 创建矩阵。
-6. 用einsum沿行轴求和。
-7. kron计算Kronecker积，不能和普通外积混淆。
+1. 导入 NumPy。
+2. kron计算Kronecker积，不能和普通外积混淆。
+3. 验证Kronecker积shape。
 
 完成标准：
-- 验证两种外积写法一致。
 - 验证Kronecker积shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-a = np.array([1, 2, 3])  # 创建列因子向量。
-b = np.array([4, 5])  # 创建行因子向量。
-outer = np.outer(a, b)  # 计算所有两两乘积。
-einsum_outer = np.einsum('i,j->ij', a, b)  # 用爱因斯坦求和表达外积。
-matrix = np.arange(6).reshape(2, 3)  # 创建矩阵。
-column_sums = np.einsum('ij->j', matrix)  # 用einsum沿行轴求和。
-assert np.array_equal(outer, einsum_outer)  # 验证两种外积写法一致。
-print(outer, column_sums)  # 输出einsum结果。
 kronecker = np.kron(np.eye(2), np.ones((2, 2)))  # kron计算Kronecker积，不能和普通外积混淆。
 assert kronecker.shape == (4, 4)  # 验证Kronecker积shape。

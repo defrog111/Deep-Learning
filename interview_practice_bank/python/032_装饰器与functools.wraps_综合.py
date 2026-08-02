@@ -4,19 +4,19 @@
 要求：完成“装饰器与functools.wraps”的综合题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 定义带状态的装饰器。
-2. 状态保存在闭包中。
-3. 保留原函数名称和文档。
-4. 接收任意原函数参数。
-5. 声明修改外层局部变量。
-6. 累加调用次数。
-7. 返回次数和原结果。
-8. 返回包装函数。
-9. 应用装饰器。
-10. 定义被装饰函数。
+1. 导入保留函数元数据的装饰器。
+2. 用类实现有状态装饰器。
+    def __init__(self, function):  # 保存被装饰函数。
+        self.function, self.count = function, 0  # 初始化函数和计数。
+    def __call__(self, *args, **kwargs):  # 让实例可调用。
+        self.count += 1  # 累计调用次数。
+        return self.function(*args, **kwargs)  # 转发调用。
+@CountCalls  # 使用类装饰器。
+def identity(value):  # 定义示例函数。
+    return value  # 原样返回。
+3. 验证类装饰器状态。
 
 完成标准：
-- 验证元数据和状态。
 - 验证类装饰器状态。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -24,20 +24,6 @@
 """
 
 from functools import wraps  # 导入保留函数元数据的装饰器。
-def count_calls(function):  # 定义带状态的装饰器。
-    calls = 0  # 状态保存在闭包中。
-    @wraps(function)  # 保留原函数名称和文档。
-    def wrapper(*args, **kwargs):  # 接收任意原函数参数。
-        nonlocal calls  # 声明修改外层局部变量。
-        calls += 1  # 累加调用次数。
-        return calls, function(*args, **kwargs)  # 返回次数和原结果。
-    return wrapper  # 返回包装函数。
-@count_calls  # 应用装饰器。
-def add(a, b):  # 定义被装饰函数。
-    return a + b  # 返回加法结果。
-result = add(6, 4)  # 调用包装后的函数。
-assert add.__name__ == 'add' and result[0] == 1  # 验证元数据和状态。
-print(result)  # 输出装饰器结果。
 class CountCalls:  # 用类实现有状态装饰器。
     def __init__(self, function):  # 保存被装饰函数。
         self.function, self.count = function, 0  # 初始化函数和计数。

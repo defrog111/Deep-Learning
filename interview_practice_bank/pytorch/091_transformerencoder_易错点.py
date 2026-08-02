@@ -4,18 +4,12 @@
 要求：完成“TransformerEncoder”的易错点题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 固定随机种子。
-2. 配置单层Encoder。
-3. 堆叠随变式变化的层数。
-4. 创建(B,T,D)输入。
-5. 定义PAD mask。
-6. 编码时屏蔽PAD key。
-7. masked mean pooling。
-8. causal mask和padding mask都用bool，避免类型不匹配警告。
-9. 区分两个mask的shape和用途。
+1. 导入 PyTorch。
+2. 导入Transformer Encoder。
+3. causal mask和padding mask都用bool，避免类型不匹配警告。
+4. 区分两个mask的shape和用途。
 
 完成标准：
-- 验证序列与池化shape。
 - 区分两个mask的shape和用途。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -24,14 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入Transformer Encoder。
-torch.manual_seed(0)  # 固定随机种子。
-layer = nn.TransformerEncoderLayer(d_model=16, nhead=4, dim_feedforward=64, batch_first=True)  # 配置单层Encoder。
-encoder = nn.TransformerEncoder(layer, num_layers=3, enable_nested_tensor=False)  # 堆叠随变式变化的层数。
-tokens = torch.randn(2, 6, 16)  # 创建(B,T,D)输入。
-padding_mask = torch.tensor([[False, False, False, False, True, True], [False, False, False, False, False, True]])  # 定义PAD mask。
-encoded = encoder(tokens, src_key_padding_mask=padding_mask)  # 编码时屏蔽PAD key。
-pooled = (encoded * (~padding_mask).unsqueeze(-1)).sum(1) / (~padding_mask).sum(1, keepdim=True)  # masked mean pooling。
-assert encoded.shape == tokens.shape and pooled.shape == (2, 16)  # 验证序列与池化shape。
-print(encoded.shape, pooled.shape)  # 输出Encoder结果。
 masked_decoder_layer = nn.TransformerDecoderLayer(8, 2, 16, batch_first=True, dropout=0.0); masked_decoder = nn.TransformerDecoder(masked_decoder_layer, 1); masked_targets = torch.randn(2, 4, 8); masked_memory = torch.randn(2, 3, 8); decoder_mask = torch.triu(torch.ones(4, 4, dtype=torch.bool), diagonal=1); decoder_padding = torch.tensor([[False, False, True, True], [False, False, False, True]]); masked_decoded = masked_decoder(masked_targets, masked_memory, tgt_mask=decoder_mask, tgt_key_padding_mask=decoder_padding)  # causal mask和padding mask都用bool，避免类型不匹配警告。
 assert decoder_mask.shape == (4, 4) and masked_decoded.shape == masked_targets.shape  # 区分两个mask的shape和用途。

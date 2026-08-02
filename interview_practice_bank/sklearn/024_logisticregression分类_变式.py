@@ -6,13 +6,10 @@
 操作步骤：
 1. 加载数据。
 2. 分层切分。
-3. 训练多分类逻辑回归。
-4. 概率最大类别即预测。
-5. 综合题统一导入NumPy用于shape、数值和标签检查。
-6. partial_fit分批训练，再用训练集内部独立校准集拟合概率映射。
+3. 综合题统一导入NumPy用于shape、数值和标签检查。
+4. partial_fit分批训练，再用训练集内部独立校准集拟合概率映射。
 
 完成标准：
-- 验证准确率。
 - 验证在线模型与校准接口。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,11 +22,6 @@ from sklearn.metrics import accuracy_score, log_loss  # 导入分类指标。
 from sklearn.model_selection import train_test_split  # 导入切分函数。
 features, labels = load_iris(return_X_y=True)  # 加载数据。
 train_x, test_x, train_y, test_y = train_test_split(features, labels, test_size=0.25, random_state=42, stratify=labels)  # 分层切分。
-model = LogisticRegression(max_iter=500).fit(train_x, train_y)  # 训练多分类逻辑回归。
-probabilities = model.predict_proba(test_x)  # 输出每类概率。
-predictions = probabilities.argmax(axis=1)  # 概率最大类别即预测。
-assert accuracy_score(test_y, predictions) > 0.85  # 验证准确率。
-print(accuracy_score(test_y, predictions), log_loss(test_y, probabilities))  # 输出硬指标和概率指标。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.calibration import CalibratedClassifierCV  # 导入概率校准器。
 from sklearn.linear_model import SGDClassifier  # 导入支持在线学习的线性分类器。

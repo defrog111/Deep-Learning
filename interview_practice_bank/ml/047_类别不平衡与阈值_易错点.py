@@ -4,17 +4,11 @@
 要求：完成“类别不平衡与阈值”的易错点题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 构造不平衡标签。
-2. 构造模型概率。
-3. 根据业务代价调整阈值。
-4. 把概率转类别。
-5. 计算少数类召回率。
-6. 计算常见balanced类别权重。
-7. 阈值应依据业务成本而非固定0.5。
-8. 高漏报成本下选择召回更高的方案。
+1. 导入 NumPy。
+2. 阈值应依据业务成本而非固定0.5。
+3. 高漏报成本下选择召回更高的方案。
 
 完成标准：
-- 验证每类一个权重。
 - 高漏报成本下选择召回更高的方案。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-targets = np.array([1, 1, 0, 0, 0, 0, 0, 0])  # 构造不平衡标签。
-scores = np.array([0.9, 0.45, 0.7, 0.4, 0.3, 0.2, 0.1, 0.05])  # 构造模型概率。
-threshold = 0.6000000000000001  # 根据业务代价调整阈值。
-predictions = scores >= threshold  # 把概率转类别。
-recall = np.sum(predictions & (targets == 1)) / np.sum(targets == 1)  # 计算少数类召回率。
-balanced_weight = len(targets) / (2 * np.bincount(targets))  # 计算常见balanced类别权重。
-assert len(balanced_weight) == 2  # 验证每类一个权重。
-print(threshold, predictions, recall, balanced_weight)  # 输出阈值和不平衡处理信息。
 costs = {'fp': 1, 'fn': 10}; candidate_confusions = [np.array([[90, 5], [4, 1]]), np.array([[80, 15], [1, 4]])]; business_costs = [matrix[0, 1] * costs['fp'] + matrix[1, 0] * costs['fn'] for matrix in candidate_confusions]  # 阈值应依据业务成本而非固定0.5。
 assert np.argmin(business_costs) == 1  # 高漏报成本下选择召回更高的方案。

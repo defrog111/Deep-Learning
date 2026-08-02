@@ -1,8 +1,8 @@
 # Transformer 完整学习路线
 
 这个目录按“一个知识点、一个可运行文件”组织。从基础张量开始，逐步手写
-Attention、Encoder、Decoder，最后从 UCI 下载真实 CSV，用手写 Transformer
-完成分类。
+Attention、Encoder、Decoder，最后从 UCI 下载真实 CSV，分别用手写 Transformer
+和 PyTorch 原生多层 Transformer 完成分类与语言建模。
 
 ## 环境
 
@@ -36,6 +36,12 @@ Matplotlib。
 | 15 | `15_attention_visualization.py` | 查看 CLS 对各输入特征的注意力 |
 | 16 | `16_torch_transformer_encoder.py` | 官方 `nn.TransformerEncoder`、padding mask、分类 |
 | 17 | `17_torch_transformer_decoder.py` | 官方 `nn.TransformerDecoder`、causal mask、Cross-Attention |
+| 18 | `builtin_csv_classifier_model.py` | 原生多层 CSV 分类器的共享模型结构 |
+| 18 | `18_builtin_csv_transformer_train.py` | 读取 CSV、4 层原生 Encoder、训练并保存 |
+| 18 | `18_builtin_csv_transformer_inference.py` | 独立加载原生分类模型并推理 |
+| 19 | `builtin_causal_lm_model.py` | 4 层原生 decoder-only causal LM 结构 |
+| 19 | `19_builtin_causal_lm_train.py` | next-token 训练与保存 checkpoint |
+| 19 | `19_builtin_causal_lm_inference.py` | 独立自回归生成、greedy/温度采样 |
 
 核心实现集中在 `components.py`，不是对 `nn.Transformer` 的简单包装。建议先读每个
 小例子，再回到 `components.py` 连起来阅读。
@@ -47,6 +53,12 @@ Matplotlib。
 - `10_tiny_causal_lm_inference.py`：只负责加载 checkpoint 与生成。
 - `12_csv_transformer_classifier.py`：CSV 分类训练。
 - `13_csv_classifier_inference.py`：CSV 分类推理。
+- `builtin_csv_classifier_model.py`：PyTorch 原生 CSV 分类共享模型。
+- `18_builtin_csv_transformer_train.py`：原生 CSV 分类训练。
+- `18_builtin_csv_transformer_inference.py`：原生 CSV 分类推理。
+- `builtin_causal_lm_model.py`：PyTorch 原生 causal LM 共享模型。
+- `19_builtin_causal_lm_train.py`：原生 causal LM 训练。
+- `19_builtin_causal_lm_inference.py`：原生 causal LM 推理。
 
 ### 官方 Encoder/Decoder API 的关键区别
 
@@ -134,6 +146,47 @@ python 15_attention_visualization.py
 
 第二条命令生成 `artifacts/iris_attention.png`。注意力权重可以帮助检查模型，但
 不能直接等同于严格的因果解释或特征重要性。
+
+## PyTorch 原生 4 层完整任务
+
+前面的例 12 和例 10 用本项目手写的 `EncoderBlock`，适合学习内部原理。下面两套
+则直接调用 PyTorch 官方 `nn.TransformerEncoderLayer` 和
+`nn.TransformerEncoder(num_layers=4)`，适合学习项目中的标准写法。
+
+### 例 18：读取 CSV 后分类
+
+```bash
+python 18_builtin_csv_transformer_train.py
+python 18_builtin_csv_transformer_inference.py --features 5.1 3.5 1.4 0.2
+```
+
+```text
+iris.csv -> float 特征 -> 标准化 -> [CLS, 4 个特征 token]
+         -> 4 x nn.TransformerEncoderLayer -> CLS 分类头 -> 3 类
+```
+
+默认读取 `data/iris.csv`，并把 4 层网络配置、模型参数、训练集均值/标准差、特征名
+和类别名一起保存在 `artifacts/builtin_iris_transformer.pt`。可通过
+`--num-layers 6` 等参数实验更多层数。
+
+### 例 19：多层 causal language model
+
+```bash
+python 19_builtin_causal_lm_train.py
+python 19_builtin_causal_lm_inference.py --prompt "transformer "
+```
+
+```text
+token ids -> Token Embedding + Position Embedding
+          -> 4 x nn.TransformerEncoderLayer + causal mask
+          -> LayerNorm -> LM Head -> next-token logits -> 自回归生成
+```
+
+GPT 是 decoder-only Transformer，只有带 causal mask 的 self-attention，没有
+Encoder memory 和 Cross-Attention。因此例 19 使用官方 `nn.TransformerEncoder`
+容器配合 causal mask；这里的 `Encoder` 是 PyTorch 类名，信息流仍然是标准的
+decoder-only causal LM。例 17 则用于学习需要 `memory` 的
+`nn.TransformerDecoder`（Encoder-Decoder/Seq2Seq 架构）。
 
 ## 学透 Transformer 时要能回答
 

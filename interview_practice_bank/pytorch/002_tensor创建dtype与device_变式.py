@@ -4,27 +4,27 @@
 要求：完成“Tensor创建dtype与device”的变式题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 显式指定浮点dtype创建Tensor。
-2. 创建同shape、dtype和device的零Tensor。
-3. 使用to转换dtype并返回新Tensor。
-4. 自动选择可用计算设备。
-5. 把数据移动到目标设备。
-6. from_numpy共享CPU内存，torch.tensor复制数据。
+1. 创建CPU NumPy源数组。
+2. from_numpy与源数组共享CPU内存。
+3. as_tensor在类型兼容时也尽量避免复制。
+4. torch.tensor始终复制输入数据。
+5. 修改NumPy源数组测试三种构造方式。
 
 完成标准：
-- 验证shape和类型。
+- 验证两个零复制Tensor看到修改。
+- 验证复制与共享内存。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
+import numpy as np  # 导入 NumPy用于演示内存关系。
 import torch  # 导入 PyTorch。
-tensor = torch.tensor([[1, 2], [3, 4]], dtype=torch.float32)  # 显式指定浮点dtype创建Tensor。
-zeros = torch.zeros_like(tensor)  # 创建同shape、dtype和device的零Tensor。
-converted = tensor.to(dtype=torch.float64)  # 使用to转换dtype并返回新Tensor。
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 自动选择可用计算设备。
-on_device = tensor.to(device)  # 把数据移动到目标设备。
-assert tensor.shape == (2, 2) and converted.dtype == torch.float64  # 验证shape和类型。
-print(tensor, zeros, on_device.device)  # 输出Tensor与设备。
-numpy_source = __import__('numpy').arange(4, dtype='float32'); shared_tensor = torch.from_numpy(numpy_source); copied_tensor = torch.tensor(numpy_source)  # from_numpy共享CPU内存，torch.tensor复制数据。
-numpy_source[0] = 99; assert shared_tensor[0].item() == 99 and copied_tensor[0].item() != 99  # 验证共享与复制差异。
+source = np.arange(4, dtype=np.float32)  # 创建CPU NumPy源数组。
+shared = torch.from_numpy(source)  # from_numpy与源数组共享CPU内存。
+also_shared = torch.as_tensor(source)  # as_tensor在类型兼容时也尽量避免复制。
+copied = torch.tensor(source)  # torch.tensor始终复制输入数据。
+source[0] = 99  # 修改NumPy源数组测试三种构造方式。
+assert shared[0].item() == also_shared[0].item() == 99  # 验证两个零复制Tensor看到修改。
+assert copied[0].item() == 0 and shared.data_ptr() == also_shared.data_ptr()  # 验证复制与共享内存。
+print(shared, also_shared, copied)  # 输出共享与复制结果。

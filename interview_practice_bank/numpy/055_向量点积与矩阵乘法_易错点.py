@@ -4,16 +4,11 @@
 要求：完成“向量点积与矩阵乘法”的易错点题，写出关键数组的shape并解释结果。
 
 操作步骤：
-1. 创建第一个向量。
-2. 创建第二个向量。
-3. 一维@一维得到标量点积。
-4. 创建2×3矩阵。
-5. 矩阵乘向量得到长度2结果。
-6. 批量矩阵乘法。
-7. matmul支持批量矩阵乘法。
+1. 导入 NumPy。
+2. matmul支持批量矩阵乘法。
+3. 验证批量维广播。
 
 完成标准：
-- 验证点积值和批量shape。
 - 验证批量维广播。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-vector_a = np.array([1.0, 2.0, 3.0])  # 创建第一个向量。
-vector_b = np.array([4.0, 5.0, 6.0])  # 创建第二个向量。
-dot = vector_a @ vector_b  # 一维@一维得到标量点积。
-matrix = np.arange(6).reshape(2, 3)  # 创建2×3矩阵。
-product = matrix @ vector_a  # 矩阵乘向量得到长度2结果。
-batch = np.matmul(np.ones((4, 2, 3)), np.ones((4, 3, 5)))  # 批量矩阵乘法。
-assert dot == 32 and batch.shape == (4, 2, 5)  # 验证点积值和批量shape。
-print(dot, product, batch.shape)  # 输出矩阵运算结果。
 batched_left = np.ones((2, 3, 4)); batched_right = np.ones((2, 4, 5)); batched_product = np.matmul(batched_left, batched_right)  # matmul支持批量矩阵乘法。
 assert batched_product.shape == (2, 3, 5)  # 验证批量维广播。

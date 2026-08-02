@@ -4,28 +4,29 @@
 要求：完成“可变对象与不可变对象”的变式题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. tuple是不可变对象。
-2. list是可变对象。
-3. 赋值只复制引用而不复制对象。
-4. 原地修改列表。
-5. 拼接tuple会创建新对象。
-6. 比较tuple不可变与list原地扩展。
-7. list的+=保持身份，tuple拼接创建新对象。
+1. 创建含嵌套可变列表的对象。
+2. 浅拷贝只复制最外层列表。
+3. 深拷贝递归复制内部列表。
+4. 修改共享的第一层内部列表。
+5. 修改原对象最外层结构。
+6. 浅拷贝看到内部修改但看不到外层新增。
+7. 深拷贝与两类后续修改完全隔离。
+8. 对比浅拷贝和深拷贝。
 
 完成标准：
-- 验证身份语义。
-- list的+=保持身份，tuple拼接创建新对象。
+- 浅拷贝看到内部修改但看不到外层新增。
+- 深拷贝与两类后续修改完全隔离。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
-immutable = (1, 2, 3)  # tuple是不可变对象。
-mutable = [1, 2, 3]  # list是可变对象。
-same_list = mutable  # 赋值只复制引用而不复制对象。
-mutable.append(4)  # 原地修改列表。
-new_tuple = immutable + (4,)  # 拼接tuple会创建新对象。
-assert same_list is mutable and new_tuple is not immutable  # 验证身份语义。
-print(mutable, immutable, new_tuple, id(mutable))  # 输出对象和值。
-immutable = (1, 2, 3); mutable = [1, 2, 3]; before_id = id(mutable); mutable += [4]  # 比较tuple不可变与list原地扩展。
-assert id(mutable) == before_id and immutable + (4,) == (1, 2, 3, 4)  # list的+=保持身份，tuple拼接创建新对象。
+import copy  # 导入浅拷贝和深拷贝工具。
+original = [[1, 2], [3, 4]]  # 创建含嵌套可变列表的对象。
+shallow = original.copy()  # 浅拷贝只复制最外层列表。
+deep = copy.deepcopy(original)  # 深拷贝递归复制内部列表。
+original[0].append(99)  # 修改共享的第一层内部列表。
+original.append([5, 6])  # 修改原对象最外层结构。
+assert shallow == [[1, 2, 99], [3, 4]]  # 浅拷贝看到内部修改但看不到外层新增。
+assert deep == [[1, 2], [3, 4]]  # 深拷贝与两类后续修改完全隔离。
+print(original, shallow, deep)  # 对比浅拷贝和深拷贝。

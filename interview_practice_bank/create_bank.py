@@ -133,14 +133,49 @@ def pandas_case(family: int, variant: int) -> tuple[str, str, list[str]]:
     task = f"完成“{title}”的{LEVELS[variant - 1]}题，并解释输出的 shape、索引和数据类型。"
     seed = variant + 2
     if family == 0:
-        code = [
-            "import pandas as pd  # 导入 Pandas。",
-            f"series = pd.Series([{seed}, {seed + 1}, {seed + 2}], index=['a', 'b', 'c'], name='score')  # 创建带标签的一维 Series。",
-            "frame = series.to_frame().reset_index(names='student')  # 转为 DataFrame 并把索引恢复成普通列。",
-            "frame['passed'] = frame['score'].ge(4)  # 使用向量化比较创建布尔列。",
-            "assert frame.shape == (3, 3)  # 验证行列数符合预期。",
-            "print(frame)  # 输出结果用于检查。",
+        distinct_variants = [
+            [
+                "import pandas as pd  # 导入 Pandas。",
+                "series = pd.Series([88, 92, 79], index=['Ada', 'Bob', 'Cyd'], name='score', dtype='int64')  # 创建带标签和名称的整数Series。",
+                "frame = pd.DataFrame({'score': series, 'passed': series.ge(80)})  # 从对齐的Series和布尔结果创建DataFrame。",
+                "assert series.shape == (3,) and frame.shape == (3, 2)  # 验证Series与DataFrame的shape。",
+                "assert frame.index.tolist() == ['Ada', 'Bob', 'Cyd']  # 验证标签索引被保留。",
+                "print(series, frame, frame.dtypes)  # 输出基础对象和dtype。",
+            ],
+            [
+                "import pandas as pd  # 导入 Pandas。",
+                "records = [{'name': 'Ada', 'score': 91}, {'name': 'Bob'}, {'name': 'Cyd', 'score': 85}]  # 创建键不完全一致的记录列表。",
+                "frame = pd.DataFrame.from_records(records, index='name')  # 用记录构造表并直接指定索引列。",
+                "frame = frame.assign(score=frame['score'].astype('Float64'), passed=lambda data: data['score'].ge(80))  # 使用可空dtype和assign派生列。",
+                "assert frame.index.name == 'name' and frame['score'].isna().sum() == 1  # 验证索引名称和缺失值对齐。",
+                "assert str(frame['score'].dtype) == 'Float64' and str(frame['passed'].dtype) == 'boolean'  # 验证Pandas扩展dtype。",
+                "print(frame, frame.dtypes)  # 输出记录式构造结果。",
+            ],
+            [
+                "import pandas as pd  # 导入 Pandas。",
+                "prices = pd.Series([10, 20], index=['A', 'B'], dtype='int64')  # 创建价格Series。",
+                "quantities = pd.Series([2, 3], index=['B', 'C'], dtype='int64')  # 创建索引集合不同的数量Series。",
+                "naive_total = prices * quantities  # Pandas按标签对齐，只有共同标签B得到非缺失结果。",
+                "safe_total = prices.mul(quantities, fill_value=0)  # fill_value显式处理仅出现在一侧的标签。",
+                "positional_total = prices.to_numpy() * quantities.to_numpy()  # 转NumPy后按位置运算但会丢失标签语义。",
+                "assert naive_total.index.tolist() == ['A', 'B', 'C'] and naive_total.notna().sum() == 1  # 验证自动索引并集和NaN陷阱。",
+                "assert safe_total.to_dict() == {'A': 0.0, 'B': 40.0, 'C': 0.0}  # 验证带填充值的标签运算。",
+                "print(naive_total, safe_total, positional_total)  # 对比标签对齐与位置计算。",
+            ],
+            [
+                "import pandas as pd  # 导入 Pandas。",
+                "names = pd.Series(['Ada', 'Bob', 'Cyd'], name='name', dtype='string')  # 创建字符串扩展类型列。",
+                "scores = pd.Series([91, None, 85], name='score', dtype='Int64')  # 创建允许缺失的整数列。",
+                "teams = pd.Categorical(['A', 'B', 'A'], categories=['A', 'B', 'C'])  # 创建带完整类别集合的分类数据。",
+                "frame = pd.concat([names, scores], axis=1).assign(team=teams)  # 横向拼接Series并加入分类列。",
+                "frame['passed'] = frame['score'].ge(80).fillna(False)  # 对可空比较结果进行明确缺失处理。",
+                "summary = frame.set_index('name').reindex(['Ada', 'Bob', 'Cyd', 'Dan'])  # 设置业务索引并补充缺失成员。",
+                "assert str(frame['name'].dtype) == 'string' and str(frame['score'].dtype) == 'Int64'  # 验证综合dtype设计。",
+                "assert summary.shape == (4, 3) and summary.loc['Dan'].isna().all()  # 验证重建索引后的shape和缺失行。",
+                "print(frame, frame.dtypes, summary)  # 输出综合创建和索引结果。",
+            ],
         ]
+        code = distinct_variants[variant - 1]
     elif family == 1:
         code = [
             "from pathlib import Path  # 导入跨平台路径工具。",

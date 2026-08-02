@@ -4,17 +4,12 @@
 要求：完成“RNN序列建模”的易错点题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 固定随机种子。
-2. 定义序列维度。
-3. 创建两层RNN。
-4. 创建batch-first输入。
-5. 取得所有时间步输出和各层最终状态。
-6. 对比顶层最后输出与最终隐藏状态。
-7. batch_first=False输入顺序为序列、批次、特征。
-8. 防止混淆batch和sequence轴。
+1. 导入 PyTorch。
+2. 导入RNN模块。
+3. batch_first=False输入顺序为序列、批次、特征。
+4. 防止混淆batch和sequence轴。
 
 完成标准：
-- 验证shape。
 - 防止混淆batch和sequence轴。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,12 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入RNN模块。
-torch.manual_seed(0)  # 固定随机种子。
-batch, steps, features, hidden = 3, 5, 4, 6  # 定义序列维度。
-rnn = nn.RNN(features, hidden, num_layers=2, batch_first=True, nonlinearity='tanh')  # 创建两层RNN。
-sequence = torch.randn(batch, steps, features)  # 创建batch-first输入。
-outputs, final_hidden = rnn(sequence)  # 取得所有时间步输出和各层最终状态。
-assert outputs.shape == (batch, steps, hidden) and final_hidden.shape == (2, batch, hidden)  # 验证shape。
-print(outputs[:, -1], final_hidden[-1])  # 对比顶层最后输出与最终隐藏状态。
 time_major_rnn = nn.RNN(3, 4, batch_first=False); time_output, _ = time_major_rnn(torch.randn(5, 2, 3))  # batch_first=False输入顺序为序列、批次、特征。
 assert time_output.shape == (5, 2, 4)  # 防止混淆batch和sequence轴。

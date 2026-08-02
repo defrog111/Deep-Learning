@@ -4,15 +4,11 @@
 要求：完成“偏差方差与过拟合”的综合题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 模型复杂度增大时训练误差下降。
-2. 用验证集选择复杂度。
-3. 计算泛化差距。
-4. 判断复杂模型是否高方差。
-5. 平均低相关模型可降低方差。
-6. 综合解释bagging改善高方差。
+1. 导入 NumPy。
+2. 平均低相关模型可降低方差。
+3. 综合解释bagging改善高方差。
 
 完成标准：
-- 验证选择验证误差最低模型。
 - 综合解释bagging改善高方差。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -20,12 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-train_errors = np.array([0.40, 0.25, 0.12, 0.05])  # 模型复杂度增大时训练误差下降。
-validation_errors = np.array([0.45, 0.28, 0.18, 0.30])  # 验证误差先降后升。
-best_complexity = validation_errors.argmin() + 1  # 用验证集选择复杂度。
-generalization_gap = validation_errors - train_errors  # 计算泛化差距。
-high_variance = generalization_gap[-1] > 0.16  # 判断复杂模型是否高方差。
-assert best_complexity == 3  # 验证选择验证误差最低模型。
-print(best_complexity, generalization_gap, high_variance)  # 输出偏差方差线索。
 ensemble_errors = np.array([[1.0, -1.0, 0.5], [-1.0, 1.0, -0.5], [0.5, -0.5, 0.0]]); individual_variance = ensemble_errors.var(axis=1).mean(); averaged_variance = ensemble_errors.mean(axis=0).var()  # 平均低相关模型可降低方差。
 assert averaged_variance < individual_variance  # 综合解释bagging改善高方差。

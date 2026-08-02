@@ -17,6 +17,10 @@ from components import (  # noqa: E402
     padding_mask,
     scaled_dot_product_attention,
 )
+from builtin_causal_lm_model import BuiltinCausalLM  # noqa: E402
+from builtin_csv_classifier_model import (  # noqa: E402
+    BuiltinTabularTransformerClassifier,
+)
 
 
 class TransformerComponentTests(unittest.TestCase):
@@ -68,6 +72,48 @@ class TransformerComponentTests(unittest.TestCase):
         self.assertEqual(target.shape, (2, 5, 16))
         self.assertEqual(self_weights.shape, (2, 4, 5, 5))
         self.assertEqual(cross_weights.shape, (2, 4, 5, 7))
+
+    def test_builtin_csv_classifier_is_multilayer(self):
+        model = BuiltinTabularTransformerClassifier(
+            num_features=4,
+            num_classes=3,
+            d_model=16,
+            num_heads=4,
+            num_layers=3,
+            dim_feedforward=32,
+            dropout=0.0,
+        )
+        features = torch.randn(2, 4)
+        feature_padding_mask = torch.tensor(
+            [[False, False, False, False], [False, False, False, True]]
+        )
+        logits = model(features, feature_padding_mask)
+        self.assertEqual(len(model.encoder.layers), 3)
+        self.assertEqual(logits.shape, (2, 3))
+
+    def test_builtin_causal_lm_is_multilayer_and_causal(self):
+        model = BuiltinCausalLM(
+            vocab_size=10,
+            d_model=16,
+            num_heads=4,
+            num_layers=3,
+            dim_feedforward=32,
+            block_size=8,
+            dropout=0.0,
+        ).eval()
+        original = torch.tensor([[1, 2, 3, 4]])
+        changed_future = torch.tensor([[1, 2, 8, 9]])
+        with torch.no_grad():
+            original_logits = model(original)
+            changed_logits = model(changed_future)
+        self.assertEqual(len(model.transformer.layers), 3)
+        self.assertEqual(original_logits.shape, (1, 4, 10))
+        # 第 0、1 个位置不能看到第 2、3 个未来 token。
+        self.assertTrue(
+            torch.allclose(
+                original_logits[:, :2], changed_logits[:, :2], atol=1e-6
+            )
+        )
 
 
 if __name__ == "__main__":

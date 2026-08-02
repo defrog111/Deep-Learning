@@ -4,38 +4,25 @@
 要求：完成“类型注解与Protocol”的综合题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 定义只要求__len__的协议。
-2. 声明所需方法签名。
-3. 协议无需实现。
-4. 定义泛型类型变量。
-5. 泛型函数保持输入元素类型。
-6. 检查空列表。
-7. 空输入没有首元素。
-8. 返回同类型元素。
-9. 接受任何结构上支持len的对象。
-10. 调用协议方法。
+1. 导入结构化类型工具。
+2. 定义泛型类型变量。
+3. 导入泛型基类。
+4. 定义保存任意T的容器。
+    def __init__(self, value: T):  # 接收泛型值。
+        self.value = value  # 保存同类型值。
+    def get(self) -> T:  # 返回原类型。
+        return self.value  # 取出值。
+5. 验证泛型容器运行行为。
 
 完成标准：
-- 验证泛型与鸭子类型。
+- 关键结果的shape、类型或数值符合题目要求。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 from typing import Protocol, TypeVar  # 导入结构化类型工具。
-class SupportsLen(Protocol):  # 定义只要求__len__的协议。
-    def __len__(self) -> int:  # 声明所需方法签名。
-        ...  # 协议无需实现。
 T = TypeVar('T')  # 定义泛型类型变量。
-def first(items: list[T]) -> T:  # 泛型函数保持输入元素类型。
-    if not items:  # 检查空列表。
-        raise ValueError('empty')  # 空输入没有首元素。
-    return items[0]  # 返回同类型元素。
-def length(value: SupportsLen) -> int:  # 接受任何结构上支持len的对象。
-    return len(value)  # 调用协议方法。
-answer = first([6, 4, 5])  # 类型检查器可推导answer为int。
-assert answer == 6 and length('abc') == 3  # 验证泛型与鸭子类型。
-print(answer, length([1, 2]))  # 输出类型协议结果。
 from typing import Generic  # 导入泛型基类。
 class Box(Generic[T]):  # 定义保存任意T的容器。
     def __init__(self, value: T):  # 接收泛型值。

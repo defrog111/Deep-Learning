@@ -6,14 +6,10 @@
 操作步骤：
 1. PCA前标准化不同量纲特征。
 2. 加载数据。
-3. 标准化后使用完整SVD降维。
-4. 拟合主成分并投影。
-5. 取得已拟合PCA步骤。
-6. 综合题统一导入NumPy用于shape、数值和标签检查。
-7. 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。
+3. 综合题统一导入NumPy用于shape、数值和标签检查。
+4. 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。
 
 完成标准：
-- 验证降维shape和解释方差。
 - 验证增量投影和白化配置。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,11 +21,6 @@ from sklearn.decomposition import PCA  # 导入PCA。
 from sklearn.pipeline import make_pipeline  # 导入Pipeline。
 from sklearn.preprocessing import StandardScaler  # PCA前标准化不同量纲特征。
 features, _ = load_breast_cancer(return_X_y=True)  # 加载数据。
-pipeline = make_pipeline(StandardScaler(), PCA(n_components=4, svd_solver='full'))  # 标准化后使用完整SVD降维。
-projected = pipeline.fit_transform(features)  # 拟合主成分并投影。
-pca = pipeline.named_steps['pca']  # 取得已拟合PCA步骤。
-assert projected.shape[1] == 4 and pca.explained_variance_ratio_.sum() <= 1  # 验证降维shape和解释方差。
-print(projected.shape, pca.explained_variance_ratio_)  # 输出PCA结果。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.decomposition import IncrementalPCA  # 导入可分批学习的PCA。
 stable_pca_features = features.astype(np.float32); incremental = IncrementalPCA(n_components=2, batch_size=50); incremental.fit(stable_pca_features); incremental_projection = incremental.transform(stable_pca_features[:5]); whitening_configuration = PCA(n_components=2, whiten=True, svd_solver='randomized', random_state=42)  # 大数据用增量PCA；whiten配置会把主成分缩放到单位方差。

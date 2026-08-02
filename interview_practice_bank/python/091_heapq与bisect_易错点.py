@@ -4,16 +4,13 @@
 要求：完成“heapq与bisect”的易错点题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 创建有序列表。
-2. 用二分定位并插入以保持有序。
-3. 创建普通列表。
-4. 原地线性时间构建最小堆。
-5. 弹出最小元素。
-6. 高效取得少量最大元素。
-7. 区分重复值左右插入点。
+1. 导入二分维护有序序列工具。
+2. 导入最小堆工具。
+3. 导入二分工具。
+4. 区分重复值左右插入点。
+5. 验证闭开区间边界。
 
 完成标准：
-- 验证两个数据结构。
 - 验证闭开区间边界。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,14 +19,6 @@
 
 import bisect  # 导入二分维护有序序列工具。
 import heapq  # 导入最小堆工具。
-values = [1, 3, 5, 7]  # 创建有序列表。
-bisect.insort(values, 5)  # 用二分定位并插入以保持有序。
-heap = [8, 3, 6, 1, 9]  # 创建普通列表。
-heapq.heapify(heap)  # 原地线性时间构建最小堆。
-smallest = heapq.heappop(heap)  # 弹出最小元素。
-largest_two = heapq.nlargest(2, heap)  # 高效取得少量最大元素。
-assert values == sorted(values) and smallest == 1  # 验证两个数据结构。
-print(values, heap, largest_two)  # 输出有序列表和堆。
 import bisect  # 导入二分工具。
 ordered = [1, 2, 2, 4]; left_position = bisect.bisect_left(ordered, 2); right_position = bisect.bisect_right(ordered, 2)  # 区分重复值左右插入点。
 assert (left_position, right_position) == (1, 3)  # 验证闭开区间边界。

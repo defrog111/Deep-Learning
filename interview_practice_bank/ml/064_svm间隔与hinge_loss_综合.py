@@ -4,18 +4,11 @@
 要求：完成“SVM间隔与hinge loss”的综合题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 定义线性分类超平面法向量。
-2. 创建训练样本。
-3. SVM标签使用-1和1。
-4. 计算到超平面的有符号分数。
-5. 计算功能间隔。
-6. 计算hinge loss。
-7. 除以权重范数得到几何间隔。
-8. 合法Mercer核矩阵应半正定。
-9. 综合核SVM决策形式。
+1. 导入 NumPy。
+2. 合法Mercer核矩阵应半正定。
+3. 综合核SVM决策形式。
 
 完成标准：
-- 验证损失非负。
 - 综合核SVM决策形式。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,14 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-weights = np.array([1.0, -1.0])  # 定义线性分类超平面法向量。
-features = np.array([[2.0, 0.0], [0.0, 2.0], [1.0, 0.5]])  # 创建训练样本。
-labels = np.array([1.0, -1.0, 1.0])  # SVM标签使用-1和1。
-scores = features @ weights  # 计算到超平面的有符号分数。
-margins = labels * scores  # 计算功能间隔。
-hinge = np.maximum(0, 1 - margins)  # 计算hinge loss。
-geometric_margin = margins / np.linalg.norm(weights)  # 除以权重范数得到几何间隔。
-assert np.all(hinge >= 0)  # 验证损失非负。
-print(scores, margins, hinge, geometric_margin)  # 输出SVM关键量。
 kernel_matrix = np.array([[1.0, 0.5], [0.5, 1.0]]); kernel_eigenvalues = np.linalg.eigvalsh(kernel_matrix); decision_scores = kernel_matrix @ np.array([1.0, -1.0]) + 0.1  # 合法Mercer核矩阵应半正定。
 assert kernel_eigenvalues.min() >= 0 and decision_scores.shape == (2,)  # 综合核SVM决策形式。

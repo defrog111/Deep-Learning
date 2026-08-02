@@ -4,16 +4,11 @@
 要求：完成“逻辑回归与Sigmoid”的变式题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 构造模型logits。
-2. 使用Sigmoid转换为正类概率。
-3. 定义二分类标签。
-4. 防止对0取log。
-5. 手算二元交叉熵。
-6. 使用阈值转类别。
-7. 减去每行最大值稳定计算softmax。
+1. 导入 NumPy。
+2. 减去每行最大值稳定计算softmax。
+3. 验证多分类概率。
 
 完成标准：
-- 验证概率范围。
 - 验证多分类概率。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-logits = np.array([-3.0, 0.0, 2.0])  # 构造模型logits。
-probabilities = 1 / (1 + np.exp(-logits))  # 使用Sigmoid转换为正类概率。
-labels = np.array([0.0, 1.0, 1.0])  # 定义二分类标签。
-epsilon = 1e-12  # 防止对0取log。
-log_loss = -(labels * np.log(probabilities + epsilon) + (1 - labels) * np.log(1 - probabilities + epsilon)).mean()  # 手算二元交叉熵。
-predictions = probabilities >= 0.5  # 使用阈值转类别。
-assert np.all((0 < probabilities) & (probabilities < 1))  # 验证概率范围。
-print(probabilities, predictions, log_loss)  # 输出逻辑回归结果。
 multi_logits = np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]); shifted_logits = multi_logits - multi_logits.max(axis=1, keepdims=True); softmax = np.exp(shifted_logits) / np.exp(shifted_logits).sum(axis=1, keepdims=True)  # 减去每行最大值稳定计算softmax。
 assert np.allclose(softmax.sum(1), 1) and softmax.argmax(1).tolist() == [0, 2]  # 验证多分类概率。

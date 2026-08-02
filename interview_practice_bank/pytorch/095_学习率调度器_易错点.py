@@ -4,19 +4,12 @@
 要求：完成“学习率调度器”的易错点题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 创建可优化模型。
-2. 设置初始学习率。
-3. 每指定轮数衰减学习率。
-4. 保存学习率轨迹。
-5. 模拟六个epoch。
-6. 清除梯度。
-7. 构造并反向传播简单损失。
-8. 更新模型参数。
-9. 在epoch末更新学习率。
-10. 记录当前学习率。
+1. 导入 PyTorch。
+2. 导入模型模块。
+3. Plateau调度器step接收验证指标而不是epoch。
+4. 验证无改进时降学习率。
 
 完成标准：
-- 验证学习率未增长。
 - 验证无改进时降学习率。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,17 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入模型模块。
-model = nn.Linear(2, 1)  # 创建可优化模型。
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1)  # 设置初始学习率。
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.5)  # 每指定轮数衰减学习率。
-history = []  # 保存学习率轨迹。
-for _ in range(6):  # 模拟六个epoch。
-    optimizer.zero_grad()  # 清除梯度。
-    model(torch.ones(1, 2)).sum().backward()  # 构造并反向传播简单损失。
-    optimizer.step()  # 更新模型参数。
-    scheduler.step()  # 在epoch末更新学习率。
-    history.append(scheduler.get_last_lr()[0])  # 记录当前学习率。
-assert history[-1] <= history[0]  # 验证学习率未增长。
-print(history)  # 输出调度轨迹。
 plateau_parameter = nn.Parameter(torch.tensor(1.0)); plateau_optimizer = torch.optim.SGD([plateau_parameter], lr=0.1); plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(plateau_optimizer, mode='min', patience=0, factor=0.5); [plateau_scheduler.step(metric) for metric in [1.0, 1.1, 1.2]]  # Plateau调度器step接收验证指标而不是epoch。
 assert plateau_optimizer.param_groups[0]['lr'] < 0.1  # 验证无改进时降学习率。

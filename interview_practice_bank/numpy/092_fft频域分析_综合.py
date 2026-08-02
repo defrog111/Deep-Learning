@@ -9,12 +9,9 @@
 3. 设置正弦信号频率。
 4. 生成单频正弦信号。
 5. 对实信号计算单边FFT。
-6. 计算每个频点对应频率。
-7. 找到幅度最大的主频。
-8. 综合使用窗函数减轻非整周期频谱泄漏。
+6. 综合使用窗函数减轻非整周期频谱泄漏。
 
 完成标准：
-- 验证FFT识别出真实频率。
 - 验证加窗不改变频点数量。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -27,9 +24,5 @@ time = np.arange(sample_count) / sample_count  # 构造一秒内的均匀时间�
 frequency = 6  # 设置正弦信号频率。
 signal = np.sin(2 * np.pi * frequency * time)  # 生成单频正弦信号。
 spectrum = np.fft.rfft(signal)  # 对实信号计算单边FFT。
-frequencies = np.fft.rfftfreq(sample_count, d=1 / sample_count)  # 计算每个频点对应频率。
-dominant = frequencies[np.abs(spectrum).argmax()]  # 找到幅度最大的主频。
-assert dominant == frequency  # 验证FFT识别出真实频率。
-print(dominant)  # 输出主频。
 window = np.hanning(sample_count); windowed_spectrum = np.fft.rfft(signal * window)  # 综合使用窗函数减轻非整周期频谱泄漏。
 assert windowed_spectrum.shape == spectrum.shape  # 验证加窗不改变频点数量。

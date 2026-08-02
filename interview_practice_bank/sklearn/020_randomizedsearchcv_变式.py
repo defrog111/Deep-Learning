@@ -5,13 +5,10 @@
 
 操作步骤：
 1. 加载数据。
-2. 建立Pipeline。
-3. 从连续分布随机抽取超参数。
-4. 综合题统一导入NumPy用于shape、数值和标签检查。
-5. 随机搜索可混合连续分布与离散候选。
+2. 综合题统一导入NumPy用于shape、数值和标签检查。
+3. 随机搜索可混合连续分布与离散候选。
 
 完成标准：
-- 验证搜索完成。
 - 验证抽样次数和参数范围。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,10 +22,6 @@ from sklearn.model_selection import RandomizedSearchCV  # 导入随机搜索。
 from sklearn.pipeline import make_pipeline  # 导入Pipeline。
 from sklearn.preprocessing import StandardScaler  # 导入标准化。
 features, labels = load_iris(return_X_y=True)  # 加载数据。
-pipeline = make_pipeline(StandardScaler(), LogisticRegression(max_iter=500))  # 建立Pipeline。
-search = RandomizedSearchCV(pipeline, {'logisticregression__C': loguniform(1e-3, 1e2)}, n_iter=5, cv=3, random_state=42).fit(features, labels)  # 从连续分布随机抽取超参数。
-assert search.best_estimator_ is not None  # 验证搜索完成。
-print(search.best_params_, search.best_score_)  # 输出最优参数和分数。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from scipy.stats import randint  # 导入离散超参数分布。
 from sklearn.ensemble import RandomForestClassifier  # 导入随机森林。

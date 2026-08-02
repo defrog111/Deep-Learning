@@ -1,6 +1,7 @@
 # Python / Data / ML 高频题库
 
-本目录包含 592 道独立、可运行的练习，其中原题库550题、CSV专项42题。每一个题目
+本目录包含 634 道独立、可运行的练习，其中原题库550题、CSV专项42题、矩阵运算
+强化42题。每一个题目
 `.py` 文件只放一道题，文件顶部包含
 中文要求、逐步操作过程和完成标准，后面是带逐行中文注释的参考代码。
 
@@ -15,6 +16,8 @@
 | `ml/` | 100 | 损失、正则化、验证、指标、经典算法、漂移和可复现性 |
 | `sklearn/` | 50 | Pipeline、预处理、CV、调参、模型、评估和持久化 |
 | `csv_data_processing/` | 42 | 每题从CSV读取，覆盖清洗、连接、时间序列、特征工程和模型数据管道 |
+| `matrix_operations/numpy/` | 21 | NumPy 矩阵乘法、方程、分解、数值稳定性和 ML 应用 |
+| `matrix_operations/pytorch/` | 21 | PyTorch 批量矩阵、Autograd、Attention、稀疏矩阵和线性代数 |
 
 “包含所有知识点”无法做数学意义上的穷尽；这里覆盖的是面试、笔试和日常 ML 开发中
 最常考、最容易写错的主干知识。Python、NumPy、PyTorch 和 ML 的每个主知识点提供
@@ -94,6 +97,13 @@ python run_all.py --category all
 python validate_csv_examples.py
 ```
 
+检查并运行42个 NumPy/PyTorch 矩阵运算强化题：
+
+```bash
+python validate_matrix_drills.py
+python run_matrix_drills.py --category all
+```
+
 需要把任何 warning 也当作失败时，可以运行：
 
 ```bash
@@ -109,4 +119,10 @@ PYTHONWARNINGS=error python run_all.py --category all
 
 ```bash
 python create_bank.py
+```
+
+矩阵强化题由 `matrix_cases.py` 单独保存，重新生成不会影响原来的六类题库：
+
+```bash
+python create_matrix_drills.py
 ```

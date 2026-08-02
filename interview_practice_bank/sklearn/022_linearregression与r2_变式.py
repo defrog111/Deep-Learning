@@ -5,15 +5,10 @@
 
 操作步骤：
 1. 加载数据。
-2. 固定随机切分。
-3. 拟合普通最小二乘。
-4. 对未见测试集预测。
-5. 计算MSE、MAE、R²。
-6. 综合题统一导入NumPy用于shape、数值和标签检查。
-7. 比较目标变换及L2、L1、ElasticNet，并选用稳定求解器。
+2. 综合题统一导入NumPy用于shape、数值和标签检查。
+3. 比较目标变换及L2、L1、ElasticNet，并选用稳定求解器。
 
 完成标准：
-- 验证预测shape。
 - 验证四个模型均学习到有限系数。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,12 +20,6 @@ from sklearn.linear_model import LinearRegression  # 导入线性回归。
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score  # 导入回归指标。
 from sklearn.model_selection import train_test_split  # 导入切分函数。
 features, targets = load_diabetes(return_X_y=True)  # 加载数据。
-train_x, test_x, train_y, test_y = train_test_split(features, targets, test_size=0.2, random_state=42)  # 固定随机切分。
-model = LinearRegression().fit(train_x, train_y)  # 拟合普通最小二乘。
-predictions = model.predict(test_x)  # 对未见测试集预测。
-metrics = mean_squared_error(test_y, predictions), mean_absolute_error(test_y, predictions), r2_score(test_y, predictions)  # 计算MSE、MAE、R²。
-assert predictions.shape == test_y.shape  # 验证预测shape。
-print(metrics)  # 输出回归指标。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.compose import TransformedTargetRegressor  # 导入目标变量转换包装器。
 from sklearn.linear_model import Ridge, Lasso, ElasticNet  # 导入三种正则线性模型。

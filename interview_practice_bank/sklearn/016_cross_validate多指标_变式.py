@@ -6,12 +6,10 @@
 操作步骤：
 1. 加载数据。
 2. 建立可复现的分类模型。
-3. 同时评估多个指标。
-4. 综合题统一导入NumPy用于shape、数值和标签检查。
-5. F2更重视召回并返回每折模型。
+3. 综合题统一导入NumPy用于shape、数值和标签检查。
+4. F2更重视召回并返回每折模型。
 
 完成标准：
-- 验证AUC合理。
 - 验证自定义指标和估计器集合。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,9 +21,6 @@ from sklearn.ensemble import RandomForestClassifier  # 导入非线性分类器�
 from sklearn.model_selection import cross_validate  # 导入多指标交叉验证。
 features, labels = load_breast_cancer(return_X_y=True)  # 加载数据。
 model = RandomForestClassifier(n_estimators=40, max_depth=5, random_state=42)  # 建立可复现的分类模型。
-result = cross_validate(model, features, labels, cv=3, scoring=['accuracy', 'roc_auc'], return_train_score=True)  # 同时评估多个指标。
-assert result['test_roc_auc'].mean() > 0.9  # 验证AUC合理。
-print({key: value.mean() for key, value in result.items() if key.startswith('test_')})  # 输出测试指标均值。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.metrics import make_scorer, fbeta_score  # 导入自定义评分器。
 from sklearn.model_selection import cross_validate  # 导入多指标验证。

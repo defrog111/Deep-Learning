@@ -4,37 +4,22 @@
 要求：完成“作用域闭包与late-binding”的变式题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 外层函数创建闭包环境。
-2. 内层函数引用外层变量。
-3. factor被闭包保存。
-4. 返回函数对象。
-5. 创建具体倍数闭包。
-6. late-binding导致调用时都读取最终index。
-7. 默认参数在定义时绑定当前值。
-8. 创建保存状态的闭包。
+1. 创建保存状态的闭包。
     count = 0  # 定义封闭变量。
     def increment():  # 定义内部函数。
         nonlocal count  # 声明修改最近一层封闭作用域。
         count += 1  # 更新闭包状态。
         return count  # 返回新计数。
     return increment  # 返回闭包。
+2. 验证nonlocal状态。
 
 完成标准：
-- 验证闭包陷阱。
+- 关键结果的shape、类型或数值符合题目要求。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
-def make_multiplier(factor):  # 外层函数创建闭包环境。
-    def multiply(value):  # 内层函数引用外层变量。
-        return value * factor  # factor被闭包保存。
-    return multiply  # 返回函数对象。
-times_n = make_multiplier(4)  # 创建具体倍数闭包。
-bad = [lambda: index for index in range(3)]  # late-binding导致调用时都读取最终index。
-fixed = [lambda index=index: index for index in range(3)]  # 默认参数在定义时绑定当前值。
-assert [fn() for fn in bad] == [2, 2, 2] and [fn() for fn in fixed] == [0, 1, 2]  # 验证闭包陷阱。
-print(times_n(5), [fn() for fn in fixed])  # 输出闭包结果。
 def make_counter():  # 创建保存状态的闭包。
     count = 0  # 定义封闭变量。
     def increment():  # 定义内部函数。

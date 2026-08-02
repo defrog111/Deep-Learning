@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from case_utils import independent_variant
+
 
 LEVELS = ["基础", "变式", "易错点", "综合"]
 
@@ -559,7 +561,9 @@ def ml_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["experiment_record = {'code_version': 'abc123', 'data_version': 'v2', 'seed': 42, 'features': ['x1', 'x2'], 'metric': 0.91}; required_fields = {'code_version', 'data_version', 'seed', 'features', 'metric'}  # 综合复现还需代码、数据、特征和指标版本，不能只有随机种子。", "assert required_fields <= experiment_record.keys()  # 验证实验追踪元数据。"],
         ],
     ]
-    code = list(cases[family])
-    if variant > 1:
-        code.extend(extras[family][variant - 2])
+    base_code = cases[family]
+    if variant == 1:
+        code = list(base_code)
+    else:
+        code = independent_variant(base_code, extras[family][variant - 2])
     return title, task, code

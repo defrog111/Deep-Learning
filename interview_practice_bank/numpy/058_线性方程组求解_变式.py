@@ -6,13 +6,10 @@
 操作步骤：
 1. 定义线性方程系数矩阵A。
 2. 定义右侧向量b。
-3. 直接求解Ax=b比显式求逆更稳定。
-4. 把解代回原方程。
-5. 非方阵或含噪问题使用最小二乘。
-6. 检查秩和奇异值。
+3. 非方阵或含噪问题使用最小二乘。
+4. 检查秩和奇异值。
 
 完成标准：
-- 验证数值解。
 - 检查秩和奇异值。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,9 +19,5 @@
 import numpy as np  # 导入 NumPy。
 coefficients = np.array([[3.0, 1.0], [1.0, 2.0]])  # 定义线性方程系数矩阵A。
 targets = np.array([11.0, 10.0])  # 定义右侧向量b。
-solution = np.linalg.solve(coefficients, targets)  # 直接求解Ax=b比显式求逆更稳定。
-reconstructed = coefficients @ solution  # 把解代回原方程。
-assert np.allclose(reconstructed, targets)  # 验证数值解。
-print(solution, reconstructed)  # 输出解和代回结果。
 least_squares, residuals, rank, singular = np.linalg.lstsq(coefficients, targets, rcond=None)  # 非方阵或含噪问题使用最小二乘。
 assert rank <= min(coefficients.shape) and singular.ndim == 1  # 检查秩和奇异值。

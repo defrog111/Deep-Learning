@@ -5,15 +5,10 @@
 
 操作步骤：
 1. 创建第一个向量。
-2. 创建第二个向量。
-3. 一维@一维得到标量点积。
-4. 创建2×3矩阵。
-5. 矩阵乘向量得到长度2结果。
-6. 批量矩阵乘法。
-7. 比较@、dot和matmul的二维行为。
+2. 创建2×3矩阵。
+3. 比较@、dot和matmul的二维行为。
 
 完成标准：
-- 验证点积值和批量shape。
 - 验证三种写法等价。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,12 +17,6 @@
 
 import numpy as np  # 导入 NumPy。
 vector_a = np.array([1.0, 2.0, 3.0])  # 创建第一个向量。
-vector_b = np.array([4.0, 5.0, 6.0])  # 创建第二个向量。
-dot = vector_a @ vector_b  # 一维@一维得到标量点积。
 matrix = np.arange(6).reshape(2, 3)  # 创建2×3矩阵。
-product = matrix @ vector_a  # 矩阵乘向量得到长度2结果。
-batch = np.matmul(np.ones((4, 2, 3)), np.ones((4, 3, 5)))  # 批量矩阵乘法。
-assert dot == 32 and batch.shape == (4, 2, 5)  # 验证点积值和批量shape。
-print(dot, product, batch.shape)  # 输出矩阵运算结果。
 via_operator = matrix @ vector_a; via_dot = np.dot(matrix, vector_a); via_matmul = np.matmul(matrix, vector_a)  # 比较@、dot和matmul的二维行为。
 assert np.allclose(via_operator, via_dot) and np.allclose(via_dot, via_matmul)  # 验证三种写法等价。

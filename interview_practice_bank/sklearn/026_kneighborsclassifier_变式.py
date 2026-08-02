@@ -6,13 +6,10 @@
 操作步骤：
 1. KNN对尺度敏感需标准化。
 2. 加载数据。
-3. 配置距离加权KNN。
-4. 交叉验证泛化性能。
-5. 综合题统一导入NumPy用于shape、数值和标签检查。
-6. 距离加权且为无邻居样本提供兜底标签。
+3. 综合题统一导入NumPy用于shape、数值和标签检查。
+4. 距离加权且为无邻居样本提供兜底标签。
 
 完成标准：
-- 验证模型表现。
 - 验证半径近邻推理。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -25,10 +22,6 @@ from sklearn.neighbors import KNeighborsClassifier  # 导入KNN。
 from sklearn.pipeline import make_pipeline  # 导入Pipeline。
 from sklearn.preprocessing import StandardScaler  # KNN对尺度敏感需标准化。
 features, labels = load_iris(return_X_y=True)  # 加载数据。
-model = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5, weights='distance'))  # 配置距离加权KNN。
-scores = cross_val_score(model, features, labels, cv=5)  # 交叉验证泛化性能。
-assert scores.mean() > 0.85  # 验证模型表现。
-print(scores, scores.mean())  # 输出各折分数。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.neighbors import RadiusNeighborsClassifier  # 导入固定半径近邻分类器。
 radius_model = make_pipeline(StandardScaler(), RadiusNeighborsClassifier(radius=2.0, weights='distance', outlier_label='most_frequent')).fit(features, labels); radius_predictions = radius_model.predict(features[:5])  # 距离加权且为无邻居样本提供兜底标签。

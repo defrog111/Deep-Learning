@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from case_utils import independent_variant
+
 
 LEVELS = ["基础", "变式", "易错点", "综合"]
 
@@ -37,6 +39,57 @@ def pytorch_case(family: int, variant: int) -> tuple[str, str, list[str]]:
     title = titles[family]
     task = f"完成“{title}”的{LEVELS[variant - 1]}题，说明训练态、梯度和张量shape。"
     n = variant + 2
+    if family == 0:
+        distinct_variants = [
+            [
+                "import torch  # 导入 PyTorch。",
+                "tensor = torch.tensor([[1, 2, 3], [4, 5, 6]], dtype=torch.float32)  # 从Python数据创建二维float32 Tensor。",
+                "assert tensor.shape == (2, 3) and tensor.ndim == 2  # 验证Tensor的shape和维数。",
+                "assert tensor.numel() == 6 and tensor.element_size() == 4  # 验证元素数和单元素字节数。",
+                "print(tensor, tensor.dtype, tensor.device, tensor.stride())  # 输出基础Tensor元数据。",
+            ],
+            [
+                "import numpy as np  # 导入 NumPy用于演示内存关系。",
+                "import torch  # 导入 PyTorch。",
+                "source = np.arange(4, dtype=np.float32)  # 创建CPU NumPy源数组。",
+                "shared = torch.from_numpy(source)  # from_numpy与源数组共享CPU内存。",
+                "also_shared = torch.as_tensor(source)  # as_tensor在类型兼容时也尽量避免复制。",
+                "copied = torch.tensor(source)  # torch.tensor始终复制输入数据。",
+                "source[0] = 99  # 修改NumPy源数组测试三种构造方式。",
+                "assert shared[0].item() == also_shared[0].item() == 99  # 验证两个零复制Tensor看到修改。",
+                "assert copied[0].item() == 0 and shared.data_ptr() == also_shared.data_ptr()  # 验证复制与共享内存。",
+                "print(shared, also_shared, copied)  # 输出共享与复制结果。",
+            ],
+            [
+                "import torch  # 导入 PyTorch。",
+                "integer = torch.tensor([1, 2], dtype=torch.int32)  # 创建显式int32 Tensor。",
+                "floating = torch.tensor([0.5, 1.5], dtype=torch.float64)  # 创建显式float64 Tensor。",
+                "promoted = integer + floating  # 混合dtype按照类型提升规则得到float64。",
+                "original = torch.tensor([1.0, 2.0])  # 创建用于演示to非原地语义的Tensor。",
+                "converted = original.to(dtype=torch.float64)  # to返回转换后的新Tensor而不修改original。",
+                "requires_grad_failed = False  # 记录整数Tensor开启梯度是否失败。",
+                "try:  # 尝试让整数Tensor记录梯度。",
+                "    torch.tensor([1, 2], requires_grad=True)  # Autograd只支持浮点或复数Tensor梯度。",
+                "except RuntimeError:  # 捕获预期的dtype错误。",
+                "    requires_grad_failed = True  # 标记已识别梯度dtype陷阱。",
+                "assert promoted.dtype == torch.float64 and original.dtype == torch.float32  # 验证类型提升和to非原地语义。",
+                "assert converted.dtype == torch.float64 and requires_grad_failed  # 验证显式转换与梯度限制。",
+                "print(promoted, original.dtype, converted.dtype)  # 输出dtype易错结果。",
+            ],
+            [
+                "import torch  # 导入 PyTorch。",
+                "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 自动选择当前可用计算设备。",
+                "indices = torch.arange(start=0, end=12, step=2, dtype=torch.int64, device=device)  # 在目标设备创建整数序列。",
+                "points = torch.linspace(start=0.0, end=1.0, steps=6, device=device)  # 在目标设备创建含终点等距序列。",
+                "grid_x, grid_y = torch.meshgrid(points[:3], points[3:], indexing='ij')  # 创建明确ij索引规则的二维网格。",
+                "features = torch.stack((grid_x, grid_y), dim=-1)  # 把坐标网格堆成最后维为2的特征Tensor。",
+                "trainable = torch.zeros_like(features, requires_grad=True)  # 继承shape、dtype和device并开启梯度。",
+                "assert indices.tolist() == [0, 2, 4, 6, 8, 10] and features.shape == (3, 3, 2)  # 验证序列和网格shape。",
+                "assert trainable.is_leaf and trainable.requires_grad and trainable.device == device  # 验证叶子Tensor和设备。",
+                "print(indices, points, features.shape, trainable.device)  # 输出综合构造结果。",
+            ],
+        ]
+        return title, task, distinct_variants[variant - 1]
     cases: list[list[str]] = [
         [
             "import torch  # 导入 PyTorch。",
@@ -476,7 +529,9 @@ def pytorch_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["multi_predictions = torch.tensor([[1, 0, 1], [0, 1, 0]], dtype=torch.bool); multi_targets = torch.tensor([[1, 1, 0], [0, 1, 0]], dtype=torch.bool); micro_tp = (multi_predictions & multi_targets).sum(); micro_fp = (multi_predictions & ~multi_targets).sum(); micro_fn = (~multi_predictions & multi_targets).sum(); micro_f1 = 2 * micro_tp / (2 * micro_tp + micro_fp + micro_fn)  # 综合计算多标签micro-F1。", "assert torch.isclose(micro_f1, torch.tensor(2 / 3))  # 验证TP、FP、FN公式。"],
         ],
     ]
-    code = list(cases[family])
-    if variant > 1:
-        code.extend(extras[family][variant - 2])
+    base_code = cases[family]
+    if variant == 1:
+        code = list(base_code)
+    else:
+        code = independent_variant(base_code, extras[family][variant - 2])
     return title, task, code

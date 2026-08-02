@@ -4,26 +4,17 @@
 要求：完成“布尔索引与花式索引”的变式题，写出关键数组的shape并解释结果。
 
 操作步骤：
-1. 创建一维数组。
-2. 使用布尔mask筛选满足阈值的元素。
-3. 定义花式索引顺序。
-4. 花式索引总是返回副本。
-5. 使用take、isin和flatnonzero表达花式选择。
+1. 导入 NumPy。
+2. 用独立成绩数据练习take和flatnonzero。
+3. 验证按位置重排和条件位置提取。
 
 完成标准：
-- 验证按指定位置重排。
-- 验证两套写法等价。
+- 验证按位置重排和条件位置提取。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
 import numpy as np  # 导入 NumPy。
-array = np.array([3, 8, 1, 9, 4, 7])  # 创建一维数组。
-selected = array[array >= 4]  # 使用布尔mask筛选满足阈值的元素。
-order = np.array([3, 0, 5])  # 定义花式索引顺序。
-reordered = array[order]  # 花式索引总是返回副本。
-assert reordered.tolist() == [9, 3, 7]  # 验证按指定位置重排。
-print(selected, reordered)  # 输出两种索引结果。
-taken = np.take(array, order); nonzero_positions = np.flatnonzero(np.isin(array, selected))  # 使用take、isin和flatnonzero表达花式选择。
-assert np.array_equal(taken, reordered) and np.array_equal(array[nonzero_positions], selected)  # 验证两套写法等价。
+scores = np.array([72, 95, 81, 95, 60]); positions = np.array([3, 1, 2]); taken = np.take(scores, positions); high_positions = np.flatnonzero(scores >= 90)  # 用独立成绩数据练习take和flatnonzero。
+assert taken.tolist() == [95, 95, 81] and high_positions.tolist() == [1, 3]  # 验证按位置重排和条件位置提取。

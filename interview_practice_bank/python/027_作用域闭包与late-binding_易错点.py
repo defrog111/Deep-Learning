@@ -4,31 +4,15 @@
 要求：完成“作用域闭包与late-binding”的易错点题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 外层函数创建闭包环境。
-2. 内层函数引用外层变量。
-3. factor被闭包保存。
-4. 返回函数对象。
-5. 创建具体倍数闭包。
-6. late-binding导致调用时都读取最终index。
-7. 默认参数在定义时绑定当前值。
-8. 闭包延迟查找循环变量，三个函数都看到最终值。
+1. 闭包延迟查找循环变量，三个函数都看到最终值。
+2. 验证late binding陷阱。
 
 完成标准：
-- 验证闭包陷阱。
 - 验证late binding陷阱。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
-def make_multiplier(factor):  # 外层函数创建闭包环境。
-    def multiply(value):  # 内层函数引用外层变量。
-        return value * factor  # factor被闭包保存。
-    return multiply  # 返回函数对象。
-times_n = make_multiplier(5)  # 创建具体倍数闭包。
-bad = [lambda: index for index in range(3)]  # late-binding导致调用时都读取最终index。
-fixed = [lambda index=index: index for index in range(3)]  # 默认参数在定义时绑定当前值。
-assert [fn() for fn in bad] == [2, 2, 2] and [fn() for fn in fixed] == [0, 1, 2]  # 验证闭包陷阱。
-print(times_n(5), [fn() for fn in fixed])  # 输出闭包结果。
 wrong_functions = [lambda: index for index in range(3)]  # 闭包延迟查找循环变量，三个函数都看到最终值。
 assert [function() for function in wrong_functions] == [2, 2, 2]  # 验证late binding陷阱。

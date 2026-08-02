@@ -6,14 +6,10 @@
 操作步骤：
 1. 每行一个样本每列一个特征。
 2. 计算样本协方差矩阵。
-3. 计算标准化相关系数。
-4. 对特征中心化。
-5. 手算样本协方差。
-6. ddof=0计算总体协方差，默认ddof=1是样本协方差。
-7. 小样本下两种分母结果不同。
+3. ddof=0计算总体协方差，默认ddof=1是样本协方差。
+4. 小样本下两种分母结果不同。
 
 完成标准：
-- 验证公式实现。
 - 小样本下两种分母结果不同。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,10 +19,5 @@
 import numpy as np  # 导入 NumPy。
 samples = np.array([[1.0, 2.0], [2.0, 4.0], [3.0, 5.0], [4.0, 8.0]])  # 每行一个样本每列一个特征。
 covariance = np.cov(samples, rowvar=False, ddof=1)  # 计算样本协方差矩阵。
-correlation = np.corrcoef(samples, rowvar=False)  # 计算标准化相关系数。
-centered = samples - samples.mean(axis=0, keepdims=True)  # 对特征中心化。
-manual_covariance = centered.T @ centered / (len(samples) - 1)  # 手算样本协方差。
-assert np.allclose(covariance, manual_covariance)  # 验证公式实现。
-print(covariance, '\n', correlation)  # 输出协方差和相关矩阵。
 population_covariance = np.cov(samples, rowvar=False, ddof=0)  # ddof=0计算总体协方差，默认ddof=1是样本协方差。
 assert not np.allclose(population_covariance, covariance)  # 小样本下两种分母结果不同。

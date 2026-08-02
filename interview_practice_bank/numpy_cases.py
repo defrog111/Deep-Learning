@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from case_utils import independent_variant
+
 
 LEVELS = ["基础", "变式", "易错点", "综合"]
 
@@ -37,6 +39,54 @@ def numpy_case(family: int, variant: int) -> tuple[str, str, list[str]]:
     title = titles[family]
     task = f"完成“{title}”的{LEVELS[variant - 1]}题，写出关键数组的shape并解释结果。"
     n = variant + 2
+    if family == 0:
+        distinct_variants = [
+            [
+                "import numpy as np  # 导入 NumPy。",
+                "matrix = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)  # 从嵌套列表创建二维float32数组。",
+                "assert matrix.shape == (2, 3) and matrix.ndim == 2  # 检查行列shape和维数。",
+                "assert matrix.size == 6 and matrix.itemsize == 4  # 检查元素数和每个float32元素字节数。",
+                "print(matrix, matrix.dtype, matrix.shape, matrix.nbytes)  # 输出基础数组元数据。",
+            ],
+            [
+                "import numpy as np  # 导入 NumPy。",
+                "source = bytearray([1, 2, 3, 4])  # 创建可修改的原始字节缓冲区。",
+                "buffer_view = np.frombuffer(source, dtype=np.uint8)  # frombuffer零复制地查看已有内存。",
+                "from_iterator = np.fromiter((value * value for value in range(5)), dtype=np.int64, count=5)  # 从迭代器创建一维数组。",
+                "existing = np.asarray(from_iterator)  # asarray接收已有ndarray时通常直接复用而不复制。",
+                "source[0] = 99  # 修改源缓冲区以观察共享内存效果。",
+                "assert buffer_view[0] == 99 and from_iterator.tolist() == [0, 1, 4, 9, 16]  # 验证共享视图和迭代器构造。",
+                "assert existing is from_iterator  # 验证dtype和布局兼容时asarray复用原数组。",
+                "print(buffer_view, from_iterator, existing)  # 输出三种不同来源的构造结果。",
+            ],
+            [
+                "import numpy as np  # 导入 NumPy。",
+                "inferred = np.array([1, 2.5, True])  # 混合整数、浮点和布尔会推导为共同浮点dtype。",
+                "truncated = np.array([1.9, -2.9]).astype(np.int64)  # astype转整数向零截断而不是四舍五入。",
+                "unsigned = np.array([-1], dtype=np.int16).astype(np.uint8)  # 转无符号整数会按模范围得到255。",
+                "ragged_failed = False  # 预先记录不规则嵌套列表是否被拒绝。",
+                "try:  # 尝试直接创建行长度不同的二维数值数组。",
+                "    np.array([[1, 2], [3]])  # 新版NumPy会拒绝不规则shape。",
+                "except ValueError:  # 捕获预期的不规则数组错误。",
+                "    ragged_failed = True  # 标记已经识别ragged array陷阱。",
+                "assert inferred.dtype == np.float64 and truncated.tolist() == [1, -2]  # 验证类型提升和截断规则。",
+                "assert unsigned.item() == 255 and ragged_failed  # 验证无符号转换与不规则输入检查。",
+                "print(inferred.dtype, truncated, unsigned)  # 输出三个dtype易错结果。",
+            ],
+            [
+                "import numpy as np  # 导入 NumPy。",
+                "zeros = np.zeros((2, 3), dtype=np.float64)  # 创建指定shape和dtype的零矩阵。",
+                "ones = np.ones_like(zeros)  # 继承zeros的shape和dtype创建全1矩阵。",
+                "filled = np.full((2, 3), fill_value=7.5)  # 创建指定填充值矩阵。",
+                "identity = np.eye(3, dtype=np.float64)  # 创建三阶单位矩阵。",
+                "row_grid, column_grid = np.indices((2, 3))  # 一次创建每个位置的行列坐标矩阵。",
+                "stacked = np.stack((zeros, ones, filled), axis=0)  # 沿新batch轴堆叠三种矩阵。",
+                "assert stacked.shape == (3, 2, 3) and np.trace(identity) == 3  # 验证综合构造shape和单位阵。",
+                "assert row_grid.shape == column_grid.shape == (2, 3)  # 验证坐标网格shape。",
+                "print(stacked, identity, row_grid, column_grid)  # 输出综合构造结果。",
+            ],
+        ]
+        return title, task, distinct_variants[variant - 1]
     cases: list[list[str]] = [
         [
             "import numpy as np  # 导入 NumPy。",
@@ -296,7 +346,7 @@ def numpy_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["picked = np.take(matrix, [0, -1], axis=0); clipped = matrix.clip(min=0)  # 综合使用take按轴选择并用clip限制范围。", "assert picked.shape[0] == 2 and clipped.min() >= 0  # 验证选择和裁剪结果。"],
         ],
         [
-            ["taken = np.take(array, order); nonzero_positions = np.flatnonzero(np.isin(array, selected))  # 使用take、isin和flatnonzero表达花式选择。", "assert np.array_equal(taken, reordered) and np.array_equal(array[nonzero_positions], selected)  # 验证两套写法等价。"],
+            ["scores = np.array([72, 95, 81, 95, 60]); positions = np.array([3, 1, 2]); taken = np.take(scores, positions); high_positions = np.flatnonzero(scores >= 90)  # 用独立成绩数据练习take和flatnonzero。", "assert taken.tolist() == [95, 95, 81] and high_positions.tolist() == [1, 3]  # 验证按位置重排和条件位置提取。"],
             ["repeated = np.zeros(3, dtype=int); repeated[[0, 0]] += 1  # 重复花式索引的原地累加只写回一次，是高频陷阱。", "assert repeated[0] == 1  # 如需累计重复位置应使用np.add.at。"],
             ["rows_ix, cols_ix = np.ix_([0, 2], [1, 3]); cross = np.arange(12).reshape(3, 4)[rows_ix, cols_ix]  # 使用ix_取得行列笛卡尔积。", "assert cross.shape == (2, 2)  # 区分成对花式索引和网格索引。"],
         ],
@@ -386,9 +436,9 @@ def numpy_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["standardized_matrix = (samples - samples.mean(0)) / samples.std(0, ddof=1); correlation_from_cov = np.cov(standardized_matrix, rowvar=False)  # 标准化后的协方差等于相关矩阵。", "assert np.allclose(correlation_from_cov, np.corrcoef(samples, rowvar=False))  # 验证协方差与相关系数关系。"],
         ],
         [
-            ["polynomial = np.polynomial.Polynomial.fit(x, y, deg=2).convert()  # 新式Polynomial API可管理定义域并转换为普通系数。", "assert np.allclose(polynomial(x), predictions)  # 验证与polyfit预测一致。"],
-            ["roots = np.roots(coefficients); evaluated = np.polyval(coefficients, roots)  # 多项式根代回后理论上接近零。", "assert np.allclose(evaluated, 0, atol=1e-6)  # 验证根的数值误差范围。"],
-            ["vandermonde = np.vander(x, N=3); manual_coefficients = np.linalg.lstsq(vandermonde, y, rcond=None)[0]  # 综合用Vandermonde设计矩阵理解多项式拟合。", "assert np.allclose(vandermonde @ manual_coefficients, predictions)  # 验证底层最小二乘形式。"],
+            ["sample_x = np.linspace(0, 4, 9); sample_y = 0.5 * sample_x**2 + 2; polynomial = np.polynomial.Polynomial.fit(sample_x, sample_y, deg=2).convert()  # 用独立数据学习新式Polynomial API和系数升幂顺序。", "assert np.allclose(polynomial(sample_x), sample_y) and np.allclose(polynomial.coef, [2, 0, 0.5])  # 验证预测和新式系数顺序。"],
+            ["known_coefficients = np.array([1.0, -3.0, 2.0]); roots = np.roots(known_coefficients); evaluated = np.polyval(known_coefficients, roots)  # 从已知多项式独立计算根并代回。", "assert np.allclose(np.sort(roots), [1, 2]) and np.allclose(evaluated, 0, atol=1e-6)  # 验证根和数值误差范围。"],
+            ["sample_x = np.linspace(-1, 1, 7); sample_y = 3 * sample_x**2 - 2 * sample_x + 4; vandermonde = np.vander(sample_x, N=3); manual_coefficients = np.linalg.lstsq(vandermonde, sample_y, rcond=None)[0]  # 用独立数据和Vandermonde设计矩阵实现拟合。", "assert np.allclose(manual_coefficients, [3, -2, 4]) and np.allclose(vandermonde @ manual_coefficients, sample_y)  # 验证底层最小二乘系数和预测。"],
         ],
         [
             ["restored = np.fft.irfft(spectrum, n=sample_count)  # 使用irfft从单边频谱恢复实信号。", "assert np.allclose(restored, signal)  # 验证FFT往返变换。"],
@@ -406,7 +456,9 @@ def numpy_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             ["positive_only = np.zeros_like(values); np.square(values, out=positive_only, where=values > 0)  # 综合使用ufunc的out和where条件写入。", "assert np.array_equal(positive_only, values**2)  # 本例所有值为正，因此等于完整平方。"],
         ],
     ]
-    code = list(cases[family])
-    if variant > 1:
-        code.extend(extras[family][variant - 2])
+    base_code = cases[family]
+    if variant == 1:
+        code = list(base_code)
+    else:
+        code = independent_variant(base_code, extras[family][variant - 2])
     return title, task, code

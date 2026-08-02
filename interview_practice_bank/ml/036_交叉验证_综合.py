@@ -4,22 +4,13 @@
 要求：完成“交叉验证”的综合题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 创建样本索引。
-2. 设置K折数量。
-3. 把样本近似等分。
-4. 记录各折验证样本。
-5. 每一折轮流作为验证集。
-6. 选择当前验证折。
-7. 合并其余训练折。
-8. 收集验证覆盖。
-9. 外层评估泛化，内层选择超参数。
+1. 导入 NumPy。
+2. 外层评估泛化，内层选择超参数。
 for outer_validation in outer_folds:  # 遍历外层验证块。
     outer_training = np.setdiff1d(np.arange(8), outer_validation); inner_validation = outer_training[::2]; inner_training = np.setdiff1d(outer_training, inner_validation); nested_counts.append((len(inner_training), len(inner_validation), len(outer_validation)))  # 只在外层训练集内部再切分。
-10. 综合验证nested CV层级。
+3. 综合验证nested CV层级。
 
 完成标准：
-- 验证单折无交集。
-- 验证每个样本恰做一次验证。
 - 综合验证nested CV层级。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -27,17 +18,6 @@ for outer_validation in outer_folds:  # 遍历外层验证块。
 """
 
 import numpy as np  # 导入 NumPy。
-indices = np.arange(12)  # 创建样本索引。
-fold_count = 6  # 设置K折数量。
-folds = np.array_split(indices, fold_count)  # 把样本近似等分。
-validation_seen = []  # 记录各折验证样本。
-for fold in range(fold_count):  # 每一折轮流作为验证集。
-    validation = folds[fold]  # 选择当前验证折。
-    training = np.concatenate([part for index, part in enumerate(folds) if index != fold])  # 合并其余训练折。
-    assert not set(training) & set(validation)  # 验证单折无交集。
-    validation_seen.extend(validation.tolist())  # 收集验证覆盖。
-assert sorted(validation_seen) == indices.tolist()  # 验证每个样本恰做一次验证。
-print([len(fold) for fold in folds])  # 输出各折大小。
 outer_folds = [np.arange(0, 4), np.arange(4, 8)]; nested_counts = []  # 外层评估泛化，内层选择超参数。
 for outer_validation in outer_folds:  # 遍历外层验证块。
     outer_training = np.setdiff1d(np.arange(8), outer_validation); inner_validation = outer_training[::2]; inner_training = np.setdiff1d(outer_training, inner_validation); nested_counts.append((len(inner_training), len(inner_validation), len(outer_validation)))  # 只在外层训练集内部再切分。

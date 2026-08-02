@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from case_utils import independent_variant
+
 
 LEVELS = ["基础", "综合"]
 
@@ -482,8 +484,13 @@ def sklearn_case(family: int, variant: int) -> tuple[str, str, list[str]]:
             "assert np.array_equal(online_predictions, restored_online_predictions)  # 验证partial_fit模型持久化一致。",
         ],
     ]
-    code = list(cases[family])
-    if variant == 2:
-        code.append("import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。")
-        code.extend(comprehensive_extras[family])
+    base_code = cases[family]
+    if variant == 1:
+        code = list(base_code)
+    else:
+        extra_code = [
+            "import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。",
+            *comprehensive_extras[family],
+        ]
+        code = independent_variant(base_code, extra_code)
     return title, task, code

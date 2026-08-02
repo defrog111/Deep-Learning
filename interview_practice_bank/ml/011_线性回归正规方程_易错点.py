@@ -4,16 +4,11 @@
 要求：完成“线性回归正规方程”的易错点题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 创建单特征样本列。
-2. 按线性规律生成目标。
-3. 添加截距列形成设计矩阵。
-4. 使用伪逆求最小二乘解。
-5. 计算训练预测。
-6. 计算R²。
-7. 完全共线使XTX不可逆，应使用lstsq或伪逆。
+1. 导入 NumPy。
+2. 完全共线使XTX不可逆，应使用lstsq或伪逆。
+3. 验证多重共线性陷阱。
 
 完成标准：
-- 验证恢复真实参数。
 - 验证多重共线性陷阱。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-x = np.arange(1, 6, dtype=float)[:, None]  # 创建单特征样本列。
-y = 5 * x[:, 0] + 2  # 按线性规律生成目标。
-design = np.c_[np.ones(len(x)), x]  # 添加截距列形成设计矩阵。
-weights = np.linalg.pinv(design) @ y  # 使用伪逆求最小二乘解。
-predictions = design @ weights  # 计算训练预测。
-r_squared = 1 - ((y - predictions) ** 2).sum() / ((y - y.mean()) ** 2).sum()  # 计算R²。
-assert np.allclose(weights, [2, 5]) and np.isclose(r_squared, 1)  # 验证恢复真实参数。
-print(weights, r_squared)  # 输出回归系数和拟合优度。
 collinear = np.c_[np.arange(5.0), 2 * np.arange(5.0)]; collinear_rank = np.linalg.matrix_rank(collinear); stable_weights = np.linalg.pinv(collinear) @ np.arange(5.0)  # 完全共线使XTX不可逆，应使用lstsq或伪逆。
 assert collinear_rank == 1 and np.isfinite(stable_weights).all()  # 验证多重共线性陷阱。

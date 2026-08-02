@@ -4,17 +4,12 @@
 要求：完成“可复现性与随机种子”的综合题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 设置统一随机种子。
-2. 固定Python随机性。
-3. 创建局部NumPy Generator。
-4. 采样Python随机数。
-5. 采样NumPy随机数。
-6. 重置Python种子验证复现。
-7. 综合复现还需代码、数据、特征和指标版本，不能只有随机种子。
+1. 导入Python随机模块。
+2. 导入 NumPy。
+3. 综合复现还需代码、数据、特征和指标版本，不能只有随机种子。
+4. 验证实验追踪元数据。
 
 完成标准：
-- 验证Python随机序列复现。
-- 验证NumPy随机序列复现。
 - 验证实验追踪元数据。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,14 +18,5 @@
 
 import random  # 导入Python随机模块。
 import numpy as np  # 导入 NumPy。
-seed = 44  # 设置统一随机种子。
-random.seed(seed)  # 固定Python随机性。
-np_rng = np.random.default_rng(seed)  # 创建局部NumPy Generator。
-python_values = [random.random() for _ in range(3)]  # 采样Python随机数。
-numpy_values = np_rng.normal(size=3)  # 采样NumPy随机数。
-random.seed(seed)  # 重置Python种子验证复现。
-assert python_values == [random.random() for _ in range(3)]  # 验证Python随机序列复现。
-assert np.allclose(numpy_values, np.random.default_rng(seed).normal(size=3))  # 验证NumPy随机序列复现。
-print(seed, python_values, numpy_values)  # 输出可复现样本。
 experiment_record = {'code_version': 'abc123', 'data_version': 'v2', 'seed': 42, 'features': ['x1', 'x2'], 'metric': 0.91}; required_fields = {'code_version', 'data_version', 'seed', 'features', 'metric'}  # 综合复现还需代码、数据、特征和指标版本，不能只有随机种子。
 assert required_fields <= experiment_record.keys()  # 验证实验追踪元数据。

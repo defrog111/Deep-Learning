@@ -5,13 +5,10 @@
 
 操作步骤：
 1. 加载数据。
-2. 把预处理放进每折内部防泄漏。
-3. 对完整Pipeline交叉验证。
-4. 综合题统一导入NumPy用于shape、数值和标签检查。
-5. 并行生成原始与交互特征。
+2. 综合题统一导入NumPy用于shape、数值和标签检查。
+3. 并行生成原始与交互特征。
 
 完成标准：
-- 验证模型表现合理。
 - 验证FeatureUnion横向拼接。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -24,10 +21,6 @@ from sklearn.model_selection import cross_val_score  # 导入交叉验证评分�
 from sklearn.pipeline import Pipeline  # 导入流水线。
 from sklearn.preprocessing import StandardScaler  # 导入标准化器。
 features, labels = load_iris(return_X_y=True)  # 加载数据。
-pipeline = Pipeline([('scale', StandardScaler()), ('model', LogisticRegression(max_iter=500))])  # 把预处理放进每折内部防泄漏。
-scores = cross_val_score(pipeline, features, labels, cv=5, scoring='accuracy')  # 对完整Pipeline交叉验证。
-assert scores.mean() > 0.9  # 验证模型表现合理。
-print(scores, scores.mean())  # 输出各折准确率。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.preprocessing import FunctionTransformer, PolynomialFeatures  # 导入自定义函数转换和多项式特征。
 from sklearn.pipeline import FeatureUnion  # 导入并行特征组合器。

@@ -4,39 +4,24 @@
 要求：完成“常用魔术方法”的变式题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. 定义支持运算符的二维向量。
-2. 初始化坐标。
-3. 同时赋值两个属性。
-4. 定义开发者友好表示。
-5. 返回可读字符串。
-6. 定义len协议。
-7. 二维向量长度固定为2个分量。
-8. 定义加号行为。
-9. 返回新向量。
-10. 定义值相等语义。
+1. 导入排序方法补全装饰器。
+2. 只实现eq和lt即可补全其他比较。
+class Version:  # 定义可排序版本号。
+    def __init__(self, number):  # 保存数值。
+        self.number = number  # 设置状态。
+    def __eq__(self, other):  # 定义相等。
+        return self.number == other.number  # 比较数值。
+    def __lt__(self, other):  # 定义小于。
+        return self.number < other.number  # 比较数值。
+3. 验证补全的比较协议。
 
 完成标准：
-- 验证协议实现。
 - 验证补全的比较协议。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
-class Vector:  # 定义支持运算符的二维向量。
-    def __init__(self, x, y):  # 初始化坐标。
-        self.x, self.y = x, y  # 同时赋值两个属性。
-    def __repr__(self):  # 定义开发者友好表示。
-        return f'Vector({self.x}, {self.y})'  # 返回可读字符串。
-    def __len__(self):  # 定义len协议。
-        return 2  # 二维向量长度固定为2个分量。
-    def __add__(self, other):  # 定义加号行为。
-        return Vector(self.x + other.x, self.y + other.y)  # 返回新向量。
-    def __eq__(self, other):  # 定义值相等语义。
-        return isinstance(other, Vector) and (self.x, self.y) == (other.x, other.y)  # 比较类型和坐标。
-answer = Vector(1, 2) + Vector(4, 4)  # 使用重载运算符。
-assert len(answer) == 2 and answer == Vector(5, 6)  # 验证协议实现。
-print(answer)  # 调用__repr__输出。
 from functools import total_ordering  # 导入排序方法补全装饰器。
 @total_ordering  # 只实现eq和lt即可补全其他比较。
 class Version:  # 定义可排序版本号。

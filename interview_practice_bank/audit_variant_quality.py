@@ -55,6 +55,25 @@ def core_signature(path: Path) -> str:
     return ast.dump(normalized, include_attributes=False)
 
 
+def core_statements(path: Path) -> list[str]:
+    """返回忽略导入、展示和断言后的逐语句签名，用于发现复制主体后追加代码。"""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    normalized = NormalizeExercise().visit(tree)
+    ast.fix_missing_locations(normalized)
+    statements = []
+    for statement in normalized.body:
+        if isinstance(statement, (ast.Import, ast.ImportFrom)):
+            continue
+        statements.append(ast.dump(statement, include_attributes=False))
+    return statements
+
+
+def reuses_prefix(left: list[str], right: list[str]) -> bool:
+    """至少两条核心语句完全作为另一题前缀时，视为复制基础题后追加。"""
+    shorter, longer = sorted((left, right), key=len)
+    return len(shorter) >= 2 and len(shorter) < len(longer) and longer[: len(shorter)] == shorter
+
+
 def main() -> None:
     duplicate_groups: list[str] = []
     for category, group_size in GROUP_SIZES.items():
@@ -67,11 +86,20 @@ def main() -> None:
             if len(set(signatures)) != len(signatures):
                 names = ", ".join(path.name for path in group)
                 duplicate_groups.append(f"{category}: {names}")
+                continue
+            statement_groups = [core_statements(path) for path in group]
+            if any(
+                reuses_prefix(statement_groups[left], statement_groups[right])
+                for left in range(len(group))
+                for right in range(left + 1, len(group))
+            ):
+                names = ", ".join(path.name for path in group)
+                duplicate_groups.append(f"{category}（复制主体后追加）: {names}")
 
     if duplicate_groups:
         details = "\n".join(duplicate_groups)
         raise SystemExit(
-            "变式质量审计失败：以下同组题存在仅改常量或展示代码的情况：\n"
+            "变式质量审计失败：以下同组题存在仅改常量、展示代码，或复制基础主体后追加的情况：\n"
             f"{details}"
         )
     print("变式质量审计通过：每组基础、变式、易错点和综合题的核心代码均不同。")

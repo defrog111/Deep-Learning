@@ -4,17 +4,11 @@
 要求：完成“KNN与距离度量”的变式题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 创建二维训练点。
-2. 创建类别标签。
-3. 创建待预测样本。
-4. 计算欧氏距离。
-5. KNN分类常使用奇数k减少平票。
-6. 找到最近k个样本。
-7. 多数投票。
-8. KNN对尺度敏感，缩放会改变距离贡献。
+1. 导入 NumPy。
+2. KNN对尺度敏感，缩放会改变距离贡献。
+3. 验证尺度影响。
 
 完成标准：
-- 验证合法类别。
 - 验证尺度影响。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,14 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-training = np.array([[0.0, 0.0], [1.0, 1.0], [4.0, 4.0], [5.0, 5.0]])  # 创建二维训练点。
-labels = np.array([0, 0, 1, 1])  # 创建类别标签。
-query = np.array([3.5, 3.5])  # 创建待预测样本。
-distances = np.linalg.norm(training - query, axis=1)  # 计算欧氏距离。
-k = 3  # KNN分类常使用奇数k减少平票。
-neighbors = np.argsort(distances)[:k]  # 找到最近k个样本。
-prediction = np.bincount(labels[neighbors], minlength=2).argmax()  # 多数投票。
-assert prediction in (0, 1)  # 验证合法类别。
-print(distances, neighbors, prediction)  # 输出邻居和预测。
 knn_train = np.array([[0.0, 0.0], [1.0, 1000.0]]); knn_query = np.array([0.9, 0.0]); raw_distances = np.linalg.norm(knn_train - knn_query, axis=1); standardized_train = (knn_train - knn_train.mean(0)) / np.where(knn_train.std(0) == 0, 1, knn_train.std(0)); standardized_query = (knn_query - knn_train.mean(0)) / np.where(knn_train.std(0) == 0, 1, knn_train.std(0))  # KNN对尺度敏感，缩放会改变距离贡献。
 assert not np.allclose(raw_distances, np.linalg.norm(standardized_train - standardized_query, axis=1))  # 验证尺度影响。

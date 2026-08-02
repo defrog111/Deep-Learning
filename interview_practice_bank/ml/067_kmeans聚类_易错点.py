@@ -4,17 +4,11 @@
 要求：完成“KMeans聚类”的易错点题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 创建两个明显簇。
-2. 初始化两个中心。
-3. 交替执行分配和更新。
-4. 计算样本到各中心平方距离。
-5. 分配到最近中心。
-6. 更新为簇均值。
-7. 计算簇内平方和。
-8. DBSCAN用eps邻域和min_samples识别密度及噪声。
+1. 导入 NumPy。
+2. DBSCAN用eps邻域和min_samples识别密度及噪声。
+3. 验证离群点。
 
 完成标准：
-- 验证简单数据被正确聚类。
 - 验证离群点。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,14 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-points = np.array([[0.0, 0.0], [0.0, 1.0], [5.0, 5.0], [5.0, 6.0]])  # 创建两个明显簇。
-centers = np.array([[0.0, 0.0], [5.0, 5.0]])  # 初始化两个中心。
-for _ in range(5):  # 交替执行分配和更新。
-    distances = ((points[:, None, :] - centers[None, :, :]) ** 2).sum(axis=2)  # 计算样本到各中心平方距离。
-    assignments = distances.argmin(axis=1)  # 分配到最近中心。
-    centers = np.stack([points[assignments == cluster].mean(axis=0) for cluster in range(2)])  # 更新为簇均值。
-inertia = np.sum((points - centers[assignments]) ** 2)  # 计算簇内平方和。
-assert inertia <= 1.0  # 验证简单数据被正确聚类。
-print(assignments, centers, inertia)  # 输出聚类结果。
 dbscan_points = np.array([[0.0], [0.1], [5.0], [5.1], [20.0]]); dbscan_distances = np.abs(dbscan_points - dbscan_points.T); neighbor_counts = (dbscan_distances <= 0.2).sum(1); core_mask = neighbor_counts >= 2; noise_candidate = ~core_mask  # DBSCAN用eps邻域和min_samples识别密度及噪声。
 assert noise_candidate.tolist() == [False, False, False, False, True]  # 验证离群点。

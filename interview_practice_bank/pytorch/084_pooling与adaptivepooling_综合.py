@@ -4,14 +4,12 @@
 要求：完成“Pooling与AdaptivePooling”的综合题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 创建NCHW特征图。
-2. 最大池化把空间尺寸减半。
-3. 自适应池化直接指定输出尺寸。
-4. 全局平均池化得到每通道特征。
-5. 综合全局平均和固定shape最大池化。
+1. 导入 PyTorch。
+2. 导入池化模块。
+3. 综合全局平均和固定shape最大池化。
+4. 验证自适应池化。
 
 完成标准：
-- 验证shape。
 - 验证自适应池化。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -20,11 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入池化模块。
-features = torch.arange(2 * 3 * 8 * 8, dtype=torch.float32).reshape(2, 3, 8, 8)  # 创建NCHW特征图。
-max_pooled = nn.MaxPool2d(kernel_size=2, stride=2)(features)  # 最大池化把空间尺寸减半。
-adaptive = nn.AdaptiveAvgPool2d((4, 4))(features)  # 自适应池化直接指定输出尺寸。
-global_average = nn.AdaptiveAvgPool2d(1)(features).flatten(1)  # 全局平均池化得到每通道特征。
-assert max_pooled.shape == (2, 3, 4, 4) and global_average.shape == (2, 3)  # 验证shape。
-print(max_pooled.shape, adaptive.shape, global_average)  # 输出池化结果。
 mixed_pool_input = torch.randn(2, 3, 7, 9); global_average = nn.AdaptiveAvgPool2d(1)(mixed_pool_input).flatten(1); fixed_max = nn.AdaptiveMaxPool2d((2, 3))(mixed_pool_input)  # 综合全局平均和固定shape最大池化。
 assert global_average.shape == (2, 3) and fixed_max.shape == (2, 3, 2, 3)  # 验证自适应池化。

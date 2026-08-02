@@ -4,23 +4,25 @@
 要求：完成“可变对象与不可变对象”的基础题，并说明时间复杂度、对象身份或协议行为。
 
 操作步骤：
-1. tuple是不可变对象。
-2. list是可变对象。
-3. 赋值只复制引用而不复制对象。
-4. 原地修改列表。
-5. 拼接tuple会创建新对象。
+1. 创建不可变整数对象。
+2. 创建可变列表对象。
+3. 让第二个变量引用同一个整数对象。
+4. 让第二个变量引用同一个列表对象。
+5. 整数不能原地改变，因此变量会重新绑定到新对象。
+6. 列表可以原地修改，因此两个引用都能看到变化。
 
 完成标准：
-- 验证身份语义。
+- 验证不可变重绑定与可变原地修改。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
 练习方式：先只看题目和步骤自己实现，再阅读下面的参考代码。
 """
 
-immutable = (1, 2, 3)  # tuple是不可变对象。
-mutable = [1, 2, 3]  # list是可变对象。
-same_list = mutable  # 赋值只复制引用而不复制对象。
-mutable.append(3)  # 原地修改列表。
-new_tuple = immutable + (4,)  # 拼接tuple会创建新对象。
-assert same_list is mutable and new_tuple is not immutable  # 验证身份语义。
-print(mutable, immutable, new_tuple, id(mutable))  # 输出对象和值。
+number = 10  # 创建不可变整数对象。
+numbers = [10, 20]  # 创建可变列表对象。
+number_alias = number  # 让第二个变量引用同一个整数对象。
+list_alias = numbers  # 让第二个变量引用同一个列表对象。
+number += 1  # 整数不能原地改变，因此变量会重新绑定到新对象。
+numbers.append(30)  # 列表可以原地修改，因此两个引用都能看到变化。
+assert number_alias == 10 and list_alias == [10, 20, 30]  # 验证不可变重绑定与可变原地修改。
+print(number, number_alias, numbers, list_alias)  # 输出两类对象行为。

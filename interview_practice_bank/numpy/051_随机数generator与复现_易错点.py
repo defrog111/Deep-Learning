@@ -5,15 +5,10 @@
 
 操作步骤：
 1. 使用推荐的Generator并固定种子。
-2. 从正态分布采样。
-3. 从离散均匀分布采样。
-4. 按概率采样类别。
-5. 用相同种子复现第一组采样。
-6. integers默认允许重复，不能直接替代permutation。
-7. 检查随机整数采样性质。
+2. integers默认允许重复，不能直接替代permutation。
+3. 检查随机整数采样性质。
 
 完成标准：
-- 验证可复现性。
 - 检查随机整数采样性质。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -22,11 +17,5 @@
 
 import numpy as np  # 导入 NumPy。
 rng = np.random.default_rng(43)  # 使用推荐的Generator并固定种子。
-normal = rng.normal(loc=0.0, scale=1.0, size=(2, 3))  # 从正态分布采样。
-integers = rng.integers(0, 10, size=5)  # 从离散均匀分布采样。
-choice = rng.choice(['A', 'B', 'C'], size=4, replace=True, p=[0.2, 0.3, 0.5])  # 按概率采样类别。
-repeat = np.random.default_rng(43).normal(size=(2, 3))  # 用相同种子复现第一组采样。
-assert np.allclose(normal, repeat)  # 验证可复现性。
-print(normal, integers, choice)  # 输出随机样本。
 sampled_with_replacement = rng.integers(0, 100, size=100)  # integers默认允许重复，不能直接替代permutation。
 assert sampled_with_replacement.shape == (100,) and np.unique(sampled_with_replacement).size <= 100  # 检查随机整数采样性质。

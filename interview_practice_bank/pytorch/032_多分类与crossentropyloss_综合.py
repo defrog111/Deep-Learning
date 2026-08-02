@@ -4,15 +4,12 @@
 要求：完成“多分类与CrossEntropyLoss”的综合题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. CrossEntropy接收未归一化logits。
-2. 多分类标签使用Long类别索引。
-3. 内部组合log_softmax和NLLLoss。
-4. 计算logits梯度。
-5. 仅展示时转换概率。
-6. 使用ignore_index忽略padding token。
+1. 导入 PyTorch。
+2. 导入损失函数模块。
+3. 使用ignore_index忽略padding token。
+4. 验证序列分类损失。
 
 完成标准：
-- 验证每行概率和为1。
 - 验证序列分类损失。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,12 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入损失函数模块。
-logits = torch.tensor([[2.0, 0.5, -1.0], [0.1, 1.5, 0.2]], requires_grad=True)  # CrossEntropy接收未归一化logits。
-labels = torch.tensor([0, 1])  # 多分类标签使用Long类别索引。
-loss = nn.CrossEntropyLoss(label_smoothing=0.08)(logits, labels)  # 内部组合log_softmax和NLLLoss。
-loss.backward()  # 计算logits梯度。
-probabilities = logits.detach().softmax(dim=1)  # 仅展示时转换概率。
-assert torch.allclose(probabilities.sum(1), torch.ones(2))  # 验证每行概率和为1。
-print(loss.item(), probabilities, logits.grad)  # 输出损失、概率和梯度。
 sequence_logits = torch.randn(2, 4, 3); sequence_labels = torch.tensor([[0, 1, -100, -100], [2, 1, 0, -100]]); token_loss = nn.CrossEntropyLoss(ignore_index=-100)(sequence_logits.reshape(-1, 3), sequence_labels.reshape(-1))  # 使用ignore_index忽略padding token。
 assert token_loss.ndim == 0 and torch.isfinite(token_loss)  # 验证序列分类损失。

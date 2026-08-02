@@ -4,18 +4,12 @@
 要求：完成“GRU序列分类”的综合题，说明训练态、梯度和张量shape。
 
 操作步骤：
-1. 固定随机种子。
-2. 创建单层GRU。
-3. 创建三分类头。
-4. 创建五条长度七的序列。
-5. 运行序列编码。
-6. 使用最终隐藏状态分类。
-7. 创建类别标签。
-8. 计算分类损失。
-9. 综合变长序列GRU。
+1. 导入 PyTorch。
+2. 导入GRU和线性层。
+3. 综合变长序列GRU。
+4. 验证有效步数和状态shape。
 
 完成标准：
-- 验证分类输出shape。
 - 验证有效步数和状态shape。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -24,16 +18,5 @@
 
 import torch  # 导入 PyTorch。
 from torch import nn  # 导入GRU和线性层。
-torch.manual_seed(0)  # 固定随机种子。
-gru = nn.GRU(input_size=4, hidden_size=8, batch_first=True)  # 创建单层GRU。
-head = nn.Linear(8, 3)  # 创建三分类头。
-sequence = torch.randn(5, 7, 4)  # 创建五条长度七的序列。
-outputs, hidden = gru(sequence)  # 运行序列编码。
-logits = head(hidden[-1])  # 使用最终隐藏状态分类。
-labels = torch.tensor([0, 1, 2, 1, 0])  # 创建类别标签。
-loss = nn.CrossEntropyLoss()(logits, labels)  # 计算分类损失。
-loss.backward()  # 验证整个模型可反向传播。
-assert logits.shape == (5, 3)  # 验证分类输出shape。
-print(loss.item(), outputs.shape, hidden.shape)  # 输出损失和状态shape。
 packed_gru = nn.GRU(3, 4, batch_first=True); gru_lengths = torch.tensor([4, 2]); gru_packed = nn.utils.rnn.pack_padded_sequence(torch.randn(2, 4, 3), gru_lengths, batch_first=True, enforce_sorted=False); gru_packed_output, gru_hidden = packed_gru(gru_packed)  # 综合变长序列GRU。
 assert gru_packed_output.data.shape[0] == 6 and gru_hidden.shape == (1, 2, 4)  # 验证有效步数和状态shape。

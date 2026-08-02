@@ -4,16 +4,11 @@
 要求：完成“outer与einsum”的综合题，写出关键数组的shape并解释结果。
 
 操作步骤：
-1. 创建列因子向量。
-2. 创建行因子向量。
-3. 计算所有两两乘积。
-4. 用爱因斯坦求和表达外积。
-5. 创建矩阵。
-6. 用einsum沿行轴求和。
-7. einsum计算每个batch的外积。
+1. 导入 NumPy。
+2. einsum计算每个batch的外积。
+3. 验证批量外积。
 
 完成标准：
-- 验证两种外积写法一致。
 - 验证批量外积。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -21,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-a = np.array([1, 2, 3])  # 创建列因子向量。
-b = np.array([4, 5])  # 创建行因子向量。
-outer = np.outer(a, b)  # 计算所有两两乘积。
-einsum_outer = np.einsum('i,j->ij', a, b)  # 用爱因斯坦求和表达外积。
-matrix = np.arange(6).reshape(2, 3)  # 创建矩阵。
-column_sums = np.einsum('ij->j', matrix)  # 用einsum沿行轴求和。
-assert np.array_equal(outer, einsum_outer)  # 验证两种外积写法一致。
-print(outer, column_sums)  # 输出einsum结果。
 batch_outer = np.einsum('bi,bj->bij', np.ones((3, 2)), np.arange(12).reshape(3, 4))  # einsum计算每个batch的外积。
 assert batch_outer.shape == (3, 2, 4)  # 验证批量外积。

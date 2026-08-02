@@ -4,16 +4,16 @@
 要求：完成“ColumnTransformer混合特征”的综合题，说明fit、transform和predict各自只能使用哪些数据。
 
 操作步骤：
-1. 创建混合特征表。
-2. 为不同列配置不同处理。
-3. 一次拟合并转换训练数据。
-4. 获取转换后的特征名。
-5. 两个数值列加两个类别列。
-6. 综合题统一导入NumPy用于shape、数值和标签检查。
+1. 导入 Pandas。
+2. 导入列级转换器。
+3. 导入数值和类别转换器。
+4. 综合题统一导入NumPy用于shape、数值和标签检查。
+5. 导入数值缺失填充器。
+6. 导入子流水线构造函数。
 7. 每类列使用独立流水线。
+8. 验证混合预处理无缺失。
 
 完成标准：
-- 两个数值列加两个类别列。
 - 验证混合预处理无缺失。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,12 +23,6 @@
 import pandas as pd  # 导入 Pandas。
 from sklearn.compose import ColumnTransformer  # 导入列级转换器。
 from sklearn.preprocessing import OneHotEncoder, StandardScaler  # 导入数值和类别转换器。
-frame = pd.DataFrame({'age': [20, 30, 40], 'income': [30, 60, 90], 'city': ['A', 'B', 'A']})  # 创建混合特征表。
-preprocessor = ColumnTransformer([('numeric', StandardScaler(), ['age', 'income']), ('category', OneHotEncoder(sparse_output=False), ['city'])])  # 为不同列配置不同处理。
-transformed = preprocessor.fit_transform(frame)  # 一次拟合并转换训练数据。
-names = preprocessor.get_feature_names_out()  # 获取转换后的特征名。
-assert transformed.shape == (3, 4)  # 两个数值列加两个类别列。
-print(names, transformed)  # 输出特征名和矩阵。
 import numpy as np  # 综合题统一导入NumPy用于shape、数值和标签检查。
 from sklearn.impute import SimpleImputer  # 导入数值缺失填充器。
 from sklearn.pipeline import make_pipeline  # 导入子流水线构造函数。

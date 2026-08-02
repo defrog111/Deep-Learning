@@ -4,18 +4,11 @@
 要求：完成“L1L2正则化”的综合题，计算结果并回答为什么不能使用错误做法。
 
 操作步骤：
-1. 构造模型权重。
-2. 设置正则化强度。
-3. L1倾向产生稀疏权重。
-4. L2平滑缩小大权重。
-5. 计算非零处L1次梯度。
-6. 计算L2梯度。
-7. 正则项应非负。
-8. 正交设计下Lasso等价于软阈值。
-9. 综合验证L1产生稀疏系数。
+1. 导入 NumPy。
+2. 正交设计下Lasso等价于软阈值。
+3. 综合验证L1产生稀疏系数。
 
 完成标准：
-- 正则项应非负。
 - 综合验证L1产生稀疏系数。
 - 脚本能够独立运行，并输出便于人工检查的结果。
 
@@ -23,13 +16,5 @@
 """
 
 import numpy as np  # 导入 NumPy。
-weights = np.array([3.0, -1.0, 0.2, 0.0])  # 构造模型权重。
-strength = 0.4  # 设置正则化强度。
-l1_penalty = strength * np.abs(weights).sum()  # L1倾向产生稀疏权重。
-l2_penalty = strength * (weights**2).sum()  # L2平滑缩小大权重。
-l1_subgradient = strength * np.sign(weights)  # 计算非零处L1次梯度。
-l2_gradient = 2 * strength * weights  # 计算L2梯度。
-assert l1_penalty >= 0 and l2_penalty >= 0  # 正则项应非负。
-print(l1_penalty, l2_penalty, l1_subgradient, l2_gradient)  # 输出惩罚和梯度。
 orthogonal_design = np.eye(3); sparse_target = np.array([3.0, 0.1, -2.0]); threshold = 0.5; lasso_closed_form = np.sign(sparse_target) * np.maximum(np.abs(sparse_target) - threshold, 0)  # 正交设计下Lasso等价于软阈值。
 assert lasso_closed_form.tolist() == [2.5, 0.0, -1.5]  # 综合验证L1产生稀疏系数。
