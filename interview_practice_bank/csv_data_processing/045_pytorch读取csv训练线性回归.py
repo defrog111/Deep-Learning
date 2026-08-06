@@ -9,11 +9,7 @@ CSV数据处理练习 045：PyTorch读取CSV训练线性回归
 3. 定义模型输入列。
 4. 把CSV特征转换为二维浮点Tensor。
 5. 把连续目标转换为shape=(N,1)。
-6. 创建可复现的PyTorch随机数生成器。
-7. 生成打乱后的样本索引。
-8. 固定六条测试样本并保留其余训练样本。
-9. 切分训练和测试特征。
-10. 切分训练和测试目标。
+6. 使用train_test_split同时划分训练和测试特征及目标。
 
 完成标准：
 - 必须使用pd.read_csv从磁盘载入CSV。
@@ -25,21 +21,29 @@ from pathlib import Path  # 导入跨平台路径工具。
 import pandas as pd  # 导入Pandas读取CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
+from sklearn.model_selection import train_test_split  # 导入训练测试集切分工具。
 csv_path = Path(__file__).parents[1] / 'data' / 'house_prices.csv'  # 定位房价回归数据文件。
 frame = pd.read_csv(csv_path)  # 从CSV读取完整回归数据。
 feature_names = ['house_size_sqft', 'bedrooms', 'house_age_years', 'distance_km']  # 定义模型输入列。
 features = torch.tensor(frame[feature_names].to_numpy(), dtype=torch.float32)  # 把CSV特征转换为二维浮点Tensor。
 targets = torch.tensor(frame['price_thousands'].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 把连续目标转换为shape=(N,1)。
-generator = torch.Generator().manual_seed(42)  # 创建可复现的PyTorch随机数生成器。
-indices = torch.randperm(len(frame), generator=generator)  # 生成打乱后的样本索引。
-test_indices, train_indices = indices[:6], indices[6:]  # 固定六条测试样本并保留其余训练样本。
-train_x, test_x = features[train_indices], features[test_indices]  # 切分训练和测试特征。
-train_y, test_y = targets[train_indices], targets[test_indices]  # 切分训练和测试目标。
+train_x, test_x, train_y, test_y = train_test_split(features, targets, test_size=0.2, random_state=42)  # 随机且可复现地划分80%训练集和20%测试集。
+# 原来的PyTorch手动切分写法：先生成随机排列，再用同一组索引切分特征和目标，保证样本一一对应。
+# generator = torch.Generator().manual_seed(42)
+# indices = torch.randperm(len(frame), generator=generator)
+# test_indices, train_indices = indices[:6], indices[6:]
+# train_x, test_x = features[train_indices], features[test_indices]
+# train_y, test_y = targets[train_indices], targets[test_indices]
 x_mean, x_std = train_x.mean(dim=0, keepdim=True), train_x.std(dim=0, keepdim=True)  # 只从训练特征计算标准化参数。
 y_mean, y_std = train_y.mean(dim=0, keepdim=True), train_y.std(dim=0, keepdim=True)  # 标准化目标以加快梯度训练收敛。
 train_x_scaled = (train_x - x_mean) / x_std  # 标准化训练特征。
 test_x_scaled = (test_x - x_mean) / x_std  # 使用训练统计量标准化测试特征。
 train_y_scaled = (train_y - y_mean) / y_std  # 标准化训练目标。
+# StandardScaler等价写法：只在训练集fit，测试集只能使用同一个scaler执行transform，避免数据泄漏。
+# from sklearn.preprocessing import StandardScaler
+# x_scaler = StandardScaler()
+# train_x_scaled = torch.tensor(x_scaler.fit_transform(train_x.numpy()), dtype=torch.float32)
+# test_x_scaled = torch.tensor(x_scaler.transform(test_x.numpy()), dtype=torch.float32)
 torch.manual_seed(42)  # 固定模型参数初始化以保证结果可复现。
 model = nn.Linear(len(feature_names), 1)  # 创建包含权重和偏置的单层线性回归模型。
 loss_function = nn.MSELoss()  # 使用均方误差作为回归损失。

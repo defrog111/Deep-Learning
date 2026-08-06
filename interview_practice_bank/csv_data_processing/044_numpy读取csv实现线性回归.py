@@ -9,11 +9,7 @@ CSV数据处理练习 044：NumPy读取CSV实现线性回归
 3. 指定四个输入特征。
 4. 把DataFrame特征转换为浮点矩阵。
 5. 把房价列转换为一维目标数组。
-6. 创建可复现且不污染全局状态的随机数生成器。
-7. 随机打乱全部样本索引。
-8. 固定六条测试数据并把其余数据用于训练。
-9. 按索引切分特征矩阵。
-10. 用相同索引切分目标向量。
+6. 使用train_test_split同时划分训练和测试特征及目标。
 
 完成标准：
 - 必须使用pd.read_csv从磁盘载入CSV。
@@ -24,16 +20,19 @@ CSV数据处理练习 044：NumPy读取CSV实现线性回归
 from pathlib import Path  # 导入跨平台路径工具。
 import numpy as np  # 导入NumPy进行矩阵运算。
 import pandas as pd  # 导入Pandas读取CSV。
+from sklearn.model_selection import train_test_split  # 导入训练测试集切分工具。
 csv_path = Path(__file__).parents[1] / 'data' / 'house_prices.csv'  # 定位房价回归数据文件。
 frame = pd.read_csv(csv_path)  # 从CSV读取特征和连续目标值。
 feature_names = ['house_size_sqft', 'bedrooms', 'house_age_years', 'distance_km']  # 指定四个输入特征。
 features = frame[feature_names].to_numpy(dtype=np.float64)  # 把DataFrame特征转换为浮点矩阵。
 targets = frame['price_thousands'].to_numpy(dtype=np.float64)  # 把房价列转换为一维目标数组。
-rng = np.random.default_rng(42)  # 创建可复现且不污染全局状态的随机数生成器。
-indices = rng.permutation(len(frame))  # 随机打乱全部样本索引。
-test_indices, train_indices = indices[:6], indices[6:]  # 固定六条测试数据并把其余数据用于训练。
-train_x, test_x = features[train_indices], features[test_indices]  # 按索引切分特征矩阵。
-train_y, test_y = targets[train_indices], targets[test_indices]  # 用相同索引切分目标向量。
+train_x, test_x, train_y, test_y = train_test_split(features, targets, test_size=0.2, random_state=42)  # 随机且可复现地划分80%训练集和20%测试集。
+# 原来的NumPy手动切分写法：先打乱索引，再用同一组索引切分特征和目标，保证样本一一对应。
+# rng = np.random.default_rng(42)
+# indices = rng.permutation(len(frame))
+# test_indices, train_indices = indices[:6], indices[6:]
+# train_x, test_x = features[train_indices], features[test_indices]
+# train_y, test_y = targets[train_indices], targets[test_indices]
 mean = train_x.mean(axis=0, keepdims=True)  # 只用训练集计算每列均值以避免数据泄漏。
 std = train_x.std(axis=0, keepdims=True)  # 只用训练集计算每列标准差。
 train_scaled = (train_x - mean) / std  # 标准化训练特征以改善数值条件。
