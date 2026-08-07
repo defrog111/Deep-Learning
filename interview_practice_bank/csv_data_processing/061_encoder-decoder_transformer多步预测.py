@@ -26,11 +26,15 @@ import pandas as pd  # 导入Pandas读取时序CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
 csv_path = Path(__file__).parents[1] / 'data' / 'time_series_sequences.csv'  # 定位含十二步序列和固定分区的CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练序列。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证序列。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理序列。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理分区。
 source_columns = [f'step_{index}' for index in range(1, 9)]  # 使用前八步作为Encoder历史输入。
 target_columns = [f'step_{index}' for index in range(9, 13)]  # 使用后四步作为多步预测目标。
+# drop变体：source_frame = train_frame.drop(columns=['sequence_id', *target_columns, 'class_label', 'next_value', 'split'])  # 按列名排除未来目标和非特征字段得到前八步。
+# iloc变体：source_frame = train_frame.iloc[:, 1:9]  # 按位置选择step_1到step_8作为Encoder特征。
 forecast_horizon = len(target_columns)  # 记录需要自回归生成的未来步数。
 train_source = torch.tensor(train_frame[source_columns].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建shape=(N,8,1)的训练源序列。
 val_source = torch.tensor(val_frame[source_columns].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建验证源序列。

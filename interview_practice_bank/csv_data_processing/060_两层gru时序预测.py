@@ -1,19 +1,17 @@
 """
-CSV数据处理练习 060：两层GRU时序预测
+CSV数据处理练习 060：两层GRU递归时序预测
 
-题目：分别从CSV读取train、val和inference序列，使用两层GRU根据历史窗口预测下一时刻连续值，并在验证集计算MAE与RMSE。
+题目：读取时序CSV，按列位置使用两层GRU根据五步历史预测下一连续值，并通过forecast_horizon控制滑动窗口递归预测一步或多步。
 
 操作过程：
-1. 定位时序预测CSV。
-2. 读取训练分区。
-3. 读取验证分区。
-4. 读取推理分区。
-5. 定义历史窗口列。
-6. 创建训练序列。
-7. 创建验证序列。
-8. 创建推理序列。
-9. 创建训练连续目标。
-10. 创建验证连续目标。
+1. 读取并清洗时序CSV。
+2. 按固定split取得训练、验证和推理分区。
+3. 按列位置使用最后五个历史值构造输入窗口。
+4. 仅用训练数据计算输入和目标标准化参数。
+5. 使用两层GRU训练单步预测模型。
+6. 验证时评估真实下一步的MAE和RMSE。
+7. 推理时删除窗口最早值并追加本轮预测值。
+8. 使用forecast_horizon控制递归预测步数。
 
 完成标准：
 - 必须使用pd.read_csv从磁盘载入CSV。
@@ -21,50 +19,68 @@ CSV数据处理练习 060：两层GRU时序预测
 - 先自己实现，再对照下面逐行中文注释的参考代码。
 """
 
-from pathlib import Path  # 导入路径工具。
+from pathlib import Path  # 导入跨平台路径工具。
 import pandas as pd  # 导入Pandas读取CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
 csv_path = Path(__file__).parents[1] / 'data' / 'time_series_sequences.csv'  # 定位时序预测CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 读取训练分区。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 读取验证分区。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 读取推理分区。
-steps = [f'step_{index}' for index in range(1, 13)]  # 定义历史窗口列。
-train_x = torch.tensor(train_frame[steps].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建训练序列。
-val_x = torch.tensor(val_frame[steps].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建验证序列。
-inference_x = torch.tensor(inference_frame[steps].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建推理序列。
-train_y = torch.tensor(train_frame['next_value'].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 创建训练连续目标。
-val_y = torch.tensor(val_frame['next_value'].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 创建验证连续目标。
-x_mean, x_std = train_x.mean(), train_x.std()  # 计算训练输入统计量。
-y_mean, y_std = train_y.mean(), train_y.std()  # 计算训练目标统计量。
-train_x, val_x, inference_x = (train_x - x_mean) / x_std, (val_x - x_mean) / x_std, (inference_x - x_mean) / x_std  # 转换三个分区。
-train_y_scaled = (train_y - y_mean) / y_std  # 标准化训练目标。
-class GRUForecaster(nn.Module):  # 定义两层GRU预测器。
-    def __init__(self):  # 初始化网络。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建索引。
+train_frame = frame.query("split == 'train'").copy()  # 取得训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 取得验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 取得推理分区。
+window_size = 5  # 指定每次用于预测的历史窗口长度。
+history_end_index = 13  # 指定历史数值区域的右边界位置且切片不包含该位置。
+history_start_index = history_end_index - window_size  # 根据窗口长度计算最后五个历史值的起始位置。
+target_index = 14  # 指定真实下一时刻连续值所在的列位置。
+# drop变体：feature_frame = train_frame.drop(columns=['sequence_id', 'class_label', 'next_value', 'split'])  # 也可按列名排除ID、目标和分区列。
+# iloc主写法：feature_frame = train_frame.iloc[:, history_start_index:history_end_index]  # 按位置选择长度为五的历史窗口。
+forecast_horizon = 4  # 设置为1预测一步，设置为大于1递归预测多步。
+train_x = torch.tensor(train_frame.iloc[:, history_start_index:history_end_index].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 创建shape=(N,5,1)的训练窗口。
+val_x = torch.tensor(val_frame.iloc[:, history_start_index:history_end_index].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 按相同位置创建验证窗口。
+inference_x = torch.tensor(inference_frame.iloc[:, history_start_index:history_end_index].to_numpy(), dtype=torch.float32).unsqueeze(-1)  # 按相同位置创建推理初始窗口。
+train_y = torch.tensor(train_frame.iloc[:, target_index].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 按位置创建真实下一值训练目标。
+val_y = torch.tensor(val_frame.iloc[:, target_index].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 按位置创建真实下一值验证目标。
+x_mean, x_std = train_x.mean(), train_x.std()  # 只从训练历史窗口计算输入统计量。
+y_mean, y_std = train_y.mean(), train_y.std()  # 只从训练下一值计算目标统计量。
+train_x = (train_x - x_mean) / x_std  # 使用训练统计量标准化训练窗口。
+val_x = (val_x - x_mean) / x_std  # 使用相同训练统计量标准化验证窗口。
+inference_x = (inference_x - x_mean) / x_std  # 使用相同训练统计量标准化推理窗口。
+train_y_scaled = (train_y - y_mean) / y_std  # 标准化训练目标以稳定优化。
+class GRUForecaster(nn.Module):  # 定义单步两层GRU预测器。
+    def __init__(self):  # 初始化网络组件。
         super().__init__()  # 初始化父类。
-        self.gru = nn.GRU(1, 16, num_layers=2, batch_first=True)  # 创建两层GRU序列编码器。
-        self.output = nn.Linear(16, 1)  # 映射隐藏状态到下一时刻预测。
-    def forward(self, values):  # 定义前向传播。
-        _, hidden = self.gru(values)  # 获取最终隐藏状态。
-        return self.output(hidden[-1])  # 从最后一层状态输出连续值。
-torch.manual_seed(42)  # 固定初始化。
-model = GRUForecaster()  # 实例化预测器。
-criterion = nn.MSELoss()  # 使用MSE训练。
-optimizer = torch.optim.Adam(model.parameters(), lr=0.02)  # 创建优化器。
-for epoch in range(400):  # 开始训练阶段。
-    model.train()  # 设置训练模式。
-    optimizer.zero_grad()  # 清空梯度。
-    loss = criterion(model(train_x), train_y_scaled)  # 计算训练损失。
-    loss.backward()  # 反向传播。
-    optimizer.step()  # 更新参数。
-model.eval()  # 开始验证阶段。
-with torch.no_grad():  # 关闭验证梯度。
-    val_predictions = model(val_x) * y_std + y_mean  # 还原验证预测尺度。
-    val_mae = (val_predictions - val_y).abs().mean()  # 计算MAE。
-    val_rmse = ((val_predictions - val_y) ** 2).mean().sqrt()  # 计算RMSE。
-model.eval()  # 开始推理阶段。
-with torch.inference_mode():  # 关闭推理梯度。
-    inference_predictions = model(inference_x) * y_std + y_mean  # 预测下一时刻值。
-assert inference_predictions.shape == (len(inference_frame), 1) and torch.isfinite(val_mae)  # 验证输出和指标。
-print('validation_mae:', val_mae.item(), 'validation_rmse:', val_rmse.item(), 'inference_next_value:', inference_predictions.squeeze(1), sep='\n')  # 输出结果。
-# 多步预测可使用递归策略反复把预测放回输入，或让模型一次输出整个forecast horizon。
+        self.gru = nn.GRU(input_size=1, hidden_size=16, num_layers=2, batch_first=True)  # 创建两层GRU序列编码器。
+        self.output = nn.Linear(16, 1)  # 从最终隐藏状态输出一个标准化下一值。
+    def forward(self, values):  # 定义单步前向传播。
+        _, hidden = self.gru(values)  # 编码当前完整历史窗口。
+        return self.output(hidden[-1])  # 使用最后一层最终状态预测下一值。
+def recursive_forecast(fitted_model, seed_window, horizon):  # 定义滑动窗口递归预测函数。
+    current_window = seed_window.clone()  # 复制初始窗口避免原地修改输入。
+    generated = []  # 保存每一步原始尺度预测值。
+    for _ in range(horizon):  # 根据forecast_horizon逐步生成未来值。
+        next_y_scaled = fitted_model(current_window)  # 在目标标准化空间预测下一值。
+        next_raw = next_y_scaled * y_std + y_mean  # 把本轮预测还原为原始数值。
+        generated.append(next_raw)  # 保存原始尺度预测结果。
+        next_x_scaled = (next_raw - x_mean) / x_std  # 把预测值转换到输入窗口使用的标准化尺度。
+        current_window = torch.cat((current_window[:, 1:, :], next_x_scaled.unsqueeze(1)), dim=1)  # 删除最早值并把预测值追加到窗口末尾。
+    return torch.stack(generated, dim=1)  # 返回shape=(N,horizon,1)的递归预测。
+torch.manual_seed(42)  # 固定模型初始化。
+model = GRUForecaster()  # 实例化两层GRU预测器。
+criterion = nn.MSELoss()  # 使用均方误差训练连续值预测。
+optimizer = torch.optim.Adam(model.parameters(), lr=0.02)  # 创建Adam优化器。
+for epoch in range(400):  # 多轮训练单步预测模型。
+    model.train()  # 切换到训练模式。
+    optimizer.zero_grad()  # 清除上一轮梯度。
+    loss = criterion(model(train_x), train_y_scaled)  # 计算标准化空间的一步预测损失。
+    loss.backward()  # 反向传播计算梯度。
+    optimizer.step()  # 更新模型参数。
+model.eval()  # 切换到验证和推理模式。
+with torch.inference_mode():  # 关闭梯度执行验证与递归推理。
+    val_predictions = model(val_x) * y_std + y_mean  # 预测验证集真实下一步并还原尺度。
+    val_mae = (val_predictions - val_y).abs().mean()  # 计算一步验证MAE。
+    val_rmse = ((val_predictions - val_y) ** 2).mean().sqrt()  # 计算一步验证RMSE。
+    inference_predictions = recursive_forecast(model, inference_x, forecast_horizon)  # 递归预测指定数量的未来值。
+assert inference_predictions.shape == (len(inference_frame), forecast_horizon, 1) and torch.isfinite(val_mae)  # 验证多步输出shape和指标有效。
+print('validation_mae:', val_mae.item(), 'validation_rmse:', val_rmse.item(), 'forecast_horizon:', forecast_horizon, 'future_values:', inference_predictions.squeeze(-1), sep='\n')  # 输出一步指标和多步预测。
+# 递归预测会把模型输出继续作为输入，因此远期误差通常会逐步累积。

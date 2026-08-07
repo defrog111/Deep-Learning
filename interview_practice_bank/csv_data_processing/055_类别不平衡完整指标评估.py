@@ -30,12 +30,16 @@ from sklearn.metrics import average_precision_score, confusion_matrix, precision
 from sklearn.pipeline import Pipeline  # 导入流水线。
 from sklearn.preprocessing import OneHotEncoder, StandardScaler  # 导入预处理组件。
 csv_path = Path(__file__).parents[1] / 'data' / 'customer_churn_interview.csv'  # 定位面试CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练数据。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证数据。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理数据。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理分区。
 numeric = ['age', 'tenure_months', 'monthly_charges', 'support_calls', 'weekly_usage_hours']  # 定义数值字段。
 categorical = ['region', 'contract_type']  # 定义类别字段。
 features = numeric + categorical  # 排除ID、标签、日期和split。
+# drop变体：feature_frame = train_frame.drop(columns=['customer_id', 'signup_date', 'churn', 'split'])  # 按列名排除非模型字段。
+# iloc变体：feature_frame = train_frame.iloc[:, 1:8]  # 按位置选择age到contract_type的连续特征区间。
 preprocessor = ColumnTransformer([('numeric', Pipeline([('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler())]), numeric), ('categorical', Pipeline([('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))]), categorical)])  # 创建无泄漏预处理。
 model = Pipeline([('preprocessor', preprocessor), ('classifier', LogisticRegression(max_iter=1000, class_weight='balanced'))])  # 用balanced让少数类获得更高损失权重。
 model.fit(train_frame[features], train_frame['churn'])  # 只在训练分区拟合模型。

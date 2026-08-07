@@ -24,7 +24,10 @@ from torch import nn  # 导入神经网络模块。
 from sklearn.model_selection import train_test_split  # 导入训练测试集切分工具。
 csv_path = Path(__file__).parents[1] / 'data' / 'house_prices.csv'  # 定位房价回归数据文件。
 frame = pd.read_csv(csv_path)  # 从CSV读取完整回归数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
 feature_names = ['house_size_sqft', 'bedrooms', 'house_age_years', 'distance_km']  # 定义模型输入列。
+# drop变体：feature_frame = frame.drop(columns=['price_thousands'])  # 按列名排除目标列得到全部特征。
+# iloc变体：feature_frame = frame.iloc[:, :-1]  # 按位置选择目标列之前的全部特征。
 features = torch.tensor(frame[feature_names].to_numpy(), dtype=torch.float32)  # 把CSV特征转换为二维浮点Tensor。
 targets = torch.tensor(frame['price_thousands'].to_numpy(), dtype=torch.float32).unsqueeze(1)  # 把连续目标转换为shape=(N,1)。
 train_x, test_x, train_y, test_y = train_test_split(features, targets, test_size=0.2, random_state=42)  # 随机且可复现地划分80%训练集和20%测试集。

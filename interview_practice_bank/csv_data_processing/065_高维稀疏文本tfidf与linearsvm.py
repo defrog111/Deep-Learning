@@ -29,9 +29,13 @@ from sklearn.metrics import accuracy_score, classification_report  # 导入分�
 from sklearn.pipeline import Pipeline  # 导入文本建模流水线。
 from sklearn.svm import LinearSVC  # 导入适合高维稀疏文本的线性支持向量机。
 csv_path = Path(__file__).parents[1] / 'data' / 'multimodal_products.csv'  # 定位文本分类CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练文本。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证文本。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理文本。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练文本。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证文本。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理文本。
+# drop变体：train_text = train_frame.drop(columns=['item_id', 'price', 'rating', 'stock', 'category', 'split'])['description']  # 按列名排除非文本字段后取得description。
+# iloc变体：train_text = train_frame.iloc[:, 4]  # 按位置选择description文本Series。
 model = Pipeline([('tfidf', TfidfVectorizer(ngram_range=(1, 2), min_df=1, max_features=5000, sublinear_tf=True)), ('classifier', LinearSVC(C=1.0, class_weight='balanced', random_state=42))])  # 串联稀疏TF-IDF和最大间隔线性SVM。
 model.fit(train_frame['description'], train_frame['category'])  # 只在训练分区学习词表、IDF和最大间隔超平面。
 train_matrix = model.named_steps['tfidf'].transform(train_frame['description'])  # 检查传入LinearSVC的是CSR稀疏特征。

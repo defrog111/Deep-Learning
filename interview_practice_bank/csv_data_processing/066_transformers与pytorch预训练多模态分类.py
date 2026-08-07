@@ -26,10 +26,13 @@ import pandas as pd  # 导入Pandas读取多模态CSV。
 import torch  # 导入PyTorch构建数值融合与分类头。
 from torch import nn  # 导入神经网络模块。
 from transformers import AutoModel, AutoTokenizer  # 导入Hugging Face自动Tokenizer和预训练Transformer。
+from sklearn.metrics import f1_score, precision_score, recall_score  # 导入多分类precision、recall和F1。
 csv_path = Path(__file__).parents[1] / 'data' / 'multimodal_products.csv'  # 定位同时包含description和数值字段的CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练文本、数值和标签。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证文本、数值和标签。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取最终推理文本和数值。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练文本、数值和标签。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证文本、数值和标签。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出最终推理文本和数值。
 model_name = 'google/bert_uncased_L-2_H-128_A-2'  # 选择Google官方轻量预训练BERT以便CPU练习。
 tokenizer_name = 'bert-base-uncased'  # 使用与bert-tiny共享词表的标准BERT uncased tokenizer。
 tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)  # 下载或从缓存加载成熟的BERT WordPiece tokenizer。
@@ -49,6 +52,8 @@ train_text = extract_text_features(train_batch)  # 一次性提取训练文本�
 val_text = extract_text_features(val_batch)  # 提取验证文本表示。
 inference_text = extract_text_features(inference_batch)  # 提取推理文本表示。
 numeric_columns = ['price', 'rating', 'stock']  # 指定数值模态字段。
+# drop变体：numeric_frame = train_frame.drop(columns=['item_id', 'description', 'category', 'split'])  # 按列名排除ID、文本、标签和分区列得到数值特征。
+# iloc变体：numeric_frame = train_frame.iloc[:, 1:4]  # 按位置选择price、rating和stock。
 train_numeric = torch.tensor(train_frame[numeric_columns].to_numpy(), dtype=torch.float32)  # 创建训练数值Tensor。
 val_numeric = torch.tensor(val_frame[numeric_columns].to_numpy(), dtype=torch.float32)  # 创建验证数值Tensor。
 inference_numeric = torch.tensor(inference_frame[numeric_columns].to_numpy(), dtype=torch.float32)  # 创建推理数值Tensor。
@@ -85,6 +90,9 @@ with torch.no_grad():  # 验证阶段关闭梯度。
     val_logits = model(val_text, val_numeric)  # 计算验证类别logits。
     val_predictions = val_logits.argmax(1)  # 选择验证最大logit类别。
     val_accuracy = (val_predictions == val_y).float().mean()  # 计算验证准确率。
+val_precision = precision_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别precision的宏平均。
+val_recall = recall_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别recall的宏平均。
+val_f1 = f1_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别F1的宏平均。
 model.eval()  # 开始独立推理阶段。
 with torch.inference_mode():  # 推理阶段关闭Autograd开销。
     inference_probabilities = torch.softmax(model(inference_text, inference_numeric), dim=1)  # 输出推理类别概率。
@@ -92,7 +100,7 @@ with torch.inference_mode():  # 推理阶段关闭Autograd开销。
     inference_labels = [class_names[index] for index in inference_indices.tolist()]  # 将索引还原为业务类别名称。
 inference_result = inference_frame[['item_id', 'description']].assign(predicted_category=inference_labels)  # 将预测结果与CSV商品ID和描述对齐。
 assert inference_probabilities.shape == (len(inference_frame), len(class_names)) and val_accuracy.item() >= 0.80  # 验证输出shape和分类效果。
-print('backbone:', model_name, 'hidden_size:', text_encoder.config.hidden_size, 'validation_accuracy:', val_accuracy.item(), 'inference:', inference_result, 'probabilities:', inference_probabilities, sep='\n')  # 输出预训练骨干、指标和推理结果。
+print('backbone:', model_name, 'hidden_size:', text_encoder.config.hidden_size, 'validation_accuracy:', val_accuracy.item(), 'validation_precision_macro:', val_precision, 'validation_recall_macro:', val_recall, 'validation_f1_macro:', val_f1, 'inference:', inference_result, 'probabilities:', inference_probabilities, sep='\n')  # 输出预训练骨干、分类指标和推理结果。
 # 冻结骨干适合小数据和CPU快速基线；数据较多时可解冻最后几层并用约1e-5到5e-5的小学习率微调。
 # 微调时BERT参数与新分类头通常使用不同学习率，并应通过DataLoader分batch避免一次载入全部文本。
 # 首次运行from_pretrained需要网络下载模型；下载完成后Hugging Face会使用本地缓存。

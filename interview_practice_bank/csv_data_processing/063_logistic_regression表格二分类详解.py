@@ -30,10 +30,14 @@ from sklearn.metrics import classification_report, roc_auc_score  # 导入分类
 from sklearn.pipeline import Pipeline  # 导入无泄漏流水线。
 from sklearn.preprocessing import StandardScaler  # 导入数值标准化工具。
 csv_path = Path(__file__).parents[1] / 'data' / 'customer_churn_interview.csv'  # 定位客户流失CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练分区。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证分区。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理分区。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理分区。
 feature_names = ['age', 'tenure_months', 'monthly_charges', 'support_calls', 'weekly_usage_hours']  # 选择数值特征并排除ID、标签和split。
+# drop变体：feature_frame = train_frame.drop(columns=['customer_id', 'region', 'contract_type', 'signup_date', 'churn', 'split'])  # 按列名排除非数值模型字段。
+# iloc变体：feature_frame = train_frame.iloc[:, 1:6]  # 按位置选择age到weekly_usage_hours五个数值特征。
 model = Pipeline([('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler()), ('classifier', LogisticRegression(C=1.0, class_weight='balanced', max_iter=1000))])  # 串联填补、标准化和带L2正则的逻辑回归。
 model.fit(train_frame[feature_names], train_frame['churn'])  # 只用训练分区拟合所有流水线步骤。
 val_probabilities = model.predict_proba(val_frame[feature_names])[:, 1]  # 输出验证样本属于正类的概率。

@@ -25,11 +25,16 @@ from pathlib import Path  # 导入跨平台路径工具。
 import pandas as pd  # 导入Pandas读取CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
+from sklearn.metrics import f1_score, precision_score, recall_score  # 导入多标签precision、recall和F1。
 csv_path = Path(__file__).parents[1] / 'data' / 'classification_examples.csv'  # 定位同时含多个0或1标签的CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练分区。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证分区。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理分区。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理分区。
 feature_names = ['x1', 'x2', 'x3', 'x4']  # 指定模型输入列。
+# drop变体：feature_frame = train_frame.drop(columns=['binary_label', 'class_label', 'label_a', 'label_b', 'label_c', 'split'])  # 按列名排除所有标签和分区列。
+# iloc变体：feature_frame = train_frame.iloc[:, :4]  # 按位置选择前四个数值特征。
 label_names = ['label_a', 'label_b', 'label_c']  # 指定三个彼此独立且可同时为1的标签列。
 train_x = torch.tensor(train_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换训练特征。
 val_x = torch.tensor(val_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换验证特征。
@@ -56,11 +61,14 @@ with torch.no_grad():  # 验证时关闭梯度记录。
     val_probabilities = torch.sigmoid(model(val_x))  # 分别得到每个标签的独立概率。
     val_predictions = (val_probabilities >= 0.5).float()  # 每个标签分别应用0.5阈值。
     per_label_accuracy = (val_predictions == val_y).float().mean(dim=0)  # 分别计算三个标签的验证准确率。
+val_precision = precision_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各标签precision的宏平均。
+val_recall = recall_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各标签recall的宏平均。
+val_f1 = f1_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各标签F1的宏平均。
 model.eval()  # 开始独立推理阶段。
 with torch.inference_mode():  # 使用推理上下文关闭梯度。
     inference_probabilities = torch.sigmoid(model(inference_x))  # 生成三个互不排斥的标签概率。
     inference_predictions = (inference_probabilities >= 0.5).to(torch.int64)  # 每行可能得到零个、一个或多个正标签。
 assert inference_predictions.shape == (len(inference_frame), len(label_names)) and per_label_accuracy.mean().item() >= 0.75  # 验证多标签输出shape和平均效果。
-print('pos_weight:', pos_weight, 'validation_accuracy_per_label:', dict(zip(label_names, per_label_accuracy.tolist())), 'inference_multilabel:', inference_predictions, sep='\n')  # 输出权重、逐标签指标和推理结果。
+print('pos_weight:', pos_weight, 'validation_accuracy_per_label:', dict(zip(label_names, per_label_accuracy.tolist())), 'validation_precision_macro:', val_precision, 'validation_recall_macro:', val_recall, 'validation_f1_macro:', val_f1, 'inference_multilabel:', inference_predictions, sep='\n')  # 输出权重、验证分类指标和推理结果。
 # 易错点：多标签不是多分类，三个标签可同时为1，因此使用BCE而不是CrossEntropyLoss。
 # 阈值变式：可根据每个标签在验证集上的precision与recall分别选择不同阈值，而不是统一使用0.5。

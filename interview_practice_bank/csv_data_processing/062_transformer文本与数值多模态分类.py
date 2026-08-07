@@ -26,11 +26,16 @@ from pathlib import Path  # 导入跨平台路径工具。
 import pandas as pd  # 导入Pandas读取包含文本和数值的CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
+from sklearn.metrics import f1_score, precision_score, recall_score  # 导入多分类precision、recall和F1。
 csv_path = Path(__file__).parents[1] / 'data' / 'multimodal_products.csv'  # 定位多模态商品CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练文本、数值和标签。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证文本、数值和标签。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理文本和数值。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练文本、数值和标签。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证文本、数值和标签。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理文本和数值。
 numeric_columns = ['price', 'rating', 'stock']  # 定义数值模态字段。
+# drop变体：numeric_frame = train_frame.drop(columns=['item_id', 'description', 'category', 'split'])  # 按列名排除ID、文本、标签和分区列得到数值特征。
+# iloc变体：numeric_frame = train_frame.iloc[:, 1:4]  # 按位置选择price、rating和stock。
 class_names = ['electronics', 'furniture', 'sports']  # 固定三个互斥商品类别。
 class_to_index = {name: index for index, name in enumerate(class_names)}  # 创建类别字符串到整数索引的映射。
 token_counts = Counter(token for text in train_frame['description'] for token in text.lower().split())  # 只统计训练文本词频以避免验证和推理词汇泄漏。
@@ -90,6 +95,9 @@ model.eval()  # 开始独立验证阶段。
 with torch.no_grad():  # 验证时关闭梯度。
     val_predictions = model(val_tokens, val_numeric).argmax(1)  # 生成验证类别索引。
     val_accuracy = (val_predictions == val_y).float().mean()  # 计算验证准确率。
+val_precision = precision_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别precision的宏平均。
+val_recall = recall_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别recall的宏平均。
+val_f1 = f1_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别F1的宏平均。
 model.eval()  # 开始独立推理阶段。
 with torch.inference_mode():  # 使用推理上下文减少开销。
     inference_probabilities = torch.softmax(model(inference_tokens, inference_numeric), dim=1)  # 输出推理商品的三类概率。
@@ -97,7 +105,7 @@ with torch.inference_mode():  # 使用推理上下文减少开销。
     inference_labels = [class_names[index] for index in inference_indices.tolist()]  # 将类别索引还原为名称。
 inference_result = inference_frame[['item_id', 'description']].assign(predicted_category=inference_labels)  # 将多模态预测与商品ID和描述对齐。
 assert inference_probabilities.shape == (len(inference_frame), len(class_names)) and val_accuracy.item() >= 0.80  # 验证概率shape和分类效果。
-print('vocabulary_size:', len(vocabulary), 'validation_accuracy:', val_accuracy.item(), 'inference_result:', inference_result, 'probabilities:', inference_probabilities, sep='\n')  # 输出词表、验证指标和推理结果。
+print('vocabulary_size:', len(vocabulary), 'validation_accuracy:', val_accuracy.item(), 'validation_precision_macro:', val_precision, 'validation_recall_macro:', val_recall, 'validation_f1_macro:', val_f1, 'inference_result:', inference_result, 'probabilities:', inference_probabilities, sep='\n')  # 输出词表、验证分类指标和推理结果。
 # 这是late/intermediate fusion：先分别编码文本和数值，再拼接表示；early fusion则更早把模态转成统一token。
 # 易错点：词表、数值均值和标准差都只能从train建立，validation与inference的新词必须映射为unk。
 # 实际项目可把手写词表替换为预训练BERT tokenizer和encoder，但CSV读取、数值分支与融合流程保持一致。

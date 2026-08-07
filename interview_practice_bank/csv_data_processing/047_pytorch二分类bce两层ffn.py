@@ -25,11 +25,16 @@ from pathlib import Path  # 导入跨平台路径工具。
 import pandas as pd  # 导入Pandas读取CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
+from sklearn.metrics import f1_score, precision_score, recall_score  # 导入二分类precision、recall和F1。
 csv_path = Path(__file__).parents[1] / 'data' / 'classification_examples.csv'  # 定位带固定数据分区的分类CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV取出训练数据。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV独立取出验证数据。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV独立取出最终推理数据。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出最终推理分区。
 feature_names = ['x1', 'x2', 'x3', 'x4']  # 定义四个数值输入特征。
+# drop变体：feature_frame = train_frame.drop(columns=['binary_label', 'class_label', 'label_a', 'label_b', 'label_c', 'split'])  # 按列名排除所有标签和分区列。
+# iloc变体：feature_frame = train_frame.iloc[:, :4]  # 按位置选择前四个数值特征。
 train_x = torch.tensor(train_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换训练特征为二维Tensor。
 val_x = torch.tensor(val_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换验证特征为二维Tensor。
 inference_x = torch.tensor(inference_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换推理特征为二维Tensor。
@@ -55,11 +60,14 @@ with torch.no_grad():  # 验证时关闭梯度记录。
     val_probabilities = torch.sigmoid(model(val_x))  # 把验证logits转换成正类概率。
     val_predictions = (val_probabilities >= 0.5).float()  # 使用0.5阈值得到二分类结果。
     val_accuracy = (val_predictions == val_y).float().mean()  # 计算验证准确率。
+val_precision = precision_score(val_y.numpy(), val_predictions.numpy(), zero_division=0)  # 使用sklearn计算正类precision。
+val_recall = recall_score(val_y.numpy(), val_predictions.numpy(), zero_division=0)  # 使用sklearn计算正类recall。
+val_f1 = f1_score(val_y.numpy(), val_predictions.numpy(), zero_division=0)  # 使用sklearn计算正类F1。
 model.eval()  # 开始独立推理阶段并保持评估模式。
 with torch.inference_mode():  # 使用专门的推理上下文进一步减少开销。
     inference_probabilities = torch.sigmoid(model(inference_x))  # 输出推理数据属于正类的概率。
     inference_predictions = (inference_probabilities >= 0.5).to(torch.int64)  # 根据阈值生成最终0或1类别。
 assert inference_predictions.shape == (len(inference_frame), 1) and val_accuracy.item() >= 0.70  # 验证输出shape及验证效果。
-print('validation_accuracy:', val_accuracy.item(), 'inference_probability:', inference_probabilities.squeeze(1), 'inference_class:', inference_predictions.squeeze(1), sep='\n')  # 输出验证指标和推理结果。
+print('validation_accuracy:', val_accuracy.item(), 'validation_precision:', val_precision, 'validation_recall:', val_recall, 'validation_f1:', val_f1, 'inference_probability:', inference_probabilities.squeeze(1), 'inference_class:', inference_predictions.squeeze(1), sep='\n')  # 输出验证分类指标和推理结果。
 # 易错点：BCEWithLogitsLoss直接接logits，训练前不要再手动调用sigmoid。
 # 另一种写法：二分类也能输出两个logits并使用CrossEntropyLoss，但单logit加BCE更直接。

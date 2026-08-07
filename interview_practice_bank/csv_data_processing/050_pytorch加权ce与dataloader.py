@@ -26,11 +26,16 @@ import pandas as pd  # 导入Pandas读取CSV。
 import torch  # 导入PyTorch。
 from torch import nn  # 导入神经网络模块。
 from torch.utils.data import DataLoader, TensorDataset  # 导入小批量数据封装工具。
+from sklearn.metrics import f1_score, precision_score, recall_score  # 导入多分类precision、recall和F1。
 csv_path = Path(__file__).parents[1] / 'data' / 'classification_examples.csv'  # 定位分类CSV。
-train_frame = pd.read_csv(csv_path).query("split == 'train'").copy()  # 从CSV读取训练数据。
-val_frame = pd.read_csv(csv_path).query("split == 'val'").copy()  # 从CSV读取验证数据。
-inference_frame = pd.read_csv(csv_path).query("split == 'inference'").copy()  # 从CSV读取推理数据。
+frame = pd.read_csv(csv_path)  # 从CSV读取全部数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
+train_frame = frame.query("split == 'train'").copy()  # 从清洗后的数据取出训练分区。
+val_frame = frame.query("split == 'val'").copy()  # 从清洗后的数据取出验证分区。
+inference_frame = frame.query("split == 'inference'").copy()  # 从清洗后的数据取出推理分区。
 feature_names = ['x1', 'x2', 'x3', 'x4']  # 指定输入特征列。
+# drop变体：feature_frame = train_frame.drop(columns=['binary_label', 'class_label', 'label_a', 'label_b', 'label_c', 'split'])  # 按列名排除所有标签和分区列。
+# iloc变体：feature_frame = train_frame.iloc[:, :4]  # 按位置选择前四个数值特征。
 class_names = ['class_a', 'class_b', 'class_c']  # 固定类别名称和索引顺序。
 class_to_index = {name: index for index, name in enumerate(class_names)}  # 创建标签编码字典。
 train_x = torch.tensor(train_frame[feature_names].to_numpy(), dtype=torch.float32)  # 转换训练特征。
@@ -61,11 +66,14 @@ with torch.no_grad():  # 验证阶段不记录梯度。
     val_predictions = model(val_x).argmax(dim=1)  # 获取验证集预测类别。
     confusion_matrix = torch.bincount(val_y * len(class_names) + val_predictions, minlength=len(class_names) ** 2).reshape(len(class_names), len(class_names))  # 不依赖sklearn构造真实类乘预测类的混淆矩阵。
     val_accuracy = confusion_matrix.diag().sum().float() / confusion_matrix.sum()  # 从混淆矩阵对角线计算准确率。
+val_precision = precision_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别precision的宏平均。
+val_recall = recall_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别recall的宏平均。
+val_f1 = f1_score(val_y.numpy(), val_predictions.numpy(), average='macro', zero_division=0)  # 计算各类别F1的宏平均。
 model.eval()  # 开始独立推理阶段。
 with torch.inference_mode():  # 关闭推理阶段梯度。
     inference_indices = model(inference_x).argmax(dim=1)  # 对CSV推理分区预测类别索引。
     inference_labels = [class_names[index] for index in inference_indices.tolist()]  # 把索引转换回业务类别名称。
 assert confusion_matrix.shape == (3, 3) and len(inference_labels) == len(inference_frame)  # 验证混淆矩阵和推理结果数量。
-print('class_counts:', class_counts, 'class_weights:', class_weights, 'validation_accuracy:', val_accuracy.item(), 'confusion_matrix:', confusion_matrix, 'inference_labels:', inference_labels, sep='\n')  # 输出类别权重、验证指标和推理类别。
+print('class_counts:', class_counts, 'class_weights:', class_weights, 'validation_accuracy:', val_accuracy.item(), 'validation_precision_macro:', val_precision, 'validation_recall_macro:', val_recall, 'validation_f1_macro:', val_f1, 'confusion_matrix:', confusion_matrix, 'inference_labels:', inference_labels, sep='\n')  # 输出类别权重、验证分类指标和推理类别。
 # 常考点：shuffle只用于训练DataLoader，验证和推理通常不打乱以方便结果对应原始行。
 # 常考点：严重不平衡任务不能只看accuracy，还应从混淆矩阵计算每类precision、recall和F1。

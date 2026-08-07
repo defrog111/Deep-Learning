@@ -27,7 +27,10 @@ from sklearn.metrics import mean_squared_error, r2_score  # 导入常用回归�
 from sklearn.model_selection import train_test_split  # 导入训练测试划分工具。
 csv_path = Path(__file__).parents[1] / 'data' / 'house_prices.csv'  # 定位房价回归CSV。
 frame = pd.read_csv(csv_path)  # 从CSV读取模型输入数据。
+frame = frame.dropna(how='all').reset_index(drop=True)  # 删除整行全为空的无效记录并重建连续索引。
 feature_names = ['house_size_sqft', 'bedrooms', 'house_age_years', 'distance_km']  # 指定特征列并保留列名。
+# drop变体：features = frame.drop(columns=['price_thousands'])  # 按列名排除目标列得到全部特征。
+# iloc变体：features = frame.iloc[:, :-1]  # 按位置选择目标列之前的全部特征。
 features = frame[feature_names]  # 使用DataFrame作为特征以保留可读列名。
 targets = frame['price_thousands']  # 选择连续房价作为回归目标。
 train_x, test_x, train_y, test_y = train_test_split(features, targets, test_size=0.2, random_state=42)  # 可复现地划分80%训练集和20%测试集。
