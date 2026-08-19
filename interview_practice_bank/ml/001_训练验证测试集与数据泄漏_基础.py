@@ -38,3 +38,5 @@ print(train_mean, standardized_test[:3])  # 输出无泄漏处理结果。
 # 易错写法：rng.integers(0, 100, size=100)默认有放回，因此会重复并遗漏部分索引。
 # wrong_indices = rng.integers(0, 100, size=100)  # 这是随机整数采样，不是随机排列。
 # assert np.unique(wrong_indices).size <= 100  # unique数量通常小于100，不能直接拿来切分数据集。
+
+

@@ -16,5 +16,6 @@
 """
 
 import numpy as np  # 导入 NumPy。
-robust_data = np.array([1.0, 2.0, 3.0, 100.0]); robust_scaled = (robust_data - np.median(robust_data)) / (np.percentile(robust_data, 75) - np.percentile(robust_data, 25))  # Robust缩放使用中位数和IQR降低离群值影响。
+robust_data = np.array([1.0, 2.0, 3.0, 100.0])
+robust_scaled = (robust_data - np.median(robust_data)) / (np.percentile(robust_data, 75) - np.percentile(robust_data, 25))  # Robust缩放使用中位数和IQR降低离群值影响。
 assert np.median(robust_scaled) == 0  # 验证中心位于中位数。

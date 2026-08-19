@@ -1,0 +1,55 @@
+customer_id,full_name,street_address,city,postal_code,country,country_calling_code,phone,purchase_time,purchase_quantity,unit_price,product_category,payment_method,membership_level,device_type,returns_last_year,purchase_segment,split
+C001,Alice Chen,,Seattle,98101,USA,+1,+1-206-555-0101,2025-01-05 09:15:00,8,89.0,electronics,credit_card,gold,mobile,0,high_value,train
+C002,Bob Smith,22 Lake Ave,Austin,,USA,+1,+1-512-555-0102,2025-01-08 18:40:00,2,44.0,home,paypal,silver,desktop,1,regular,train
+C003,Carla Ruiz,8 Sunset Rd,Miami,33101,USA,+1,,2025-01-11 13:20:00,1,18.0,beauty,debit_card,basic,mobile,2,occasional,train
+C004,Daniel Kim,77 King St,Toronto,M5H2N2,Canada,+1,+1-416-555-0104,,6,110.0,electronics,credit_card,gold,desktop,0,high_value,train
+C005,Emma Wilson,14 Queen St,Vancouver,V6B1A1,Canada,+1,+1-604-555-0105,2025-02-07 20:10:00,,36.0,books,paypal,silver,tablet,1,regular,train
+C006,Felix Brown,6 Oak Way,Calgary,T2P1J9,Canada,+1,+1-403-555-0106,2025-02-12 08:30:00,1,,home,debit_card,basic,mobile,3,occasional,train
+C007,Grace Liu,9 Market St,London,EC1A1BB,UK,+44,+44-20-5550-0107,2025-03-03 14:45:00,7,95.0,sports,credit_card,gold,mobile,0,high_value,train
+C008,Hugo Martin,31 Bridge Rd,Manchester,M11AE,UK,+44,+44-161-555-0108,2025-03-09 17:25:00,2,52.0,,paypal,silver,desktop,1,regular,train
+C009,Iris Clark,5 Hill St,Bristol,BS15AH,UK,+44,+44-117-555-0109,2025-03-15 11:55:00,1,15.0,books,,basic,,2,occasional,train
+C010,Jonas Weber,18 Hauptstrasse,Berlin,10115,Germany,+49,+49-30-555-0110,2025-04-01 19:05:00,9,72.0,home,credit_card,gold,desktop,0,high_value,train
+C011,Klara Fischer,3 Gartenweg,Munich,80331,Germany,+49,+49-89-555-0111,2025-04-06 12:35:00,3,41.0,beauty,paypal,,mobile,1,regular,train
+C012,Lukas Meyer,42 Bahnhofstrasse,Hamburg,20095,Germany,+49,+49-40-555-0112,2025-04-13 07:50:00,1,21.0,sports,debit_card,basic,tablet,,occasional,train
+C013,Mia Rossi,11 Via Roma,Rome,00100,Italy,+39,+39-06-555-0113,2025-05-04 15:20:00,5,130.0,electronics,credit_card,gold,mobile,0,high_value,train
+C014,Nico Bianchi,28 Via Dante,Milan,20121,,+39,+39-02-555-0114,2025-05-10 21:15:00,2,48.0,home,paypal,silver,desktop,1,regular,train
+C015,Olivia Conti,7 Via Verdi,Turin,10121,Italy,+39,+39-011-555-0115,2025-05-18 09:40:00,1,16.0,beauty,debit_card,basic,mobile,2,occasional,train
+C016,Pablo Garcia,16 Calle Mayor,Madrid,28013,Spain,+34,+34-91-555-0116,2025-06-02 16:10:00,8,84.0,sports,credit_card,gold,tablet,0,high_value,train
+C017,Quinn Lopez,25 Rambla St,Barcelona,08002,Spain,+34,+34-93-555-0117,2025-06-08 18:55:00,4,,books,paypal,silver,mobile,1,regular,train
+C018,Rosa Torres,4 Plaza Sol,Valencia,,Spain,+34,+34-96-555-0118,2025-06-14 10:25:00,1,27.0,home,debit_card,basic,desktop,,occasional,train
+C019,Sven Nilsson,12 Drottninggatan,Stockholm,11151,Sweden,+46,+46-8-555-0119,2025-07-01 08:10:00,6,105.0,electronics,credit_card,gold,desktop,0,high_value,train
+C020,Tara Lind,44 Storgatan,Gothenburg,41110,Sweden,+46,,2025-07-07 13:45:00,2,58.0,sports,paypal,silver,mobile,1,regular,train
+C021,Ulf Berg,2 Parkvagen,Malmo,21122,Sweden,+46,+46-40-555-0121,,1,19.0,books,debit_card,basic,tablet,2,occasional,train
+C022,Vera Sato,1 Chiyoda,Tokyo,1000001,Japan,+81,+81-3-555-0122,2025-08-03 11:30:00,10,68.0,electronics,credit_card,gold,mobile,0,high_value,train
+C023,Will Tanaka,4 Umeda,Osaka,5300001,Japan,+81,+81-6-555-0123,2025-08-09 19:20:00,,39.0,home,paypal,silver,desktop,1,regular,train
+C024,Yuki Mori,8 Sakae,Nagoya,4600008,Japan,+81,+81-52-555-0124,2025-08-17 06:55:00,1,22.0,beauty,debit_card,basic,mobile,3,occasional,train
+C025,Zoe Wang,88 Nanjing Rd,Shanghai,200001,China,+86,+86-21-555-0125,2025-09-02 14:05:00,7,92.0,electronics,credit_card,gold,tablet,0,high_value,train
+C026,An Li,10 Changan Ave,Beijing,100000,China,+86,+86-10-555-0126,2025-09-08 20:35:00,2,55.0,books,,silver,mobile,1,regular,train
+C027,Bo Zhao,6 Tianhe Rd,Guangzhou,510000,China,+86,+86-20-555-0127,2025-09-16 09:50:00,1,17.0,,debit_card,basic,desktop,2,occasional,train
+C028,Camille Dubois,21 Rue Rivoli,Paris,75001,France,+33,+33-1-555-0128,2025-10-04 17:40:00,9,75.0,home,credit_card,gold,mobile,0,high_value,train
+C029,Denis Bernard,5 Rue Victor,Lyon,69002,France,+33,+33-4-555-0129,2025-10-11 12:15:00,3,46.0,electronics,paypal,silver,tablet,,regular,train
+C030,Elise Petit,17 Rue Port,Nice,06000,France,+33,+33-4-555-0130,2025-10-19 08:25:00,1,20.0,beauty,debit_card,,mobile,3,occasional,train
+C031,Farah Khan,2 MG Road,Mumbai,400001,India,+91,+91-22-555-0131,2025-11-02 15:35:00,6,115.0,electronics,credit_card,gold,desktop,0,high_value,train
+C032,Gopal Shah,19 Park St,Kolkata,700016,India,+91,+91-33-555-0132,2025-11-08 21:10:00,2,,home,paypal,silver,mobile,1,regular,train
+C033,Hana Patel,7 Brigade Rd,Bengaluru,560001,India,+91,+91-80-555-0133,2025-11-15 10:45:00,1,23.0,books,debit_card,basic,tablet,2,occasional,train
+C034,Ian Jones,33 George St,Sydney,2000,Australia,+61,+61-2-555-0134,2025-12-01 09:05:00,8,88.0,sports,credit_card,gold,mobile,0,high_value,train
+C035,Julia Evans,6 Collins St,Melbourne,3000,Australia,+61,+61-3-555-0135,2025-12-07 16:50:00,4,34.0,beauty,paypal,silver,,1,regular,train
+C036,Kai Taylor,15 Queen St,Brisbane,4000,Australia,+61,+61-7-555-0136,2025-12-14 18:15:00,1,26.0,home,debit_card,basic,mobile,3,occasional,train
+C037,Lina Chen,,Portland,97201,USA,+1,+1-503-555-0137,2026-01-03 10:20:00,7,99.0,electronics,credit_card,gold,mobile,0,high_value,val
+C038,Marco Smith,45 River Rd,Dallas,,USA,+1,+1-214-555-0138,2026-01-08 19:30:00,3,43.0,books,paypal,silver,desktop,1,regular,val
+C039,Nora Ruiz,8 Palm Ave,Orlando,32801,USA,+1,,2026-01-12 07:40:00,1,19.0,beauty,debit_card,basic,tablet,2,occasional,val
+C040,Owen Lee,90 Bay St,Toronto,M5J2N8,Canada,+1,+1-416-555-0140,2026-02-04 13:10:00,6,108.0,home,credit_card,gold,desktop,0,high_value,val
+C041,Pia Martin,3 Robson St,Vancouver,V6B2A7,Canada,+1,+1-604-555-0141,2026-02-09 20:45:00,2,,sports,paypal,silver,mobile,1,regular,val
+C042,Ravi Brown,17 Centre St,Calgary,T2G2B7,Canada,+1,+1-403-555-0142,,1,16.0,books,debit_card,basic,,3,occasional,val
+C043,Sara Wilson,19 Oxford St,London,W1D1BS,UK,+44,+44-20-5550-0143,2026-03-02 14:30:00,9,78.0,electronics,credit_card,gold,tablet,0,high_value,val
+C044,Theo Clark,7 Deansgate,Manchester,M32BW,UK,+44,+44-161-555-0144,2026-03-08 18:05:00,,31.0,home,paypal,silver,mobile,1,regular,val
+C045,Uma Weber,22 Park St,Bristol,BS15TR,UK,+44,+44-117-555-0145,2026-03-15 11:15:00,1,25.0,beauty,,basic,desktop,2,occasional,val
+C046,Viktor Rossi,4 Via Torino,Rome,00184,Italy,+39,+39-06-555-0146,2026-04-01 08:55:00,5,125.0,sports,credit_card,gold,mobile,0,high_value,val
+C047,Wendy Garcia,29 Gran Via,Madrid,28013,,+34,+34-91-555-0147,2026-04-07 17:35:00,3,45.0,electronics,paypal,silver,tablet,1,regular,val
+C048,Xavier Sato,10 Ginza,Tokyo,1040061,Japan,+81,+81-3-555-0148,2026-04-13 21:20:00,1,21.0,home,debit_card,basic,mobile,3,occasional,val
+C049,Yara Wang,,San Francisco,94105,USA,+1,+1-415-555-0149,2026-05-03 10:10:00,8,93.0,electronics,credit_card,gold,mobile,0,,inference
+C050,Zane Kim,5 Front St,Toronto,,Canada,+1,+1-416-555-0150,2026-05-08 18:50:00,2,,books,paypal,silver,desktop,1,,inference
+C051,Ada Jones,11 Baker St,London,W1U3BW,UK,+44,,2026-05-14 08:35:00,1,18.0,beauty,debit_card,basic,tablet,2,,inference
+C052,Bruno Meyer,8 Alexanderplatz,Berlin,10178,Germany,+49,+49-30-555-0152,,7,102.0,home,credit_card,gold,,0,,inference
+C053,Cleo Dubois,20 Rue Opera,Paris,75001,France,+33,+33-1-555-0153,2026-06-07 20:05:00,,38.0,sports,paypal,silver,mobile,,,inference
+C054,Diego Patel,3 Connaught Pl,Delhi,110001,India,+91,+91-11-555-0154,2026-06-15 11:40:00,1,24.0,,debit_card,,desktop,3,,inference

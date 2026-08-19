@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parent / "csv_data_processing"
-EXPECTED_COUNT = 42
+EXPECTED_COUNT = 76
 
 
 def has_read_csv(tree: ast.AST) -> bool:

@@ -1,6 +1,6 @@
 # Python / Data / ML 高频题库
 
-本目录包含 634 道独立、可运行的练习，其中原题库550题、CSV专项42题、矩阵运算
+本目录包含 668 道独立、可运行的练习，其中原题库550题、CSV专项76题、矩阵运算
 强化42题。每一个题目
 `.py` 文件只放一道题，文件顶部包含
 中文要求、逐步操作过程和完成标准，后面是带逐行中文注释的参考代码。
@@ -15,7 +15,7 @@
 | `python/` | 100 | 数据结构、函数、OOP、迭代器、装饰器、标准库和复杂度 |
 | `ml/` | 100 | 损失、正则化、验证、指标、经典算法、漂移和可复现性 |
 | `sklearn/` | 50 | Pipeline、预处理、CV、调参、模型、评估和持久化 |
-| `csv_data_processing/` | 42 | 每题从CSV读取，覆盖清洗、连接、时间序列、特征工程和模型数据管道 |
+| `csv_data_processing/` | 76 | 每题从CSV读取，覆盖清洗、连接、时间序列、特征工程和模型数据管道 |
 | `matrix_operations/numpy/` | 21 | NumPy 矩阵乘法、方程、分解、数值稳定性和 ML 应用 |
 | `matrix_operations/pytorch/` | 21 | PyTorch 批量矩阵、Autograd、Attention、稀疏矩阵和线性代数 |
 
@@ -54,6 +54,12 @@ python pytorch/085_multiheadattention_基础.py
 
 - `data/sales.csv`：销售、日期、类别、数量、价格、折扣。
 - `data/employees.csv`：员工、部门、城市、工资和经理关系。
+- `data/house_prices.csv`：用于NumPy、PyTorch和scikit-learn线性回归的房屋特征与价格。
+- `data/classification_examples.csv`：带train、val、inference固定分区的二分类、多分类和多标签数据。
+- `data/customer_churn_interview.csv`：面试用混合类型、缺失值、日期、业务ID和固定分区的流失数据。
+- `data/time_series_sequences.csv`：十二步历史窗口、趋势类别、下一时刻目标和固定数据分区。
+- `data/multimodal_products.csv`：商品描述文本、价格评分库存数值、类别标签和固定数据分区。
+- `data/customer_purchases_mixed.csv`：姓名、地址、邮编、国家区号、电话、购买时间与数量等真实风格混合字段分类数据。
 
 CSV 题目通过 `Path(__file__)` 定位数据，因此从仓库根目录或题库目录运行都可以。
 
@@ -91,7 +97,7 @@ python run_all.py --category pandas
 python run_all.py --category all
 ```
 
-检查并运行42个CSV专项例子：
+检查并运行69个CSV专项例子：
 
 ```bash
 python validate_csv_examples.py

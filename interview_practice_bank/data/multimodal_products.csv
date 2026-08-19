@@ -1,0 +1,49 @@
+item_id,price,rating,stock,description,category,split
+P001,120,3.5,5,wireless laptop device with fast processor,electronics,train
+P002,87,3.8,16,wooden office desk with storage,furniture,train
+P003,49,4.1,27,lightweight running shoes for training,sports,train
+P004,141,4.4,38,compact camera with digital sensor,electronics,train
+P005,108,4.7,49,soft fabric chair for living room,furniture,train
+P006,70,3.5,15,durable tennis racket for players,sports,val
+P007,162,3.8,26,bluetooth headphones with clear audio,electronics,val
+P008,129,4.1,37,modern bookshelf with strong shelves,furniture,inference
+P009,36,4.4,48,outdoor football for team practice,sports,train
+P010,128,4.7,14,smart tablet with bright display,electronics,train
+P011,95,3.5,25,comfortable sofa with durable frame,furniture,train
+P012,57,3.8,36,fitness yoga mat with firm grip,sports,train
+P013,149,4.1,47,wireless laptop device with fast processor,electronics,train
+P014,116,4.4,13,wooden office desk with storage,furniture,val
+P015,78,4.7,24,lightweight running shoes for training,sports,val
+P016,170,3.5,35,compact camera with digital sensor,electronics,inference
+P017,82,3.8,46,soft fabric chair for living room,furniture,train
+P018,44,4.1,12,durable tennis racket for players,sports,train
+P019,136,4.4,23,bluetooth headphones with clear audio,electronics,train
+P020,103,4.7,34,modern bookshelf with strong shelves,furniture,train
+P021,65,3.5,45,outdoor football for team practice,sports,train
+P022,157,3.8,11,smart tablet with bright display,electronics,val
+P023,124,4.1,22,comfortable sofa with durable frame,furniture,val
+P024,86,4.4,33,fitness yoga mat with firm grip,sports,inference
+P025,123,4.7,44,wireless laptop device with fast processor,electronics,train
+P026,90,3.5,10,wooden office desk with storage,furniture,train
+P027,52,3.8,21,lightweight running shoes for training,sports,train
+P028,144,4.1,32,compact camera with digital sensor,electronics,train
+P029,111,4.4,43,soft fabric chair for living room,furniture,train
+P030,73,4.7,9,durable tennis racket for players,sports,val
+P031,165,3.5,20,bluetooth headphones with clear audio,electronics,val
+P032,132,3.8,31,modern bookshelf with strong shelves,furniture,inference
+P033,39,4.1,42,outdoor football for team practice,sports,train
+P034,131,4.4,8,smart tablet with bright display,electronics,train
+P035,98,4.7,19,comfortable sofa with durable frame,furniture,train
+P036,60,3.5,30,fitness yoga mat with firm grip,sports,train
+P037,152,3.8,41,wireless laptop device with fast processor,electronics,train
+P038,119,4.1,7,wooden office desk with storage,furniture,val
+P039,81,4.4,18,lightweight running shoes for training,sports,val
+P040,173,4.7,29,compact camera with digital sensor,electronics,inference
+P041,85,3.5,40,soft fabric chair for living room,furniture,train
+P042,47,3.8,6,durable tennis racket for players,sports,train
+P043,139,4.1,17,bluetooth headphones with clear audio,electronics,train
+P044,106,4.4,28,modern bookshelf with strong shelves,furniture,train
+P045,68,4.7,39,outdoor football for team practice,sports,train
+P046,160,3.5,5,smart tablet with bright display,electronics,val
+P047,127,3.8,16,comfortable sofa with durable frame,furniture,val
+P048,89,4.1,27,fitness yoga mat with firm grip,sports,inference
