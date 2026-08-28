@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-inference"
+version = "0.1.0"
+description = "A small, configurable local LLM inference service"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "accelerate>=0.27",
+  "fastapi>=0.110",
+  "pydantic>=2.6",
+  "torch>=2.1",
+  "transformers>=4.39",
+  "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27",
+  "pytest>=8.0",
+  "ruff>=0.3",
+]
+
+[project.scripts]
+llm-infer = "llm_inference.cli:main"
+llm-serve = "llm_inference.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
