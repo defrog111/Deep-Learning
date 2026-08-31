@@ -8,7 +8,17 @@ from .schemas import (
     ChatCompletionResponse,
     Choice,
     Message,
+    RoutingDecision,
+    RoutingRequest,
     Usage,
+    WorkerHeartbeat,
+)
+from .routing import (
+    IntelligentRouter,
+    NoRouteAvailable,
+    WorkerRegistry,
+    get_router,
+    get_worker_registry,
 )
 
 app = FastAPI(title="LLM Inference API", version="0.1.0")
@@ -17,6 +27,43 @@ app = FastAPI(title="LLM Inference API", version="0.1.0")
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.put("/v1/workers/{worker_id}/heartbeat", response_model=WorkerHeartbeat)
+def worker_heartbeat(
+    worker_id: str,
+    heartbeat: WorkerHeartbeat,
+    registry: WorkerRegistry = Depends(get_worker_registry),
+) -> WorkerHeartbeat:
+    if worker_id != heartbeat.worker_id:
+        raise HTTPException(status_code=400, detail="worker_id path/body mismatch")
+    registry.update(heartbeat)
+    return heartbeat
+
+
+@app.get("/v1/workers", response_model=list[WorkerHeartbeat])
+def list_workers(
+    registry: WorkerRegistry = Depends(get_worker_registry),
+) -> list[WorkerHeartbeat]:
+    return registry.all_workers()
+
+
+@app.post("/v1/routing/decisions", response_model=RoutingDecision)
+def routing_decision(
+    request: RoutingRequest,
+    registry: WorkerRegistry = Depends(get_worker_registry),
+    router: IntelligentRouter = Depends(get_router),
+) -> RoutingDecision:
+    try:
+        return router.route(
+            messages=request.messages,
+            workers=registry.healthy_workers(),
+            prompt_tokens=request.prompt_tokens,
+            reusable_prefix_tokens=request.reusable_prefix_tokens,
+            required_context_tokens=request.required_context_tokens,
+        )
+    except NoRouteAvailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
@@ -42,4 +89,3 @@ def chat_completions(
             total_tokens=result.prompt_tokens + result.completion_tokens,
         ),
     )
-

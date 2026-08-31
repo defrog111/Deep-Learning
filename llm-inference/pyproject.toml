@@ -27,6 +27,7 @@ dev = [
 [project.scripts]
 llm-infer = "llm_inference.cli:main"
 llm-serve = "llm_inference.server:main"
+llm-prefix-cache-lab = "llm_inference.prefix_cache_lab:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -38,4 +39,3 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py39"
-
